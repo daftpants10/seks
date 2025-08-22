@@ -38,27 +38,20 @@
     .center{text-align:center}
     .left{text-align:left}
 
-    /* CTA */
-    .btn{display:inline-block; padding:10px 18px; border-radius:999px; font-weight:600; text-decoration:none; color:#fff;
-      background:linear-gradient(135deg,#f3a7a4,#ffd0b0)}
-    .btn:hover{opacity:.9}
-
     /* Stick visualization */
     .stick{margin:20px auto; display:flex; align-items:center; justify-content:center;}
     .bar{width:180px; height:3px; background:var(--muted); opacity:.3; transition:.6s ease}
     .dot{width:14px; height:14px; border-radius:50%; background:var(--muted); margin:0 6px; opacity:.3; transition:.6s ease}
     .active{background:var(--ink)!important; opacity:1!important}
 
-    .btn-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px}
-    @media(max-width:600px){.btn-row{grid-template-columns:1fr}}
-
-    /* Connect */
+    /* Connect style blocks */
     .connect{margin-top:22px; border:1px solid var(--line); border-radius:10px; overflow:hidden}
     .connect-head{padding:12px 14px; text-align:center; border-bottom:1px solid var(--line)}
-    .connect-grid{display:grid; grid-template-columns:repeat(3,1fr)}
+    .connect-grid{display:grid; grid-template-columns:repeat(2,1fr)}
     .connect-grid a{display:block; text-align:center; padding:12px 0; color:var(--ink); text-decoration:none; border-right:1px solid var(--line)}
     .connect-grid a:last-child{border-right:none}
     .connect-grid a:hover{background:#f7f7f8}
+
     footer{margin-top:28px; color:var(--muted); font-size:14px; text-align:left}
 
     /* Reveal-on-scroll */
@@ -113,37 +106,24 @@
 
     <!-- final CTA -->
     <div class="row center reveal">
-            <h2 style="margin:0; font-size:18px">0-1-0</h2>
-<p> play with us </p>
-      <div>
+      <h2 style="margin:0; font-size:18px">0-1-0</h2>
+      <p>play with us</p>
       <div class="stick step3"><div class="dot"></div><div class="bar"></div><div class="dot"></div></div>
-      <div class="btn-row">
-<!-- join -->
-<div class="connect" style="margin-top:22px">
-  <div class="connect-head">Join</div>
-  <div class="connect-grid">
-    <a href="https://forms.gle/rhYSKbXUK9U7vudr6" target="_blank" rel="noopener">⦿-⦿</a>
-  </div>
-</div>
+
+      <!-- Run + Read side by side -->
+      <div class="connect" style="margin-top:22px">
+        <div class="connect-grid">
+          <a href="https://forms.gle/rhYSKbXUK9U7vudr6" target="_blank" rel="noopener">run</a>
+          <a href="cheatcodes.html" target="_blank" rel="noopener">read</a>
+        </div>
       </div>
+
+      <p style="margin-top:20px">The 3D is the access point. Learn the movement and ... Be here, no?</p>
     </div>
-
-            <p>The 3D is the access point. Learn the movement and ... Be here, no? </p>
-
-
-<!-- read -->
-<div class="connect" style="margin-top:22px">
-  <div class="connect-head">Read</div>
-  <div class="connect-grid">
-    <a href="cheatcodes.html" target="_blank" rel="noopener">8 cheatcodes</a>
-  </div>
-</div>
-
-   
   </main>
 
   <script>
-    // IntersectionObserver to reveal sections as they enter the viewport
+    // IntersectionObserver to reveal sections
     const revealEls = document.querySelectorAll('.reveal');
     const io = new IntersectionObserver((entries) => {
       entries.forEach(e => {
@@ -153,7 +133,6 @@
         }
       });
     }, { threshold: 0.15 });
-
     revealEls.forEach(el => io.observe(el));
   </script>
 </body>
