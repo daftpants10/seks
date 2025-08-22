@@ -3,97 +3,152 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>the movement ⦿‑⦿ — seks.design</title>
-  <meta name="description" content="⦿‑⦿ — a mouse for the human bio‑computer. A movement tool designed to move your mind." />
+  <title>the movement ⦿-⦿ — seks.design</title>
+  <meta name="description" content="⦿-⦿ — a mouse for the human bio-computer. A movement tool designed to move your mind." />
   <meta name="theme-color" content="#ffffff" />
   <style>
     :root{
       --bg:#ffffff;
-      --ink:#111111;
-      --muted:#6b6b70;
-      --accent1:#f3a7a4;
-      --accent2:#ffd0b0;
-      --colw:640px;
+      --ink:#3a3a40;
+      --muted:#8e8e96;
+      --line:#ececec;
+      --colw:540px;
     }
     *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;background:var(--bg);color:var(--ink);
-      font:17px/1.7 ui-sans-serif, system-ui, -apple-system, Inter, Segoe UI, Roboto, Helvetica, Arial;}
-    .shell{max-width:var(--colw);margin:0 auto;padding:32px 20px 80px}
-    h1,h2{font-weight:700;line-height:1.2;margin:0 0 16px}
-    h1{font-size:clamp(28px,6vw,46px)}
-    h2{font-size:clamp(20px,4vw,28px)}
-    p{margin:0 0 14px}
-    .hero,.panel{min-height:80vh;display:flex;flex-direction:column;justify-content:center}
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font:16px/1.7 ui-sans-serif, system-ui, -apple-system, Inter, Segoe UI, Roboto, Helvetica, Arial;
+      -webkit-font-smoothing:antialiased;
+    }
+    .shell{max-width:var(--colw); margin:0 auto; padding:20px 20px 64px;}
+
+    /* Header tabs centered */
+    .tabs{position:sticky; top:0; background:rgba(255,255,255,.85); backdrop-filter:saturate(120%) blur(8px);}
+    .tabs-inner{max-width:var(--colw); margin:0 auto; display:flex; justify-content:center; gap:24px; align-items:center; padding:12px 20px;}
+    .tab{font-size:14px; color:var(--muted)}
+    .tab a{color:inherit; text-decoration:none}
+    .tab + .tab{position:relative}
+    .tab + .tab::before{content:""; position:absolute; left:-12px; top:50%; width:1px; height:16px; background:var(--line); transform:translateY(-50%)}
+
+    /* Rows */
+    .row{padding:22px 0; border-bottom:1px solid var(--line);}
+    .row:first-of-type{border-top:1px solid var(--line);}
+    .row strong{font-weight:700}
     .muted{color:var(--muted)}
+    .center{text-align:center}
+    .left{text-align:left}
 
     /* CTA */
-    .btn{display:inline-block;padding:12px 18px;border-radius:999px;font-weight:600;text-decoration:none;color:#fff;
-      background:linear-gradient(135deg,var(--accent1),var(--accent2));}
+    .btn{display:inline-block; padding:10px 18px; border-radius:999px; font-weight:600; text-decoration:none; color:#fff;
+      background:linear-gradient(135deg,#f3a7a4,#ffd0b0)}
     .btn:hover{opacity:.9}
 
-    /* P1/P2 visualization */
-    .stick{margin:40px auto;display:flex;align-items:center;justify-content:center;}
-    .bar{width:200px;height:4px;background:var(--muted);opacity:.3;transition:.6s ease}
-    .dot{width:18px;height:18px;border-radius:50%;background:var(--muted);margin:0 8px;opacity:.3;transition:.6s ease}
-    .active{background:var(--ink)!important;opacity:1!important}
+    /* Stick visualization */
+    .stick{margin:20px auto; display:flex; align-items:center; justify-content:center;}
+    .bar{width:180px; height:3px; background:var(--muted); opacity:.3; transition:.6s ease}
+    .dot{width:14px; height:14px; border-radius:50%; background:var(--muted); margin:0 6px; opacity:.3; transition:.6s ease}
+    .active{background:var(--ink)!important; opacity:1!important}
 
-    footer{margin-top:40px;font-size:14px;color:var(--muted)}
-    .foot{max-width:var(--colw);margin:0 auto;padding:22px 20px;display:flex;align-items:center;justify-content:space-between}
-    .socials a{color:var(--ink);text-decoration:none;margin-left:12px}
-    .socials a:hover{background:linear-gradient(90deg,rgba(243,167,164,.22),rgba(255,208,176,.22))}
+    .btn-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px}
+    @media(max-width:600px){.btn-row{grid-template-columns:1fr}}
+
+    /* Connect */
+    .connect{margin-top:22px; border:1px solid var(--line); border-radius:10px; overflow:hidden}
+    .connect-head{padding:12px 14px; text-align:center; border-bottom:1px solid var(--line)}
+    .connect-grid{display:grid; grid-template-columns:repeat(3,1fr)}
+    .connect-grid a{display:block; text-align:center; padding:12px 0; color:var(--ink); text-decoration:none; border-right:1px solid var(--line)}
+    .connect-grid a:last-child{border-right:none}
+    .connect-grid a:hover{background:#f7f7f8}
+    footer{margin-top:28px; color:var(--muted); font-size:14px; text-align:left}
+
+    /* Reveal-on-scroll */
+    .reveal { opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; }
+    .reveal.show { opacity: 1; transform: translateY(0); }
+
+    /* Animate stick parts */
+    .stick .dot, .stick .bar { transition: opacity .45s ease, background-color .45s ease, width .45s ease; }
+    .stick.step1 .dot:first-child { opacity: 1; background: var(--ink); }
+    .stick.step2 .dot:first-child { opacity: 1; background: var(--ink); }
+    .stick.step2 .bar { opacity: 1; background: var(--ink); width: 180px; }
+    .stick.step3 .dot:first-child,
+    .stick.step3 .dot:last-child,
+    .stick.step3 .bar { opacity: 1; background: var(--ink); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1 !important; transform: none !important; }
+      .stick .dot, .stick .bar { transition: none !important; }
+    }
   </style>
 </head>
 <body>
+  <!-- header tabs -->
+  <div class="tabs">
+    <div class="tabs-inner">
+      <div class="tab"><a href="index.html">seks</a></div>
+      <div class="tab">EDS</div>
+      <div class="tab">toys</div>
+    </div>
+  </div>
+
   <main class="shell">
-    <!-- Panel 1: identity -->
-    <section class="hero">
-      <h1>⦿‑⦿</h1>
-      <p>a mouse for the human bio‑computer</p>
-      <p class="muted">based on 8 cheat codes to hyperspace — a movement tool designed to move your mind.</p>
-      <p><a class="btn" href="https://forms.gle/your-form" target="_blank" rel="noopener">join / collaborate</a></p>
-    </section>
+    <!-- identity -->
+    <div class="row left reveal">
+      <h1 style="margin:0; font-size:22px; font-weight:700">⦿-⦿</h1>
+      <p class="muted">based on the 8 cheatcodes to hyperspace -- a movement tool designed to move your mind.</p>
+    </div>
 
-    <!-- Panel 2: P1 / P2 -->
-    <section class="panel" id="principles">
-      <h2>P1</h2>
+    <!-- P1 -->
+    <div class="row center reveal">
+      <h2 style="margin:0; font-size:18px">P1</h2>
       <p>your body remembers what your mind forgets</p>
-      <div class="stick"><div class="dot" id="dot1"></div><div class="bar" id="bar"></div><div class="dot" id="dot2"></div></div>
-      <h2>P2</h2>
+      <div class="stick step1"><div class="dot"></div></div>
+    </div>
+
+    <!-- P2 -->
+    <div class="row center reveal">
+      <h2 style="margin:0; font-size:18px">P2</h2>
       <p>move your body, move your mind</p>
-      <p class="muted">glitches & signs — yawns, sneezes, déjà vu — hold the game lightly</p>
-    </section>
+      <div class="stick step2"><div class="dot"></div><div class="bar"></div></div>
+    </div>
 
-    <!-- Panel 3: join options -->
-    <section class="panel">
-      <h2>find the others & move your body, together</h2>
-      <div style="display:grid;gap:16px;margin-top:16px">
-        <a class="btn" href="https://forms.gle/your-form" target="_blank" rel="noopener">Glow — movers / co‑hosts</a>
-        <a class="btn" href="https://forms.gle/your-form" target="_blank" rel="noopener">Flow — venues / festivals</a>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="foot">
-      <div><a href="index.html">← back to seks.design</a></div>
-      <div class="socials">
-        <a href="#">IG</a>
-        <a href="#">X</a>
-        <a href="#">SC</a>
+    <!-- final CTA -->
+    <div class="row center reveal">
+      <h2 style="margin:0; font-size:18px">find the others and come, together.</h2>
+      <div class="stick step3"><div class="dot"></div><div class="bar"></div><div class="dot"></div></div>
+      <div class="btn-row">
+        <a class="btn" href="https://forms.gle/rhYSKbXUK9U7vudr6" target="_blank" rel="noopener">glow</a>
+        <a class="btn" href="https://forms.gle/rhYSKbXUK9U7vudr6" target="_blank" rel="noopener">flow</a>
       </div>
     </div>
-  </footer>
+
+    <!-- connect -->
+    <div class="connect">
+      <div class="connect-head">Connect</div>
+      <div class="connect-grid">
+        <a href="https://t.me/+G13L15iiwDo0ZWYy" target="_blank" rel="noopener">TG</a>
+        <a href="https://www.instagram.com/seks_design" target="_blank" rel="noopener">IG</a>
+        <a href="https://soundcloud.com/seks_design" target="_blank" rel="noopener">SC</a>
+      </div>
+    </div>
+
+    <footer class="muted" style="margin-top:16px">
+      hello@seks.design
+    </footer>
+  </main>
 
   <script>
-    // Animate stick once page loads
-    window.addEventListener('load',()=>{
-      setTimeout(()=>{
-        document.getElementById('dot1').classList.add('active');
-        document.getElementById('dot2').classList.add('active');
-        document.getElementById('bar').classList.add('active');
-      },400);
-    });
+    // IntersectionObserver to reveal sections as they enter the viewport
+    const revealEls = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('show');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    revealEls.forEach(el => io.observe(el));
   </script>
 </body>
 </html>
