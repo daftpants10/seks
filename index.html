@@ -9,10 +9,10 @@
   <style>
     :root{
       --bg:#ffffff;
-      --ink:#3a3a40;
-      --muted:#8e8e96;
-      --line:#ececec;
-      --colw:540px;
+      --ink:#3a3a40;          
+      --muted:#8e8e96;        
+      --line:#ececec;         
+      --colw:540px;           
     }
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
@@ -23,6 +23,7 @@
     }
     .shell{max-width:var(--colw); margin:0 auto; padding:20px 20px 64px;}
 
+    /* Header tabs */
     .tabs{position:sticky; top:0; background:rgba(255,255,255,.8); backdrop-filter:saturate(120%) blur(8px);}
     .tabs-inner{max-width:var(--colw); margin:0 auto; display:flex; justify-content:center; gap:24px; align-items:center; padding:12px 20px;}
     .tab{font-size:14px; color:var(--muted)}
@@ -30,25 +31,25 @@
     .tab + .tab{position:relative}
     .tab + .tab::before{content:""; position:absolute; left:-12px; top:50%; width:1px; height:16px; background:var(--line); transform:translateY(-50%)}
 
+    /* Rows */
     .row{padding:16px 0; border-bottom:1px solid var(--line);} 
     .row:first-of-type{border-top:1px solid var(--line);} 
     .row strong{font-weight:700}
     .row a{color:inherit; text-decoration:none; border-bottom:1px dotted #d6d6d9}
     .row a:hover{border-bottom-color:#bbb}
-
     .muted{color:var(--muted)}
-    .center{text-align:center}
 
+    /* Connect */
     .connect{margin-top:18px; border:1px solid var(--line); border-radius:10px; overflow:hidden}
     .connect-head{padding:12px 14px; text-align:center; border-bottom:1px solid var(--line)}
     .connect-grid{display:grid; grid-template-columns:repeat(3,1fr)}
     .connect-grid a{display:block; text-align:center; padding:12px 0; color:var(--ink); text-decoration:none; border-right:1px solid var(--line)}
     .connect-grid a:last-child{border-right:none}
     .connect-grid a:hover{background:#f7f7f8}
-    footer{margin-top:28px; color:var(--muted); font-size:14px; text-align:left}
   </style>
 </head>
 <body>
+  <!-- header tabs -->
   <div class="tabs">
     <div class="tabs-inner">
       <div class="tab">seks</div>
@@ -58,19 +59,25 @@
   </div>
 
   <main class="shell">
+    <!-- seks -->
     <div class="row">
-      <strong>seks</strong> is a collective of experience designers. we design, create, and produce immersive installations. audio, visual, tactile, olfactory synesthesia.
+      <strong>seks</strong> is a collective of experience designers. immersive spaces shaped through sound, light, touch, and scent. our ethos asks: <em>do we design spaces, or do spaces design us?</em><br>
+      <span class="muted">• we explore this question by shaping environments that in turn shape us.</span>
     </div>
 
+    <!-- seksEDS -->
     <div class="row">
-      <strong><a href="EDS.html">seksEDS</a></strong> is our flagship studio night series: come as a guest, leave as a host. We invite you into our production process, with curated experiences by our friends & family. Next event, Berlin Fall 2025.
+      <strong><a href="EDS.html">seksEDS</a></strong> our studio nights for collective practice in experience design. guests become hosts as we open the process together. <em>infrastructure shapes interaction.</em><br>
+      <span class="muted">• each studio explores the Y — building a space to catch and release, a regenerative narrative commons.</span>
     </div>
     
+    <!-- seksToys -->
     <div class="row">
-      <strong><a href="the-movement.html">seksToys</a></strong> is our movement-tech lab where we design new tools for embodied dancefloor presence. Currently building: 
-      <a href="the-movement.html">⦿-⦿</a> : The mouse for the human bio-computer.
+      <strong><a href="the-movement.html">seksToys</a></strong> our movement-tech lab, where we explore the play of body and tool. ⦿-⦿ is our first prototype. <em>if music is the answer, what is the question?</em><br>
+      <span class="muted">• toys are experiments in embodied presence, tools that invite new forms of play.</span>
     </div>
 
+    <!-- connect -->
     <div class="connect">
       <div class="connect-head"><a href="mailto:hello@seks.design" style="color:inherit; text-decoration:none">Connect</a></div>
       <div class="connect-grid">
