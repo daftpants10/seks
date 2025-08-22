@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>the movement ⦿-⦿ — by seks.design</title>
+  <meta name="description" content="⦿-⦿ — the mouse for the human bio‑computer. A movement tool designed to move your mind." />
+  <meta property="og:title" content="the movement ⦿-⦿ — by seks.design" />
+  <meta property="og:description" content="Based on the 8 cheat codes to hyperspace. A movement tool designed to move your mind." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#f3a7a4" />
+  <style>
+    :root{
+      --bg:#0e0f11;         /* deep charcoal */
+      --ink:#f7f7f8;        /* near-white text */
+      --muted:#b8b8bf;      
+      --brand:#f3a7a4;      /* fleshy orange‑pink */
+      --brand2:#ffd0b0;     /* warm peach */
+      --glass:rgba(255,255,255,.06);
+      --maxw:920px;
+      --radius:20px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0; color:var(--ink);
+      font: 17px/1.7 ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 90% -10%, rgba(255,208,176,.18), transparent 60%),
+        radial-gradient(900px 500px at -10% 20%, rgba(243,167,164,.2), transparent 60%),
+        var(--bg);
+    }
+    a{color:var(--ink); text-decoration:none}
+    .wrap{width:min(100%,var(--maxw)); margin-inline:auto; padding:0 20px}
+
+    /* NAV (tiny, minimal) */
+    .nav{position:sticky; top:0; z-index:40; backdrop-filter:saturate(140%) blur(10px);
+      background:linear-gradient(to bottom, rgba(14,15,17,.85), rgba(14,15,17,.55)); border-bottom:1px solid rgba(255,255,255,.08)}
+    .nav-inner{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 0}
+    .brand{display:flex; align-items:center; gap:10px; font-weight:700}
+    .dot{width:22px; height:22px; border-radius:8px; background:linear-gradient(135deg,var(--brand),var(--brand2)); box-shadow:0 6px 24px rgba(243,167,164,.3)}
+    .links{display:flex; gap:14px; flex-wrap:wrap}
+    .pill{padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.14)}
+
+    /* Sections (≤3 scrolls total) */
+    section{padding:56px 0}
+    h1{font-size:clamp(32px,4.5vw,56px); line-height:1.05; margin:0 0 10px}
+    h2{font-size:clamp(22px,3vw,34px); margin:0 0 14px}
+    p{margin:0 0 12px}
+
+    /* Cards / Glass */
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); padding:22px}
+
+    /* HERO */
+    .hero{padding:80px 0 40px}
+    .tag{display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; letter-spacing:.3px; color:var(--muted);
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); margin-bottom:10px}
+    .lede{color:var(--muted); max-width:60ch}
+
+    /* GRID helpers */
+    .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+    .center{display:grid; place-items:center}
+    .muted{color:var(--muted)}
+
+    /* CTA */
+    .btn{display:inline-flex; align-items:center; gap:10px; padding:12px 16px; border-radius:999px; font-weight:600; cursor:pointer; border:1px solid rgba(255,255,255,.18)}
+    .btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand2)); color:#141416; border:none}
+
+    footer{border-top:1px solid rgba(255,255,255,.08); color:var(--muted); padding:26px 0 60px}
+
+    @media (max-width:900px){ .grid-2{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <a href="#top" class="brand"><span class="dot"></span> the movement ⦿-⦿</a>
+      <div class="links">
+        <a class="pill" href="#movement">movement</a>
+        <a class="pill" href="#join">join</a>
+        <a class="pill" href="#about">about</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 1) HERO / WHAT IT IS -->
+  <header id="top" class="hero">
+    <div class="wrap">
+      <div class="card">
+        <span class="tag">By seks.design</span>
+        <h1>— The mouse for the human bio‑computer —</h1>
+        <p class="lede">Based on the 8 cheat codes to hyperspace, a movement tool designed to move your mind. ⦿-⦿ helps you play the human game.</p>
+        <div class="grid-2" style="margin-top:6px">
+          <div>
+            <p>The game is played on ∞ dimensions, with ∞ levels. Your body is the access point to all levels of the game.</p>
+            <p>The goal of the game is to remember that you are playing a game. The more levels that you remember you are playing, the more fun & consequential the game becomes ✨</p>
+          </div>
+          <div class="card">
+            <h2 style="margin-top:0">Glitches & Signs</h2>
+            <p><strong>Body</strong> — Yawning, sneezing, hiccups?</p>
+            <p><strong>Mind</strong> — Synchronicities, coincidences, or déjà vu?</p>
+            <p class="muted">They’re signs — that the game is afoot & best held loosely ;)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2) THE MOVEMENT (CTA) -->
+  <section id="movement">
+    <div class="wrap">
+      <div class="card">
+        <h2>Find the others & move your body, together.</h2>
+        <p class="muted" style="margin-bottom:14px">Two paths, same form. Choose the model that fits you.</p>
+        <div class="grid-2">
+          <div class="card">
+            <h3 style="margin-top:0">Glow</h3>
+            <p class="muted">For movers / co‑hosts</p>
+            <a class="btn btn-primary" href="https://forms.gle/your-form" target="_blank" rel="noopener">Join via Google Form</a>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Flow</h3>
+            <p class="muted">For venues / festivals</p>
+            <a class="btn btn-primary" href="https://forms.gle/your-form" target="_blank" rel="noopener">Join via Google Form</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3) ABOUT US / WHO WE ARE (END) -->
+  <section id="about">
+    <div class="wrap">
+      <div class="card">
+        <h2>About us</h2>
+        <p>Seks is a crew of multimodal, post‑dimensional experience designers. Creating moments to be here now.</p>
+        <p>Our work is rooted in cognitive models of consciousness.</p>
+        <p><strong>Premise 1</strong>: Your body remembers, what your mind forgets.<br>
+           <strong>Premise 2</strong>: Move your body, move your mind.</p>
+        <p>⦿-⦿ is a mouse for the human bio‑computer. Learn the movement. Gift yourself a moment. Come together.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div>© <span id="year"></span> seks.design • <a href="#movement">join</a> • <a href="#about">about</a></div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
