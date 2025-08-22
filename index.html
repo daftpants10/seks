@@ -3,100 +3,102 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>seks.design</title>
-  <meta name="description" content="seks.design — a collective of multi‑modal, post‑dimensional experience designers." />
+  <title>the movement ⦿-⦿ — seks.design</title>
+  <meta name="description" content="⦿-⦿ — a mouse for the human bio-computer. A movement tool designed to move your mind." />
   <meta name="theme-color" content="#ffffff" />
   <style>
     :root{
-      --bg:#ffffff;        /* white canvas */
-      --ink:#111111;       /* near-black text */
-      --muted:#6b6b70;     /* soft gray */
-      --accent1:#f3a7a4;   /* fleshy orange‑pink */
-      --accent2:#ffd0b0;   /* warm peach */
-      --colw: 640px;       /* centered column width */
+      --bg:#ffffff;
+      --ink:#111111;
+      --muted:#6b6b70;
+      --accent1:#f3a7a4;
+      --accent2:#ffd0b0;
+      --colw:540px; /* narrower column for mobile-like center */
     }
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
-    body{margin:0;background:var(--bg);color:var(--ink);
-      font: 17px/1.7 ui-sans-serif, system-ui, -apple-system, Inter, Segoe UI, Roboto, Helvetica, Arial;
-      -webkit-font-smoothing:antialiased;}
-    .shell{max-width:var(--colw); margin:0 auto; padding:24px 20px 80px;}
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font:18px/1.65 ui-sans-serif, system-ui, -apple-system, Inter, Segoe UI, Roboto, Helvetica, Arial;
+      -webkit-font-smoothing:antialiased;
+    }
+    .shell{max-width:var(--colw); margin:0 auto; padding:64px 20px 96px;}
+    h1,h2{font-weight:700; line-height:1.25; margin:0 0 28px}
+    h1{font-size:clamp(30px,6vw,48px)}
+    h2{font-size:clamp(20px,4vw,28px)}
+    p{margin:0 0 22px}
 
-    /* Static, ultra-minimal nav */
-    .nav{position:sticky; top:0; background:rgba(255,255,255,.8); backdrop-filter:saturate(120%) blur(8px);}
-    .nav-inner{max-width:var(--colw); margin:0 auto; padding:10px 20px; display:flex; align-items:center; justify-content:flex-end; gap:14px}
-    .nav a{font-size:14px; text-decoration:none; color:var(--ink); opacity:.85}
-    .nav a:hover{opacity:1}
+    .hero,.panel{min-height:80vh; display:flex; flex-direction:column; justify-content:center}
+    .muted{color:var(--muted)}
 
-    /* Centered mobile-like column */
-    .hero{display:grid; place-items:center; min-height:42vh;}
-    .hero h1{font-size:clamp(28px,5vw,44px); line-height:1.1; text-align:center; margin:80px 0 32px}
+    /* CTA */
+    .btn{display:inline-block; padding:14px 22px; border-radius:999px; font-weight:600; text-decoration:none; color:#fff;
+      background:linear-gradient(135deg,var(--accent1),var(--accent2)); transition:.25s ease}
+    .btn:hover{opacity:.9}
 
-    /* Three stacked blocks (like solea) */
-    .stack{display:grid; gap:20px}
-    .block{font-weight:700; font-size:20px}
-    .sub{display:block; font-weight:400; color:var(--muted)}
+    /* Stick visualization */
+    .stick{margin:52px auto; display:flex; align-items:center; justify-content:center;}
+    .bar{width:200px; height:3px; background:var(--muted); opacity:.3; transition:.6s ease}
+    .dot{width:16px; height:16px; border-radius:50%; background:var(--muted); margin:0 8px; opacity:.3; transition:.6s ease}
+    .active{background:var(--ink)!important; opacity:1!important}
 
-    /* Link accent: subtle underline + pastel glow on hover */
-    a.inline{position:relative; text-decoration:none; color:var(--ink)}
-    a.inline:after{content:""; position:absolute; left:0; right:0; bottom:-2px; height:1px; background:#ddd; transform:scaleX(0); transform-origin:left; transition:.25s ease}
-    a.inline:hover:after{transform:scaleX(1);}
-    a.inline:hover{background: linear-gradient(90deg, rgba(243,167,164,.22), rgba(255,208,176,.22));}
-
-    /* Footer socials */
-    footer{margin-top:42px; font-size:14px; color:var(--muted)}
-    .foot{max-width:var(--colw); margin:0 auto; padding:22px 20px; display:flex; align-items:center; justify-content:space-between}
-    .socials a{color:var(--ink); text-decoration:none; margin-right:12px}
-    .socials a:hover{background:linear-gradient(90deg, rgba(243,167,164,.22), rgba(255,208,176,.22))}
-
-    @media (max-width:720px){ .shell{padding-top:12px} .hero h1{margin-top:56px} }
+    footer{margin-top:60px; font-size:15px; color:var(--muted)}
+    .foot{max-width:var(--colw); margin:0 auto; padding:28px 20px; display:flex; align-items:center; justify-content:space-between}
+    .socials a{color:var(--ink); text-decoration:none; margin-left:14px}
+    .socials a:hover{background:linear-gradient(90deg,rgba(243,167,164,.22),rgba(255,208,176,.22))}
   </style>
 </head>
 <body>
-  <!-- minimal top nav -->
-  <div class="nav">
-    <div class="nav-inner">
-      <a href="#home">home</a>
-      <a href="#sections">sections</a>
-      <a href="#contact">contact</a>
-    </div>
-  </div>
-
-  <main id="home" class="shell">
-    <!-- centered headline like a mobile column on desktop -->
+  <main class="shell">
+    <!-- Panel 1: identity -->
     <section class="hero">
-      <h1>do we design spaces or do spaces design us</h1>
+      <h1>⦿-⦿</h1>
+      <p>a mouse for the human bio-computer</p>
+      <p class="muted">based on 8 cheat codes to hyperspace — a movement tool designed to move your mind.</p>
+      <p><a class="btn" href="https://forms.gle/your-form" target="_blank" rel="noopener">join / collaborate</a></p>
     </section>
 
-    <!-- identity blocks (solea-style) -->
-    <section id="sections" class="stack">
-      <div class="block">
-        <strong>seks.design</strong>
-        <span class="sub">a collective of multi‑modal, post‑dimensional experience designers. we design moments to be here now.</span>
-      </div>
-      <div class="block">
-        <strong>seksEDS</strong>
-        <span class="sub">our flagship studio nights: come as a guest, leave as a host. a cyberdelic commons.</span>
-      </div>
-      <div class="block">
-        <strong>seksToys</strong>
-        <span class="sub">movement‑born tools for embodied interfaces. first up: <a class="inline" href="the-movement.html">the movement ⦿‑⦿</a></span>
-      </div>
+    <!-- Panel 2: P1 / P2 -->
+    <section class="panel" id="principles">
+      <h2>P1</h2>
+      <p>your body remembers what your mind forgets</p>
+      <div class="stick"><div class="dot" id="dot1"></div><div class="bar" id="bar"></div><div class="dot" id="dot2"></div></div>
+      <h2>P2</h2>
+      <p>move your body, move your mind</p>
+      <p class="muted">glitches & signs — yawns, sneezes, déjà vu — hold the game lightly</p>
     </section>
 
-    <section id="contact">
-      <footer>
-        <div class="foot">
-          <div>hello@seks.design</div>
-          <div class="socials">
-            <a href="#" aria-label="instagram">IG</a>
-            <a href="#" aria-label="x">X</a>
-            <a href="#" aria-label="soundcloud">SC</a>
-          </div>
-        </div>
-      </footer>
+    <!-- Panel 3: join options -->
+    <section class="panel">
+      <h2>find the others & move your body, together</h2>
+      <div style="display:grid; gap:22px; margin-top:22px">
+        <a class="btn" href="https://forms.gle/your-form" target="_blank" rel="noopener">Glow — movers / co-hosts</a>
+        <a class="btn" href="https://forms.gle/your-form" target="_blank" rel="noopener">Flow — venues / festivals</a>
+      </div>
     </section>
   </main>
+
+  <footer>
+    <div class="foot">
+      <div><a href="index.html">← back to seks.design</a></div>
+      <div class="socials">
+        <a href="#">IG</a>
+        <a href="#">X</a>
+        <a href="#">SC</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Animate stick once page loads
+    window.addEventListener('load',()=>{
+      setTimeout(()=>{
+        document.getElementById('dot1').classList.add('active');
+        document.getElementById('dot2').classList.add('active');
+        document.getElementById('bar').classList.add('active');
+      },400);
+    });
+  </script>
 </body>
 </html>
 
