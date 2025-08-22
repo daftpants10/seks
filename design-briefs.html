@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Design Briefs (beta) — seks.design</title>
+  <style>
+    body {
+      font:16px/1.6 ui-sans-serif, system-ui, -apple-system, Inter, Segoe UI, Roboto, Helvetica, Arial;
+      background:#fff; color:#3a3a40;
+      margin:0; padding:40px; -webkit-font-smoothing:antialiased;
+    }
+    .shell{max-width:540px; margin:0 auto;}
+    h1{font-size:22px; font-weight:700; text-align:center; margin-bottom:20px;}
+    .brief{padding:16px 0; border-bottom:1px solid #ececec;}
+    .brief:first-of-type{border-top:1px solid #ececec;}
+  </style>
+  <script>
+    // simple passcode protection
+    document.addEventListener("DOMContentLoaded", function() {
+      const pass = prompt("Enter passcode to access Design Briefs:");
+      if(pass !== "seks2025") {  // <-- change passcode here
+        alert("Incorrect passcode. Returning to homepage.");
+        window.location.href = "index.html";
+      }
+    });
+  </script>
+</head>
+<body>
+  <main class="shell">
+    <h1>Design Briefs (beta)</h1>
+    <div class="brief"><strong>Brief 1:</strong> Placeholder — write your first members-only note here.</div>
+    <div class="brief"><strong>Brief 2:</strong> Add more design briefs as needed.</div>
+  </main>
+</body>
+</html>
