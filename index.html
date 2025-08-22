@@ -9,10 +9,10 @@
   <style>
     :root{
       --bg:#ffffff;
-      --ink:#3a3a40;          /* lighter grey text */
-      --muted:#8e8e96;        /* softer muted */
-      --line:#ececec;         /* separators */
-      --colw:540px;           /* narrow, phone-in-desktop column */
+      --ink:#3a3a40;
+      --muted:#8e8e96;
+      --line:#ececec;
+      --colw:540px;
     }
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
@@ -23,7 +23,6 @@
     }
     .shell{max-width:var(--colw); margin:0 auto; padding:20px 20px 64px;}
 
-    /* Header tabs centered */
     .tabs{position:sticky; top:0; background:rgba(255,255,255,.8); backdrop-filter:saturate(120%) blur(8px);}
     .tabs-inner{max-width:var(--colw); margin:0 auto; display:flex; justify-content:center; gap:24px; align-items:center; padding:12px 20px;}
     .tab{font-size:14px; color:var(--muted)}
@@ -31,16 +30,15 @@
     .tab + .tab{position:relative}
     .tab + .tab::before{content:""; position:absolute; left:-12px; top:50%; width:1px; height:16px; background:var(--line); transform:translateY(-50%)}
 
-    /* Rows */
     .row{padding:16px 0; border-bottom:1px solid var(--line);} 
     .row:first-of-type{border-top:1px solid var(--line);} 
     .row strong{font-weight:700}
     .row a{color:inherit; text-decoration:none; border-bottom:1px dotted #d6d6d9}
     .row a:hover{border-bottom-color:#bbb}
+
     .muted{color:var(--muted)}
     .center{text-align:center}
 
-    /* Connect bar + buttons */
     .connect{margin-top:18px; border:1px solid var(--line); border-radius:10px; overflow:hidden}
     .connect-head{padding:12px 14px; text-align:center; border-bottom:1px solid var(--line)}
     .connect-grid{display:grid; grid-template-columns:repeat(3,1fr)}
@@ -51,43 +49,36 @@
   </style>
 </head>
 <body>
-  <!-- header tabs -->
   <div class="tabs">
     <div class="tabs-inner">
       <div class="tab">seks</div>
-      <div class="tab">EDS</div>
+      <div class="tab"><a href="EDS.html" title="seksEDS">EDS</a></div>
       <div class="tab"><a href="the-movement.html" title="seksToys → the movement">toys</a></div>
     </div>
   </div>
 
   <main class="shell">
-    <!-- three rows, first word bold, same font size -->
     <div class="row">
       <strong>seks</strong> is a collective of experience designers. we design, create, and produce immersive installations. audio, visual, tactile, olfactory synesthesia.
     </div>
 
     <div class="row">
-      <strong>seksEDS</strong> is our flagship studio night series: come as a guest, leave as a host. We invite you to into our production process, with curated experiences by our friends & family. Next event, Berlin Fall 2025. 
-</div>
+      <strong><a href="EDS.html">seksEDS</a></strong> is our flagship studio night series: come as a guest, leave as a host. We invite you into our production process, with curated experiences by our friends & family. Next event, Berlin Fall 2025.
+    </div>
     
     <div class="row">
-      <strong>seksToys</strong> is our movement-tech lab where we design new tools for embodied dancefloor presence. Currently building: 
+      <strong><a href="the-movement.html">seksToys</a></strong> is our movement-tech lab where we design new tools for embodied dancefloor presence. Currently building: 
       <a href="the-movement.html">⦿-⦿</a> : The mouse for the human bio-computer.
     </div>
-<!-- connect -->
-<div class="connect">
-  <div class="connect-head">Connect</div>
-  <div class="connect-grid" style="grid-template-columns:repeat(4,1fr)">
-    <a href="mailto:hello@seks.design" aria-label="email">Mail</a>
-    <a href="https://t.me/+G13L15iiwDo0ZWYy" aria-label="telegram" target="_blank" rel="noopener">TG</a>
-    <a href="https://www.instagram.com/seks_design" aria-label="instagram" target="_blank" rel="noopener">IG</a>
-    <a href="https://soundcloud.com/seks_design" aria-label="soundcloud" target="_blank" rel="noopener">SC</a>
-  </div>
-</div>
 
-
-
+    <div class="connect">
+      <div class="connect-head"><a href="mailto:hello@seks.design" style="color:inherit; text-decoration:none">Connect</a></div>
+      <div class="connect-grid">
+        <a href="https://t.me/+G13L15iiwDo0ZWYy" aria-label="telegram" target="_blank" rel="noopener">TG</a>
+        <a href="https://www.instagram.com/seks_design" aria-label="instagram" target="_blank" rel="noopener">IG</a>
+        <a href="https://soundcloud.com/seks_design" aria-label="soundcloud" target="_blank" rel="noopener">SC</a>
+      </div>
+    </div>
   </main>
 </body>
 </html>
-
