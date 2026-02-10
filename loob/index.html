@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⦿-⦿ Loob Rotation Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark: #3a3a40;
+            --muted: #8e8e96;
+            --light: #ffffff;
+            --accent: #ff006e;
+            --success: #06ffa5;
+            --warning: #ffa500;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        header {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e0e0e0;
+            background: var(--light);
+            z-index: 100;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: var(--muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Video Panel */
+        .video-panel {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #webcam {
+            display: none;
+        }
+
+        #canvas {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 340px;
+            background: var(--light);
+            border-left: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .sidebar-section h2 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Status */
+        .status {
+            padding: 0.75rem 1rem;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-indicator.active {
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.inactive {
+            background: var(--muted);
+        }
+
+        .status-indicator.warning {
+            background: var(--warning);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Controls */
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--dark);
+            background: var(--light);
+            color: var(--dark);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border-radius: 4px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--dark);
+            color: var(--light);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--light);
+        }
+
+        button.primary:hover:not(:disabled) {
+            background: #dd0060;
+            border-color: #dd0060;
+        }
+
+        button.success {
+            background: var(--success);
+            border-color: var(--success);
+            color: var(--dark);
+        }
+
+        /* Metrics */
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--muted);
+        }
+
+        .metric-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .metric-value.large {
+            font-size: 1.5rem;
+        }
+
+        .metric-value.cw {
+            color: #0066ff;
+        }
+
+        .metric-value.ccw {
+            color: #ff006e;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        /* HUD Overlay */
+        .hud {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.85);
+            color: var(--light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            min-width: 220px;
+        }
+
+        .hud-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .hud-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .hud-label {
+            color: #aaa;
+        }
+
+        .hud-value {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .hud-value.cw {
+            color: #4da6ff;
+        }
+
+        .hud-value.ccw {
+            color: #ff4d94;
+        }
+
+        .rotation-indicator {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .rotation-arrow {
+            font-size: 3rem;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .rotation-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+        }
+
+        /* Loading */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--light);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: var(--success);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>⦿-⦿ Loob Rotation Tracker</h1>
+            <p class="subtitle">MediaPipe Hands-based rotation analysis</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Video Panel -->
+            <div class="video-panel">
+                <video id="webcam" autoplay playsinline></video>
+                <canvas id="canvas"></canvas>
+
+                <!-- Loading Indicator -->
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div>Initializing MediaPipe...</div>
+                </div>
+
+                <!-- HUD Overlay -->
+                <div class="hud" id="hud" style="display: none;">
+                    <div class="rotation-indicator">
+                        <div class="rotation-arrow" id="rotation-arrow">↻</div>
+                        <div class="rotation-label" id="rotation-label">Detecting...</div>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">Speed</span>
+                        <span class="hud-value" id="hud-rpm">0 RPM</span>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">Plane</span>
+                        <span class="hud-value" id="hud-plane">—</span>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">Duration</span>
+                        <span class="hud-value" id="hud-duration">00:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Status Section -->
+                <div class="sidebar-section">
+                    <h2>Status</h2>
+                    <div class="status">
+                        <span class="status-indicator inactive" id="status-indicator"></span>
+                        <span id="status-text">Initializing...</span>
+                    </div>
+                </div>
+
+                <!-- Pre-Session Form -->
+                <div class="sidebar-section" id="pre-session-section">
+                    <h2>Pre-Session</h2>
+                    <div class="form-group">
+                        <label for="pre-energy">Energy Level (1-10)</label>
+                        <select id="pre-energy">
+                            <option value="5">5 - Neutral</option>
+                            <option value="1">1 - Very Low</option>
+                            <option value="2">2 - Low</option>
+                            <option value="3">3 - Below Average</option>
+                            <option value="4">4 - Slightly Below</option>
+                            <option value="6">6 - Slightly Above</option>
+                            <option value="7">7 - Above Average</option>
+                            <option value="8">8 - High</option>
+                            <option value="9">9 - Very High</option>
+                            <option value="10">10 - Maximum</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pre-mood">Current Mood</label>
+                        <select id="pre-mood">
+                            <option value="neutral">Neutral</option>
+                            <option value="focused">Focused</option>
+                            <option value="playful">Playful</option>
+                            <option value="meditative">Meditative</option>
+                            <option value="anxious">Anxious</option>
+                            <option value="energized">Energized</option>
+                            <option value="tired">Tired</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pre-notes">Body Sensations (optional)</label>
+                        <textarea id="pre-notes" placeholder="How does your body feel right now?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="sidebar-section">
+                    <h2>Controls</h2>
+                    <div class="button-group">
+                        <button id="start-btn" class="primary" disabled>Start Session</button>
+                        <button id="stop-btn" disabled>Stop</button>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem;">
+                        Hold the stick with both hands (fists closed). Move in circular motions.
+                    </p>
+                </div>
+
+                <!-- Real-time Metrics -->
+                <div class="sidebar-section" id="metrics-section" style="display: none;">
+                    <h2>Real-time Metrics</h2>
+                    <div class="metric">
+                        <span class="metric-label">Direction</span>
+                        <span class="metric-value large" id="metric-direction">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Speed</span>
+                        <span class="metric-value" id="metric-rpm">0 RPM</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Plane Tilt</span>
+                        <span class="metric-value" id="metric-plane">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Grip Width</span>
+                        <span class="metric-value" id="metric-grip">0 cm</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Duration</span>
+                        <span class="metric-value" id="metric-duration">00:00</span>
+                    </div>
+                </div>
+
+                <!-- Export Section -->
+                <div class="sidebar-section" id="export-section" style="display: none;">
+                    <h2>Session Summary</h2>
+                    <div class="metric">
+                        <span class="metric-label">Total Duration</span>
+                        <span class="metric-value" id="summary-duration">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Avg Speed</span>
+                        <span class="metric-value" id="summary-rpm">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">CW Time</span>
+                        <span class="metric-value" id="summary-cw">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">CCW Time</span>
+                        <span class="metric-value" id="summary-ccw">—</span>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="post-notes">Post-Session Reflection</label>
+                        <textarea id="post-notes" placeholder="What did you notice? Any insights?"></textarea>
+                    </div>
+                    <button id="export-btn" class="success">Download Session Data (JSON)</button>
+                    <button id="new-session-btn" style="margin-top: 0.5rem;">Start New Session</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MediaPipe Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <!-- Application Script -->
+    <script>
+        // ========================================
+        // Global State
+        // ========================================
+        const state = {
+            initialized: false,
+            tracking: false,
+            sessionStartTime: null,
+            sessionData: {
+                sessionId: null,
+                startTime: null,
+                endTime: null,
+                preSession: {},
+                postSession: {},
+                frames: [],
+                metrics: {}
+            },
+            rotationHistory: [],
+            lastStickVector: null,
+            directionChanges: [],
+            cwTime: 0,
+            ccwTime: 0,
+            currentDirection: null
+        };
+
+        // ========================================
+        // DOM Elements
+        // ========================================
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const newSessionBtn = document.getElementById('new-session-btn');
+
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        const loading = document.getElementById('loading');
+        const hud = document.getElementById('hud');
+
+        const preSessionSection = document.getElementById('pre-session-section');
+        const metricsSection = document.getElementById('metrics-section');
+        const exportSection = document.getElementById('export-section');
+
+        // ========================================
+        // MediaPipe Hands Setup
+        // ========================================
+        let hands;
+        let camera;
+
+        async function initMediaPipe() {
+            try {
+                // Initialize Hands
+                hands = new Hands({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                    }
+                });
+
+                hands.setOptions({
+                    maxNumHands: 2,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+
+                hands.onResults(onHandsResults);
+
+                // Initialize Camera
+                camera = new Camera(video, {
+                    onFrame: async () => {
+                        await hands.send({ image: video });
+                    },
+                    width: 1280,
+                    height: 720
+                });
+
+                await camera.start();
+
+                // Update UI
+                state.initialized = true;
+                loading.style.display = 'none';
+                statusIndicator.classList.remove('inactive');
+                statusIndicator.classList.add('active');
+                statusText.textContent = 'Ready to track';
+                startBtn.disabled = false;
+
+                // Set canvas size
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+            } catch (err) {
+                console.error('MediaPipe initialization error:', err);
+                loading.innerHTML = '<div>❌ Failed to initialize MediaPipe</div>';
+                statusText.textContent = 'Initialization failed';
+            }
+        }
+
+        // ========================================
+        // Hand Tracking Results Handler
+        // ========================================
+        function onHandsResults(results) {
+            // Clear canvas
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw video frame
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length === 2) {
+                const leftHand = results.multiHandedness[0].label === 'Left'
+                    ? results.multiHandLandmarks[0]
+                    : results.multiHandLandmarks[1];
+                const rightHand = results.multiHandedness[0].label === 'Right'
+                    ? results.multiHandLandmarks[0]
+                    : results.multiHandLandmarks[1];
+
+                // Get wrist positions (landmark 0)
+                const leftWrist = leftHand[0];
+                const rightWrist = rightHand[0];
+
+                // Convert to canvas coordinates
+                const leftPos = {
+                    x: leftWrist.x * canvas.width,
+                    y: leftWrist.y * canvas.height,
+                    z: leftWrist.z
+                };
+                const rightPos = {
+                    x: rightWrist.x * canvas.width,
+                    y: rightWrist.y * canvas.height,
+                    z: rightWrist.z
+                };
+
+                // Draw stick
+                drawStick(leftPos, rightPos);
+
+                // Calculate rotation metrics
+                if (state.tracking) {
+                    calculateRotationMetrics(leftPos, rightPos);
+                }
+
+                // Draw hand landmarks
+                drawHandLandmarks(leftHand, '#ff006e');
+                drawHandLandmarks(rightHand, '#06ffa5');
+
+                // Update status
+                if (!state.tracking) {
+                    statusIndicator.classList.remove('warning');
+                    statusIndicator.classList.add('active');
+                    statusText.textContent = 'Both hands detected';
+                }
+
+            } else {
+                // Hands not detected
+                if (state.tracking) {
+                    statusIndicator.classList.add('warning');
+                    statusText.textContent = 'Tracking paused - show both hands';
+                } else if (state.initialized) {
+                    statusIndicator.classList.remove('active');
+                    statusIndicator.classList.add('warning');
+                    statusText.textContent = 'Show both hands to camera';
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function drawStick(leftPos, rightPos) {
+            // Draw stick line
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 10;
+
+            ctx.beginPath();
+            ctx.moveTo(leftPos.x, leftPos.y);
+            ctx.lineTo(rightPos.x, rightPos.y);
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+
+            // Draw endpoints
+            drawCircle(leftPos.x, leftPos.y, 12, '#ff006e');
+            drawCircle(rightPos.x, rightPos.y, 12, '#06ffa5');
+        }
+
+        function drawHandLandmarks(landmarks, color) {
+            // Draw wrist as larger circle
+            const wrist = landmarks[0];
+            drawCircle(wrist.x * canvas.width, wrist.y * canvas.height, 8, color);
+        }
+
+        function drawCircle(x, y, radius, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw glow
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.arc(x, y, radius + 3, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        // ========================================
+        // Rotation Analysis
+        // ========================================
+        function calculateRotationMetrics(leftPos, rightPos) {
+            const timestamp = Date.now();
+            const elapsed = (timestamp - state.sessionStartTime) / 1000;
+
+            // Calculate stick vector
+            const stickVector = {
+                x: rightPos.x - leftPos.x,
+                y: rightPos.y - leftPos.y,
+                z: rightPos.z - leftPos.z
+            };
+
+            // Calculate grip width (in cm, assuming webcam FOV)
+            const gripWidth = Math.sqrt(
+                Math.pow(stickVector.x, 2) +
+                Math.pow(stickVector.y, 2)
+            ) * 0.05; // Rough conversion to cm
+
+            let rotation = null;
+
+            if (state.lastStickVector) {
+                // Calculate cross product to determine rotation direction
+                const cross = crossProduct2D(
+                    state.lastStickVector,
+                    stickVector
+                );
+
+                // Calculate angle change
+                const angle = angleBetweenVectors(
+                    state.lastStickVector,
+                    stickVector
+                );
+
+                // Determine direction (positive cross product = CCW, negative = CW)
+                const direction = cross > 0 ? 'ccw' : 'cw';
+                const angularVelocity = angle * 30; // Assuming ~30 FPS, convert to deg/sec
+                const rpm = (angularVelocity / 360) * 60;
+
+                // Update direction tracking
+                if (Math.abs(rpm) > 5) { // Minimum threshold to ignore noise
+                    if (state.currentDirection !== direction) {
+                        if (state.currentDirection !== null) {
+                            state.directionChanges.push({
+                                timestamp,
+                                from: state.currentDirection,
+                                to: direction
+                            });
+                        }
+                        state.currentDirection = direction;
+                    }
+
+                    // Accumulate time per direction
+                    const timeDelta = 1/30; // ~30 FPS
+                    if (direction === 'cw') {
+                        state.cwTime += timeDelta;
+                    } else {
+                        state.ccwTime += timeDelta;
+                    }
+                }
+
+                // Calculate plane orientation
+                const planeNormal = [0, 0, 1]; // Simplified for 2D
+                const planeTilt = calculatePlaneTilt(stickVector);
+
+                rotation = {
+                    direction,
+                    angularVelocity: Math.abs(angularVelocity),
+                    rpm: Math.abs(rpm),
+                    planeNormal,
+                    planeTilt
+                };
+
+                state.rotationHistory.push(rotation);
+                if (state.rotationHistory.length > 30) {
+                    state.rotationHistory.shift();
+                }
+            }
+
+            state.lastStickVector = stickVector;
+
+            // Record frame data
+            state.sessionData.frames.push({
+                timestamp,
+                elapsed,
+                leftHand: { x: leftPos.x, y: leftPos.y, z: leftPos.z },
+                rightHand: { x: rightPos.x, y: rightPos.y, z: rightPos.z },
+                stickVector,
+                gripWidth,
+                rotation
+            });
+
+            // Update HUD
+            updateHUD(elapsed, rotation, gripWidth);
+        }
+
+        function crossProduct2D(v1, v2) {
+            return v1.x * v2.y - v1.y * v2.x;
+        }
+
+        function angleBetweenVectors(v1, v2) {
+            const dot = v1.x * v2.x + v1.y * v2.y;
+            const mag1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+            const mag2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+            const cos = dot / (mag1 * mag2);
+            return Math.acos(Math.max(-1, Math.min(1, cos))) * (180 / Math.PI);
+        }
+
+        function calculatePlaneTilt(stickVector) {
+            // Calculate angle from horizontal (0° = horizontal, 90° = vertical)
+            const horizontal = Math.sqrt(stickVector.x * stickVector.x + stickVector.y * stickVector.y);
+            const vertical = Math.abs(stickVector.z);
+            return Math.atan2(vertical, horizontal) * (180 / Math.PI);
+        }
+
+        // ========================================
+        // HUD Updates
+        // ========================================
+        function updateHUD(elapsed, rotation, gripWidth) {
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = Math.floor(elapsed % 60);
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            // Update HUD
+            document.getElementById('hud-duration').textContent = timeString;
+
+            if (rotation && rotation.rpm > 5) {
+                const arrow = rotation.direction === 'cw' ? '↻' : '↺';
+                const label = rotation.direction === 'cw' ? 'CLOCKWISE' : 'COUNTERCLOCKWISE';
+                const className = rotation.direction === 'cw' ? 'cw' : 'ccw';
+
+                document.getElementById('rotation-arrow').textContent = arrow;
+                document.getElementById('rotation-label').textContent = label;
+                document.getElementById('hud-rpm').textContent = `${Math.round(rotation.rpm)} RPM`;
+                document.getElementById('hud-rpm').className = `hud-value ${className}`;
+
+                const planeDesc = rotation.planeTilt < 30 ? 'Horizontal' :
+                                 rotation.planeTilt > 60 ? 'Vertical' : 'Tilted';
+                document.getElementById('hud-plane').textContent =
+                    `${planeDesc} (${Math.round(rotation.planeTilt)}°)`;
+            } else {
+                document.getElementById('rotation-arrow').textContent = '◯';
+                document.getElementById('rotation-label').textContent = 'MOVE TO DETECT';
+                document.getElementById('hud-rpm').textContent = '0 RPM';
+                document.getElementById('hud-rpm').className = 'hud-value';
+                document.getElementById('hud-plane').textContent = '—';
+            }
+
+            // Update sidebar metrics
+            document.getElementById('metric-duration').textContent = timeString;
+
+            if (rotation && rotation.rpm > 5) {
+                const arrow = rotation.direction === 'cw' ? '↻ CW' : '↺ CCW';
+                const className = rotation.direction === 'cw' ? 'cw' : 'ccw';
+                document.getElementById('metric-direction').textContent = arrow;
+                document.getElementById('metric-direction').className = `metric-value large ${className}`;
+                document.getElementById('metric-rpm').textContent = `${Math.round(rotation.rpm)} RPM`;
+
+                const planeDesc = rotation.planeTilt < 30 ? 'Horizontal' :
+                                 rotation.planeTilt > 60 ? 'Vertical' : 'Tilted';
+                document.getElementById('metric-plane').textContent =
+                    `${planeDesc} (${Math.round(rotation.planeTilt)}°)`;
+            } else {
+                document.getElementById('metric-direction').textContent = '—';
+                document.getElementById('metric-rpm').textContent = '0 RPM';
+                document.getElementById('metric-plane').textContent = '—';
+            }
+
+            document.getElementById('metric-grip').textContent = `${Math.round(gripWidth)} cm`;
+        }
+
+        // ========================================
+        // Session Management
+        // ========================================
+        function startSession() {
+            // Capture pre-session data
+            state.sessionData.sessionId = generateSessionId();
+            state.sessionData.startTime = Date.now();
+            state.sessionData.preSession = {
+                energy: parseInt(document.getElementById('pre-energy').value),
+                mood: document.getElementById('pre-mood').value,
+                notes: document.getElementById('pre-notes').value
+            };
+
+            // Reset tracking state
+            state.tracking = true;
+            state.sessionStartTime = Date.now();
+            state.rotationHistory = [];
+            state.lastStickVector = null;
+            state.directionChanges = [];
+            state.cwTime = 0;
+            state.ccwTime = 0;
+            state.currentDirection = null;
+            state.sessionData.frames = [];
+
+            // Update UI
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            hud.style.display = 'block';
+            preSessionSection.style.display = 'none';
+            metricsSection.style.display = 'block';
+            exportSection.style.display = 'none';
+
+            statusText.textContent = 'Tracking active';
+        }
+
+        function stopSession() {
+            state.tracking = false;
+            state.sessionData.endTime = Date.now();
+
+            // Calculate final metrics
+            const duration = (state.sessionData.endTime - state.sessionData.startTime) / 1000;
+
+            const rpms = state.rotationHistory.map(r => r.rpm).filter(rpm => rpm > 5);
+            const avgRPM = rpms.length > 0
+                ? rpms.reduce((a, b) => a + b, 0) / rpms.length
+                : 0;
+            const maxRPM = rpms.length > 0 ? Math.max(...rpms) : 0;
+
+            const planeTilts = state.rotationHistory.map(r => r.planeTilt);
+            const avgPlaneTilt = planeTilts.length > 0
+                ? planeTilts.reduce((a, b) => a + b, 0) / planeTilts.length
+                : 0;
+
+            state.sessionData.metrics = {
+                duration,
+                avgRPM,
+                maxRPM,
+                clockwiseTime: state.cwTime,
+                counterclockwiseTime: state.ccwTime,
+                directionChanges: state.directionChanges.length,
+                avgPlaneTilt,
+                frameCount: state.sessionData.frames.length
+            };
+
+            // Update UI
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            hud.style.display = 'none';
+            metricsSection.style.display = 'none';
+            exportSection.style.display = 'block';
+
+            // Display summary
+            const durationMin = Math.floor(duration / 60);
+            const durationSec = Math.floor(duration % 60);
+            document.getElementById('summary-duration').textContent =
+                `${durationMin}:${durationSec.toString().padStart(2, '0')}`;
+            document.getElementById('summary-rpm').textContent = `${Math.round(avgRPM)} RPM`;
+            document.getElementById('summary-cw').textContent = `${Math.round(state.cwTime)}s`;
+            document.getElementById('summary-ccw').textContent = `${Math.round(state.ccwTime)}s`;
+
+            statusText.textContent = 'Session complete';
+        }
+
+        function exportSession() {
+            // Capture post-session reflection
+            state.sessionData.postSession = {
+                notes: document.getElementById('post-notes').value,
+                timestamp: Date.now()
+            };
+
+            // Create JSON blob
+            const dataStr = JSON.stringify(state.sessionData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            // Download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `loob-session-${state.sessionData.sessionId}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function resetForNewSession() {
+            preSessionSection.style.display = 'block';
+            exportSection.style.display = 'none';
+            document.getElementById('post-notes').value = '';
+        }
+
+        function generateSessionId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // ========================================
+        // Event Listeners
+        // ========================================
+        startBtn.addEventListener('click', startSession);
+        stopBtn.addEventListener('click', stopSession);
+        exportBtn.addEventListener('click', exportSession);
+        newSessionBtn.addEventListener('click', resetForNewSession);
+
+        // ========================================
+        // Initialize
+        // ========================================
+        initMediaPipe();
+    </script>
+</body>
+</html>
