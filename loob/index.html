@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⦿-⦿ Loob Motion Tracker</title>
+    <title>⦿-⦿ Loob Rotation Tracker</title>
     <style>
         * {
             margin: 0;
@@ -17,10 +17,11 @@
             --light: #ffffff;
             --accent: #ff006e;
             --success: #06ffa5;
+            --warning: #ffa500;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--light);
             color: var(--dark);
             overflow: hidden;
@@ -82,7 +83,7 @@
 
         /* Sidebar */
         .sidebar {
-            width: 320px;
+            width: 340px;
             background: var(--light);
             border-left: 1px solid #e0e0e0;
             display: flex;
@@ -102,53 +103,6 @@
             letter-spacing: 0.05em;
             color: var(--muted);
             margin-bottom: 1rem;
-        }
-
-        /* Controls */
-        .button-group {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        button {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--dark);
-            background: var(--light);
-            color: var(--dark);
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            border-radius: 4px;
-        }
-
-        button:hover {
-            background: var(--dark);
-            color: var(--light);
-        }
-
-        button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        button.primary {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: var(--light);
-        }
-
-        button.primary:hover {
-            background: #dd0060;
-            border-color: #dd0060;
-        }
-
-        button.success {
-            background: var(--success);
-            border-color: var(--success);
-            color: var(--dark);
         }
 
         /* Status */
@@ -177,16 +131,68 @@
             background: var(--muted);
         }
 
+        .status-indicator.warning {
+            background: var(--warning);
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
+        }
+
+        /* Controls */
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--dark);
+            background: var(--light);
+            color: var(--dark);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border-radius: 4px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--dark);
+            color: var(--light);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--light);
+        }
+
+        button.primary:hover:not(:disabled) {
+            background: #dd0060;
+            border-color: #dd0060;
+        }
+
+        button.success {
+            background: var(--success);
+            border-color: var(--success);
+            color: var(--dark);
         }
 
         /* Metrics */
         .metric {
             display: flex;
             justify-content: space-between;
-            padding: 0.5rem 0;
+            align-items: center;
+            padding: 0.75rem 0;
             border-bottom: 1px solid #e0e0e0;
         }
 
@@ -205,79 +211,19 @@
             color: var(--dark);
         }
 
-        /* Color Pickers */
-        .color-picker {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.75rem;
+        .metric-value.large {
+            font-size: 1.5rem;
         }
 
-        .color-picker label {
-            font-size: 0.875rem;
-            flex: 1;
+        .metric-value.cw {
+            color: #0066ff;
         }
 
-        .color-picker input[type="color"] {
-            width: 40px;
-            height: 40px;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            cursor: pointer;
+        .metric-value.ccw {
+            color: #ff006e;
         }
 
-        /* Slider */
-        .slider-control {
-            margin-bottom: 1rem;
-        }
-
-        .slider-control label {
-            display: block;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            height: 4px;
-            background: #e0e0e0;
-            border-radius: 2px;
-            outline: none;
-        }
-
-        /* HUD Overlay */
-        .hud {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: rgba(0, 0, 0, 0.7);
-            color: var(--light);
-            padding: 1rem;
-            border-radius: 4px;
-            font-size: 0.875rem;
-            min-width: 200px;
-        }
-
-        .hud-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-
-        .hud-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .hud-label {
-            color: var(--muted);
-        }
-
-        .hud-value {
-            font-weight: 600;
-            color: var(--success);
-        }
-
-        /* Pre-session Form */
+        /* Form */
         .form-group {
             margin-bottom: 1rem;
         }
@@ -303,47 +249,88 @@
             min-height: 60px;
         }
 
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--light);
-            padding: 2rem;
+        /* HUD Overlay */
+        .hud {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.85);
+            color: var(--light);
+            padding: 1.5rem;
             border-radius: 8px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
+            font-size: 0.875rem;
+            min-width: 220px;
         }
 
-        .modal-content h2 {
+        .hud-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .hud-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .hud-label {
+            color: #aaa;
+        }
+
+        .hud-value {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .hud-value.cw {
+            color: #4da6ff;
+        }
+
+        .hud-value.ccw {
+            color: #ff4d94;
+        }
+
+        .rotation-indicator {
+            text-align: center;
             margin-bottom: 1rem;
-            font-size: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
         }
 
-        .modal-content pre {
-            background: #f5f5f5;
-            padding: 1rem;
-            border-radius: 4px;
-            overflow-x: auto;
+        .rotation-arrow {
+            font-size: 3rem;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .rotation-label {
             font-size: 0.75rem;
-            max-height: 300px;
-            overflow-y: auto;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+        }
+
+        /* Loading */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--light);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: var(--success);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -351,8 +338,8 @@
     <div class="container">
         <!-- Header -->
         <header>
-            <h1>⦿-⦿ Loob Motion Tracker</h1>
-            <p class="subtitle">Neuroadaptive motion tracking for somatic research</p>
+            <h1>⦿-⦿ Loob Rotation Tracker</h1>
+            <p class="subtitle">MediaPipe Hands-based rotation analysis</p>
         </header>
 
         <!-- Main Content -->
@@ -362,19 +349,29 @@
                 <video id="webcam" autoplay playsinline></video>
                 <canvas id="canvas"></canvas>
 
+                <!-- Loading Indicator -->
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div>Initializing MediaPipe...</div>
+                </div>
+
                 <!-- HUD Overlay -->
                 <div class="hud" id="hud" style="display: none;">
+                    <div class="rotation-indicator">
+                        <div class="rotation-arrow" id="rotation-arrow">↻</div>
+                        <div class="rotation-label" id="rotation-label">Detecting...</div>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">Speed</span>
+                        <span class="hud-value" id="hud-rpm">0 RPM</span>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">Plane</span>
+                        <span class="hud-value" id="hud-plane">—</span>
+                    </div>
                     <div class="hud-item">
                         <span class="hud-label">Duration</span>
                         <span class="hud-value" id="hud-duration">00:00</span>
-                    </div>
-                    <div class="hud-item">
-                        <span class="hud-label">Velocity</span>
-                        <span class="hud-value" id="hud-velocity">0 px/s</span>
-                    </div>
-                    <div class="hud-item">
-                        <span class="hud-label">Distance</span>
-                        <span class="hud-value" id="hud-distance">0 px</span>
                     </div>
                 </div>
             </div>
@@ -386,11 +383,11 @@
                     <h2>Status</h2>
                     <div class="status">
                         <span class="status-indicator inactive" id="status-indicator"></span>
-                        <span id="status-text">Not tracking</span>
+                        <span id="status-text">Initializing...</span>
                     </div>
                 </div>
 
-                <!-- Controls Section -->
+                <!-- Pre-Session Form -->
                 <div class="sidebar-section" id="pre-session-section">
                     <h2>Pre-Session</h2>
                     <div class="form-group">
@@ -426,86 +423,85 @@
                     </div>
                 </div>
 
+                <!-- Controls -->
                 <div class="sidebar-section">
                     <h2>Controls</h2>
                     <div class="button-group">
-                        <button id="start-btn" class="primary">Start Session</button>
+                        <button id="start-btn" class="primary" disabled>Start Session</button>
                         <button id="stop-btn" disabled>Stop</button>
                     </div>
-                    <button id="calibrate-btn">Calibrate Colors</button>
-                </div>
-
-                <!-- Tracking Settings -->
-                <div class="sidebar-section">
-                    <h2>Tracking Settings</h2>
-                    <div class="color-picker">
-                        <label>Ball 1 Color</label>
-                        <input type="color" id="color1" value="#ff1493">
-                    </div>
-                    <div class="color-picker">
-                        <label>Ball 2 Color</label>
-                        <input type="color" id="color2" value="#00ff00">
-                    </div>
-                    <div class="slider-control">
-                        <label>Color Tolerance: <span id="tolerance-value">30</span></label>
-                        <input type="range" id="tolerance" min="10" max="100" value="30">
-                    </div>
-                    <div class="slider-control">
-                        <label>Trail Length: <span id="trail-value">50</span></label>
-                        <input type="range" id="trail-length" min="10" max="200" value="50">
-                    </div>
+                    <p style="font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem;">
+                        Hold the stick with both hands (fists closed). Move in circular motions.
+                    </p>
                 </div>
 
                 <!-- Real-time Metrics -->
                 <div class="sidebar-section" id="metrics-section" style="display: none;">
                     <h2>Real-time Metrics</h2>
                     <div class="metric">
+                        <span class="metric-label">Direction</span>
+                        <span class="metric-value large" id="metric-direction">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Speed</span>
+                        <span class="metric-value" id="metric-rpm">0 RPM</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Plane Tilt</span>
+                        <span class="metric-value" id="metric-plane">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Grip Width</span>
+                        <span class="metric-value" id="metric-grip">0 cm</span>
+                    </div>
+                    <div class="metric">
                         <span class="metric-label">Duration</span>
                         <span class="metric-value" id="metric-duration">00:00</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Avg Velocity</span>
-                        <span class="metric-value" id="metric-velocity">0 px/s</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Total Distance</span>
-                        <span class="metric-value" id="metric-distance">0 px</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Detected Points</span>
-                        <span class="metric-value" id="metric-points">0</span>
                     </div>
                 </div>
 
                 <!-- Export Section -->
                 <div class="sidebar-section" id="export-section" style="display: none;">
-                    <h2>Session Complete</h2>
-                    <div class="form-group">
+                    <h2>Session Summary</h2>
+                    <div class="metric">
+                        <span class="metric-label">Total Duration</span>
+                        <span class="metric-value" id="summary-duration">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Avg Speed</span>
+                        <span class="metric-value" id="summary-rpm">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">CW Time</span>
+                        <span class="metric-value" id="summary-cw">—</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">CCW Time</span>
+                        <span class="metric-value" id="summary-ccw">—</span>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
                         <label for="post-notes">Post-Session Reflection</label>
                         <textarea id="post-notes" placeholder="What did you notice? Any insights?"></textarea>
                     </div>
                     <button id="export-btn" class="success">Download Session Data (JSON)</button>
-                    <button id="new-session-btn">Start New Session</button>
+                    <button id="new-session-btn" style="margin-top: 0.5rem;">Start New Session</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal for Calibration -->
-    <div class="modal" id="calibration-modal">
-        <div class="modal-content">
-            <h2>Calibration Mode</h2>
-            <p style="margin-bottom: 1rem; font-size: 0.875rem;">Click on the colored markers in the video to auto-detect their colors.</p>
-            <button id="calibration-done-btn">Done</button>
-        </div>
-    </div>
+    <!-- MediaPipe Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
-    <!-- JavaScript -->
+    <!-- Application Script -->
     <script>
         // ========================================
         // Global State
         // ========================================
         const state = {
+            initialized: false,
             tracking: false,
             sessionStartTime: null,
             sessionData: {
@@ -517,22 +513,12 @@
                 frames: [],
                 metrics: {}
             },
-            trails: {
-                ball1: [],
-                ball2: []
-            },
-            settings: {
-                color1: { r: 255, g: 20, b: 147 }, // Hot pink
-                color2: { r: 0, g: 255, b: 0 },     // Green
-                tolerance: 30,
-                trailLength: 50
-            },
-            lastPositions: {
-                ball1: null,
-                ball2: null
-            },
-            velocities: [],
-            totalDistance: 0
+            rotationHistory: [],
+            lastStickVector: null,
+            directionChanges: [],
+            cwTime: 0,
+            ccwTime: 0,
+            currentDirection: null
         };
 
         // ========================================
@@ -544,238 +530,353 @@
 
         const startBtn = document.getElementById('start-btn');
         const stopBtn = document.getElementById('stop-btn');
-        const calibrateBtn = document.getElementById('calibrate-btn');
         const exportBtn = document.getElementById('export-btn');
         const newSessionBtn = document.getElementById('new-session-btn');
 
         const statusIndicator = document.getElementById('status-indicator');
         const statusText = document.getElementById('status-text');
+        const loading = document.getElementById('loading');
         const hud = document.getElementById('hud');
-
-        const color1Input = document.getElementById('color1');
-        const color2Input = document.getElementById('color2');
-        const toleranceInput = document.getElementById('tolerance');
-        const trailLengthInput = document.getElementById('trail-length');
 
         const preSessionSection = document.getElementById('pre-session-section');
         const metricsSection = document.getElementById('metrics-section');
         const exportSection = document.getElementById('export-section');
 
-        const calibrationModal = document.getElementById('calibration-modal');
-        const calibrationDoneBtn = document.getElementById('calibration-done-btn');
+        // ========================================
+        // MediaPipe Hands Setup
+        // ========================================
+        let hands;
+        let camera;
 
-        // ========================================
-        // Webcam Setup
-        // ========================================
-        async function initWebcam() {
+        async function initMediaPipe() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 1280, height: 720, facingMode: 'user' }
-                });
-                video.srcObject = stream;
-
-                video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    statusText.textContent = 'Webcam ready';
-                };
-            } catch (err) {
-                console.error('Webcam error:', err);
-                statusText.textContent = 'Webcam access denied';
-                alert('Please allow webcam access to use the tracker.');
-            }
-        }
-
-        // ========================================
-        // Color Detection
-        // ========================================
-        function hexToRgb(hex) {
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? {
-                r: parseInt(result[1], 16),
-                g: parseInt(result[2], 16),
-                b: parseInt(result[3], 16)
-            } : null;
-        }
-
-        function colorDistance(c1, c2) {
-            return Math.sqrt(
-                Math.pow(c1.r - c2.r, 2) +
-                Math.pow(c1.g - c2.g, 2) +
-                Math.pow(c1.b - c2.b, 2)
-            );
-        }
-
-        function detectColor(imageData, targetColor, tolerance) {
-            const pixels = imageData.data;
-            const width = imageData.width;
-            const height = imageData.height;
-
-            let sumX = 0, sumY = 0, count = 0;
-
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const i = (y * width + x) * 4;
-                    const r = pixels[i];
-                    const g = pixels[i + 1];
-                    const b = pixels[i + 2];
-
-                    const distance = colorDistance({ r, g, b }, targetColor);
-
-                    if (distance < tolerance) {
-                        sumX += x;
-                        sumY += y;
-                        count++;
+                // Initialize Hands
+                hands = new Hands({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
                     }
-                }
-            }
+                });
 
-            if (count > 100) { // Minimum pixel threshold
-                return {
-                    x: sumX / count,
-                    y: sumY / count,
-                    confidence: count
+                hands.setOptions({
+                    maxNumHands: 2,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+
+                hands.onResults(onHandsResults);
+
+                // Initialize Camera
+                camera = new Camera(video, {
+                    onFrame: async () => {
+                        await hands.send({ image: video });
+                    },
+                    width: 1280,
+                    height: 720
+                });
+
+                await camera.start();
+
+                // Update UI
+                state.initialized = true;
+                loading.style.display = 'none';
+                statusIndicator.classList.remove('inactive');
+                statusIndicator.classList.add('active');
+                statusText.textContent = 'Ready to track';
+                startBtn.disabled = false;
+
+                // Set canvas size
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+            } catch (err) {
+                console.error('MediaPipe initialization error:', err);
+                loading.innerHTML = '<div>❌ Failed to initialize MediaPipe</div>';
+                statusText.textContent = 'Initialization failed';
+            }
+        }
+
+        // ========================================
+        // Hand Tracking Results Handler
+        // ========================================
+        function onHandsResults(results) {
+            // Clear canvas
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw video frame
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length === 2) {
+                const leftHand = results.multiHandedness[0].label === 'Left'
+                    ? results.multiHandLandmarks[0]
+                    : results.multiHandLandmarks[1];
+                const rightHand = results.multiHandedness[0].label === 'Right'
+                    ? results.multiHandLandmarks[0]
+                    : results.multiHandLandmarks[1];
+
+                // Get wrist positions (landmark 0)
+                const leftWrist = leftHand[0];
+                const rightWrist = rightHand[0];
+
+                // Convert to canvas coordinates
+                const leftPos = {
+                    x: leftWrist.x * canvas.width,
+                    y: leftWrist.y * canvas.height,
+                    z: leftWrist.z
                 };
+                const rightPos = {
+                    x: rightWrist.x * canvas.width,
+                    y: rightWrist.y * canvas.height,
+                    z: rightWrist.z
+                };
+
+                // Draw stick
+                drawStick(leftPos, rightPos);
+
+                // Calculate rotation metrics
+                if (state.tracking) {
+                    calculateRotationMetrics(leftPos, rightPos);
+                }
+
+                // Draw hand landmarks
+                drawHandLandmarks(leftHand, '#ff006e');
+                drawHandLandmarks(rightHand, '#06ffa5');
+
+                // Update status
+                if (!state.tracking) {
+                    statusIndicator.classList.remove('warning');
+                    statusIndicator.classList.add('active');
+                    statusText.textContent = 'Both hands detected';
+                }
+
+            } else {
+                // Hands not detected
+                if (state.tracking) {
+                    statusIndicator.classList.add('warning');
+                    statusText.textContent = 'Tracking paused - show both hands';
+                } else if (state.initialized) {
+                    statusIndicator.classList.remove('active');
+                    statusIndicator.classList.add('warning');
+                    statusText.textContent = 'Show both hands to camera';
+                }
             }
 
-            return null;
+            ctx.restore();
         }
 
-        // ========================================
-        // Tracking Loop
-        // ========================================
-        function trackFrame() {
-            if (!state.tracking) return;
+        function drawStick(leftPos, rightPos) {
+            // Draw stick line
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 10;
 
-            // Draw video frame to canvas
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.moveTo(leftPos.x, leftPos.y);
+            ctx.lineTo(rightPos.x, rightPos.y);
+            ctx.stroke();
 
-            // Get image data
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            ctx.shadowBlur = 0;
 
-            // Detect both colors
-            const ball1 = detectColor(imageData, state.settings.color1, state.settings.tolerance);
-            const ball2 = detectColor(imageData, state.settings.color2, state.settings.tolerance);
-
-            // Calculate metrics
-            const timestamp = Date.now();
-            const elapsed = (timestamp - state.sessionStartTime) / 1000;
-
-            let velocity = 0;
-
-            if (ball1) {
-                state.trails.ball1.push({ x: ball1.x, y: ball1.y });
-                if (state.trails.ball1.length > state.settings.trailLength) {
-                    state.trails.ball1.shift();
-                }
-
-                if (state.lastPositions.ball1) {
-                    const dx = ball1.x - state.lastPositions.ball1.x;
-                    const dy = ball1.y - state.lastPositions.ball1.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    state.totalDistance += distance;
-
-                    const timeDelta = 1/30; // Assuming ~30 FPS
-                    velocity = distance / timeDelta;
-                    state.velocities.push(velocity);
-                }
-
-                state.lastPositions.ball1 = { x: ball1.x, y: ball1.y };
-            }
-
-            if (ball2) {
-                state.trails.ball2.push({ x: ball2.x, y: ball2.y });
-                if (state.trails.ball2.length > state.settings.trailLength) {
-                    state.trails.ball2.shift();
-                }
-                state.lastPositions.ball2 = { x: ball2.x, y: ball2.y };
-            }
-
-            // Draw trails
-            drawTrails();
-
-            // Draw current positions
-            if (ball1) drawMarker(ball1.x, ball1.y, '#ff1493', 10);
-            if (ball2) drawMarker(ball2.x, ball2.y, '#00ff00', 10);
-
-            // Record frame data
-            state.sessionData.frames.push({
-                timestamp,
-                elapsed,
-                ball1: ball1 ? { x: ball1.x, y: ball1.y, confidence: ball1.confidence } : null,
-                ball2: ball2 ? { x: ball2.x, y: ball2.y, confidence: ball2.confidence } : null,
-                velocity
-            });
-
-            // Update HUD
-            updateHUD(elapsed, velocity);
-
-            // Continue tracking
-            requestAnimationFrame(trackFrame);
+            // Draw endpoints
+            drawCircle(leftPos.x, leftPos.y, 12, '#ff006e');
+            drawCircle(rightPos.x, rightPos.y, 12, '#06ffa5');
         }
 
-        function drawTrails() {
-            // Draw ball 1 trail
-            if (state.trails.ball1.length > 1) {
-                ctx.strokeStyle = '#ff1493';
-                ctx.lineWidth = 3;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-
-                ctx.beginPath();
-                ctx.moveTo(state.trails.ball1[0].x, state.trails.ball1[0].y);
-                for (let i = 1; i < state.trails.ball1.length; i++) {
-                    ctx.lineTo(state.trails.ball1[i].x, state.trails.ball1[i].y);
-                }
-                ctx.stroke();
-            }
-
-            // Draw ball 2 trail
-            if (state.trails.ball2.length > 1) {
-                ctx.strokeStyle = '#00ff00';
-                ctx.lineWidth = 3;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-
-                ctx.beginPath();
-                ctx.moveTo(state.trails.ball2[0].x, state.trails.ball2[0].y);
-                for (let i = 1; i < state.trails.ball2.length; i++) {
-                    ctx.lineTo(state.trails.ball2[i].x, state.trails.ball2[i].y);
-                }
-                ctx.stroke();
-            }
+        function drawHandLandmarks(landmarks, color) {
+            // Draw wrist as larger circle
+            const wrist = landmarks[0];
+            drawCircle(wrist.x * canvas.width, wrist.y * canvas.height, 8, color);
         }
 
-        function drawMarker(x, y, color, size) {
+        function drawCircle(x, y, radius, color) {
             ctx.fillStyle = color;
             ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
 
             // Draw glow
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.5;
             ctx.beginPath();
-            ctx.arc(x, y, size + 5, 0, Math.PI * 2);
+            ctx.arc(x, y, radius + 3, 0, Math.PI * 2);
             ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        // ========================================
+        // Rotation Analysis
+        // ========================================
+        function calculateRotationMetrics(leftPos, rightPos) {
+            const timestamp = Date.now();
+            const elapsed = (timestamp - state.sessionStartTime) / 1000;
+
+            // Calculate stick vector
+            const stickVector = {
+                x: rightPos.x - leftPos.x,
+                y: rightPos.y - leftPos.y,
+                z: rightPos.z - leftPos.z
+            };
+
+            // Calculate grip width (in cm, assuming webcam FOV)
+            const gripWidth = Math.sqrt(
+                Math.pow(stickVector.x, 2) +
+                Math.pow(stickVector.y, 2)
+            ) * 0.05; // Rough conversion to cm
+
+            let rotation = null;
+
+            if (state.lastStickVector) {
+                // Calculate cross product to determine rotation direction
+                const cross = crossProduct2D(
+                    state.lastStickVector,
+                    stickVector
+                );
+
+                // Calculate angle change
+                const angle = angleBetweenVectors(
+                    state.lastStickVector,
+                    stickVector
+                );
+
+                // Determine direction (positive cross product = CCW, negative = CW)
+                const direction = cross > 0 ? 'ccw' : 'cw';
+                const angularVelocity = angle * 30; // Assuming ~30 FPS, convert to deg/sec
+                const rpm = (angularVelocity / 360) * 60;
+
+                // Update direction tracking
+                if (Math.abs(rpm) > 5) { // Minimum threshold to ignore noise
+                    if (state.currentDirection !== direction) {
+                        if (state.currentDirection !== null) {
+                            state.directionChanges.push({
+                                timestamp,
+                                from: state.currentDirection,
+                                to: direction
+                            });
+                        }
+                        state.currentDirection = direction;
+                    }
+
+                    // Accumulate time per direction
+                    const timeDelta = 1/30; // ~30 FPS
+                    if (direction === 'cw') {
+                        state.cwTime += timeDelta;
+                    } else {
+                        state.ccwTime += timeDelta;
+                    }
+                }
+
+                // Calculate plane orientation
+                const planeNormal = [0, 0, 1]; // Simplified for 2D
+                const planeTilt = calculatePlaneTilt(stickVector);
+
+                rotation = {
+                    direction,
+                    angularVelocity: Math.abs(angularVelocity),
+                    rpm: Math.abs(rpm),
+                    planeNormal,
+                    planeTilt
+                };
+
+                state.rotationHistory.push(rotation);
+                if (state.rotationHistory.length > 30) {
+                    state.rotationHistory.shift();
+                }
+            }
+
+            state.lastStickVector = stickVector;
+
+            // Record frame data
+            state.sessionData.frames.push({
+                timestamp,
+                elapsed,
+                leftHand: { x: leftPos.x, y: leftPos.y, z: leftPos.z },
+                rightHand: { x: rightPos.x, y: rightPos.y, z: rightPos.z },
+                stickVector,
+                gripWidth,
+                rotation
+            });
+
+            // Update HUD
+            updateHUD(elapsed, rotation, gripWidth);
+        }
+
+        function crossProduct2D(v1, v2) {
+            return v1.x * v2.y - v1.y * v2.x;
+        }
+
+        function angleBetweenVectors(v1, v2) {
+            const dot = v1.x * v2.x + v1.y * v2.y;
+            const mag1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+            const mag2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+            const cos = dot / (mag1 * mag2);
+            return Math.acos(Math.max(-1, Math.min(1, cos))) * (180 / Math.PI);
+        }
+
+        function calculatePlaneTilt(stickVector) {
+            // Calculate angle from horizontal (0° = horizontal, 90° = vertical)
+            const horizontal = Math.sqrt(stickVector.x * stickVector.x + stickVector.y * stickVector.y);
+            const vertical = Math.abs(stickVector.z);
+            return Math.atan2(vertical, horizontal) * (180 / Math.PI);
         }
 
         // ========================================
         // HUD Updates
         // ========================================
-        function updateHUD(elapsed, velocity) {
+        function updateHUD(elapsed, rotation, gripWidth) {
             const minutes = Math.floor(elapsed / 60);
             const seconds = Math.floor(elapsed % 60);
             const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
+            // Update HUD
             document.getElementById('hud-duration').textContent = timeString;
-            document.getElementById('hud-velocity').textContent = `${Math.round(velocity)} px/s`;
-            document.getElementById('hud-distance').textContent = `${Math.round(state.totalDistance)} px`;
 
+            if (rotation && rotation.rpm > 5) {
+                const arrow = rotation.direction === 'cw' ? '↻' : '↺';
+                const label = rotation.direction === 'cw' ? 'CLOCKWISE' : 'COUNTERCLOCKWISE';
+                const className = rotation.direction === 'cw' ? 'cw' : 'ccw';
+
+                document.getElementById('rotation-arrow').textContent = arrow;
+                document.getElementById('rotation-label').textContent = label;
+                document.getElementById('hud-rpm').textContent = `${Math.round(rotation.rpm)} RPM`;
+                document.getElementById('hud-rpm').className = `hud-value ${className}`;
+
+                const planeDesc = rotation.planeTilt < 30 ? 'Horizontal' :
+                                 rotation.planeTilt > 60 ? 'Vertical' : 'Tilted';
+                document.getElementById('hud-plane').textContent =
+                    `${planeDesc} (${Math.round(rotation.planeTilt)}°)`;
+            } else {
+                document.getElementById('rotation-arrow').textContent = '◯';
+                document.getElementById('rotation-label').textContent = 'MOVE TO DETECT';
+                document.getElementById('hud-rpm').textContent = '0 RPM';
+                document.getElementById('hud-rpm').className = 'hud-value';
+                document.getElementById('hud-plane').textContent = '—';
+            }
+
+            // Update sidebar metrics
             document.getElementById('metric-duration').textContent = timeString;
-            document.getElementById('metric-velocity').textContent = `${Math.round(velocity)} px/s`;
-            document.getElementById('metric-distance').textContent = `${Math.round(state.totalDistance)} px`;
-            document.getElementById('metric-points').textContent = state.sessionData.frames.length;
+
+            if (rotation && rotation.rpm > 5) {
+                const arrow = rotation.direction === 'cw' ? '↻ CW' : '↺ CCW';
+                const className = rotation.direction === 'cw' ? 'cw' : 'ccw';
+                document.getElementById('metric-direction').textContent = arrow;
+                document.getElementById('metric-direction').className = `metric-value large ${className}`;
+                document.getElementById('metric-rpm').textContent = `${Math.round(rotation.rpm)} RPM`;
+
+                const planeDesc = rotation.planeTilt < 30 ? 'Horizontal' :
+                                 rotation.planeTilt > 60 ? 'Vertical' : 'Tilted';
+                document.getElementById('metric-plane').textContent =
+                    `${planeDesc} (${Math.round(rotation.planeTilt)}°)`;
+            } else {
+                document.getElementById('metric-direction').textContent = '—';
+                document.getElementById('metric-rpm').textContent = '0 RPM';
+                document.getElementById('metric-plane').textContent = '—';
+            }
+
+            document.getElementById('metric-grip').textContent = `${Math.round(gripWidth)} cm`;
         }
 
         // ========================================
@@ -794,26 +895,23 @@
             // Reset tracking state
             state.tracking = true;
             state.sessionStartTime = Date.now();
-            state.trails = { ball1: [], ball2: [] };
-            state.lastPositions = { ball1: null, ball2: null };
-            state.velocities = [];
-            state.totalDistance = 0;
+            state.rotationHistory = [];
+            state.lastStickVector = null;
+            state.directionChanges = [];
+            state.cwTime = 0;
+            state.ccwTime = 0;
+            state.currentDirection = null;
             state.sessionData.frames = [];
 
             // Update UI
             startBtn.disabled = true;
             stopBtn.disabled = false;
-            calibrateBtn.disabled = true;
-            statusIndicator.classList.remove('inactive');
-            statusIndicator.classList.add('active');
-            statusText.textContent = 'Tracking active';
             hud.style.display = 'block';
             preSessionSection.style.display = 'none';
             metricsSection.style.display = 'block';
             exportSection.style.display = 'none';
 
-            // Start tracking loop
-            trackFrame();
+            statusText.textContent = 'Tracking active';
         }
 
         function stopSession() {
@@ -821,31 +919,47 @@
             state.sessionData.endTime = Date.now();
 
             // Calculate final metrics
-            const avgVelocity = state.velocities.length > 0
-                ? state.velocities.reduce((a, b) => a + b, 0) / state.velocities.length
-                : 0;
-
             const duration = (state.sessionData.endTime - state.sessionData.startTime) / 1000;
+
+            const rpms = state.rotationHistory.map(r => r.rpm).filter(rpm => rpm > 5);
+            const avgRPM = rpms.length > 0
+                ? rpms.reduce((a, b) => a + b, 0) / rpms.length
+                : 0;
+            const maxRPM = rpms.length > 0 ? Math.max(...rpms) : 0;
+
+            const planeTilts = state.rotationHistory.map(r => r.planeTilt);
+            const avgPlaneTilt = planeTilts.length > 0
+                ? planeTilts.reduce((a, b) => a + b, 0) / planeTilts.length
+                : 0;
 
             state.sessionData.metrics = {
                 duration,
-                avgVelocity,
-                maxVelocity: Math.max(...state.velocities, 0),
-                totalDistance: state.totalDistance,
-                frameCount: state.sessionData.frames.length,
-                avgFPS: state.sessionData.frames.length / duration
+                avgRPM,
+                maxRPM,
+                clockwiseTime: state.cwTime,
+                counterclockwiseTime: state.ccwTime,
+                directionChanges: state.directionChanges.length,
+                avgPlaneTilt,
+                frameCount: state.sessionData.frames.length
             };
 
             // Update UI
             startBtn.disabled = false;
             stopBtn.disabled = true;
-            calibrateBtn.disabled = false;
-            statusIndicator.classList.remove('active');
-            statusIndicator.classList.add('inactive');
-            statusText.textContent = 'Session complete';
             hud.style.display = 'none';
             metricsSection.style.display = 'none';
             exportSection.style.display = 'block';
+
+            // Display summary
+            const durationMin = Math.floor(duration / 60);
+            const durationSec = Math.floor(duration % 60);
+            document.getElementById('summary-duration').textContent =
+                `${durationMin}:${durationSec.toString().padStart(2, '0')}`;
+            document.getElementById('summary-rpm').textContent = `${Math.round(avgRPM)} RPM`;
+            document.getElementById('summary-cw').textContent = `${Math.round(state.cwTime)}s`;
+            document.getElementById('summary-ccw').textContent = `${Math.round(state.ccwTime)}s`;
+
+            statusText.textContent = 'Session complete';
         }
 
         function exportSession() {
@@ -874,9 +988,6 @@
             preSessionSection.style.display = 'block';
             exportSection.style.display = 'none';
             document.getElementById('post-notes').value = '';
-
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
         function generateSessionId() {
@@ -884,85 +995,17 @@
         }
 
         // ========================================
-        // Calibration
-        // ========================================
-        let calibrationMode = false;
-
-        function startCalibration() {
-            calibrationMode = true;
-            calibrationModal.classList.add('active');
-        }
-
-        function endCalibration() {
-            calibrationMode = false;
-            calibrationModal.classList.remove('active');
-        }
-
-        canvas.addEventListener('click', (e) => {
-            if (!calibrationMode) return;
-
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const x = (e.clientX - rect.left) * scaleX;
-            const y = (e.clientY - rect.top) * scaleY;
-
-            // Get pixel color at clicked position
-            const imageData = ctx.getImageData(x, y, 1, 1);
-            const r = imageData.data[0];
-            const g = imageData.data[1];
-            const b = imageData.data[2];
-
-            // Ask which ball this is for
-            const ball = confirm('Click OK for Ball 1 (pink), Cancel for Ball 2 (green)');
-
-            if (ball) {
-                state.settings.color1 = { r, g, b };
-                color1Input.value = rgbToHex(r, g, b);
-                alert('Ball 1 color calibrated!');
-            } else {
-                state.settings.color2 = { r, g, b };
-                color2Input.value = rgbToHex(r, g, b);
-                alert('Ball 2 color calibrated!');
-            }
-        });
-
-        function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        }
-
-        // ========================================
         // Event Listeners
         // ========================================
         startBtn.addEventListener('click', startSession);
         stopBtn.addEventListener('click', stopSession);
-        calibrateBtn.addEventListener('click', startCalibration);
-        calibrationDoneBtn.addEventListener('click', endCalibration);
         exportBtn.addEventListener('click', exportSession);
         newSessionBtn.addEventListener('click', resetForNewSession);
-
-        color1Input.addEventListener('change', (e) => {
-            state.settings.color1 = hexToRgb(e.target.value);
-        });
-
-        color2Input.addEventListener('change', (e) => {
-            state.settings.color2 = hexToRgb(e.target.value);
-        });
-
-        toleranceInput.addEventListener('input', (e) => {
-            state.settings.tolerance = parseInt(e.target.value);
-            document.getElementById('tolerance-value').textContent = e.target.value;
-        });
-
-        trailLengthInput.addEventListener('input', (e) => {
-            state.settings.trailLength = parseInt(e.target.value);
-            document.getElementById('trail-value').textContent = e.target.value;
-        });
 
         // ========================================
         // Initialize
         // ========================================
-        initWebcam();
+        initMediaPipe();
     </script>
 </body>
 </html>
