@@ -577,6 +577,20 @@
 
                 await camera.start();
 
+                // Wait for video metadata to load before setting canvas size
+                video.addEventListener('loadedmetadata', () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                });
+
+                // Fallback: set canvas size after a short delay
+                setTimeout(() => {
+                    if (canvas.width === 0) {
+                        canvas.width = 1280;
+                        canvas.height = 720;
+                    }
+                }, 1000);
+
                 // Update UI
                 state.initialized = true;
                 loading.style.display = 'none';
@@ -584,10 +598,6 @@
                 statusIndicator.classList.add('active');
                 statusText.textContent = 'Ready to track';
                 startBtn.disabled = false;
-
-                // Set canvas size
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
 
             } catch (err) {
                 console.error('MediaPipe initialization error:', err);
@@ -604,9 +614,19 @@
             ctx.save();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw video frame
+            // Draw video frame ALWAYS (so user can see themselves)
             ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
+            // Draw any detected hands (even just 1)
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                results.multiHandLandmarks.forEach((landmarks, index) => {
+                    const handLabel = results.multiHandedness[index].label;
+                    const color = handLabel === 'Left' ? '#ff006e' : '#06ffa5';
+                    drawHandLandmarks(landmarks, color);
+                });
+            }
+
+            // Track rotation ONLY when BOTH hands detected
             if (results.multiHandLandmarks && results.multiHandLandmarks.length === 2) {
                 const leftHand = results.multiHandedness[0].label === 'Left'
                     ? results.multiHandLandmarks[0]
@@ -639,10 +659,6 @@
                     calculateRotationMetrics(leftPos, rightPos);
                 }
 
-                // Draw hand landmarks
-                drawHandLandmarks(leftHand, '#ff006e');
-                drawHandLandmarks(rightHand, '#06ffa5');
-
                 // Update status
                 if (!state.tracking) {
                     statusIndicator.classList.remove('warning');
@@ -651,14 +667,17 @@
                 }
 
             } else {
-                // Hands not detected
+                // Less than 2 hands detected
+                const numHands = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
                 if (state.tracking) {
                     statusIndicator.classList.add('warning');
                     statusText.textContent = 'Tracking paused - show both hands';
                 } else if (state.initialized) {
                     statusIndicator.classList.remove('active');
                     statusIndicator.classList.add('warning');
-                    statusText.textContent = 'Show both hands to camera';
+                    statusText.textContent = numHands === 1
+                        ? 'Show second hand to camera'
+                        : 'Show both hands to camera';
                 }
             }
 
