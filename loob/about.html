@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Loob - Embodied Music Participation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #f0f0f0;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #333;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #00ff88 0%, #00ccff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: #888;
+            font-weight: 300;
+        }
+
+        section {
+            margin-bottom: 4rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+            color: #00ff88;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin: 2rem 0 1rem;
+            color: #00ccff;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin: 1.5rem 0 0.75rem;
+            color: #fff;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+            font-size: 1.05rem;
+        }
+
+        .highlight-box {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 4px solid #00ff88;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+        }
+
+        .highlight-box p {
+            margin-bottom: 0;
+        }
+
+        ul, ol {
+            margin: 1rem 0 1.5rem 2rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.75rem;
+        }
+
+        code {
+            background: #1a1a1a;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+            font-size: 0.95em;
+        }
+
+        .tech-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+        }
+
+        .tech-table th,
+        .tech-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #222;
+        }
+
+        .tech-table th {
+            background: #151515;
+            color: #00ff88;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+        }
+
+        .tech-table td:first-child {
+            color: #00ccff;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+        }
+
+        .flow-diagram {
+            background: #151515;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            border: 1px solid #222;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .flow-number {
+            background: #00ff88;
+            color: #000;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .flow-arrow {
+            text-align: center;
+            color: #00ff88;
+            font-size: 1.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 3rem;
+            padding: 0.75rem 1.5rem;
+            background: #00ff88;
+            color: #000;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .back-link:hover {
+            background: #00ccff;
+            transform: translateY(-2px);
+        }
+
+        footer {
+            margin-top: 6rem;
+            padding-top: 2rem;
+            border-top: 1px solid #333;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌀 Loob</h1>
+            <p class="tagline">Embodied Music Participation Through Movement</p>
+        </header>
+
+        <!-- ========================================
+             USER EXPERIENCE
+        ======================================== -->
+        <section id="ux">
+            <h2>The Experience</h2>
+
+            <p>
+                Loob transforms passive music listening into active, embodied participation.
+                It's a system where your body becomes the interface, your movements create art,
+                and the collective gestures of all listeners shape what music plays next.
+            </p>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <div>
+                        <strong>Tune In</strong><br>
+                        You discover a web radio stream—either an auto-playlist or live DJ session.
+                        The music is playing, the vibe is set.
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <div>
+                        <strong>Enable Your Camera</strong><br>
+                        A prompt invites you to turn on your camera and grab a stick (pen, chopstick,
+                        rolled paper—anything works).
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <div>
+                        <strong>Spin to Create</strong><br>
+                        Hold the stick with both hands and move in circular motions. As you spin,
+                        you're generating a unique visualization in real-time—a visual signature of
+                        your movement quality, speed, rhythm, and flow state.
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">4</div>
+                    <div>
+                        <strong>Join the Collective</strong><br>
+                        Your visualization is added to a composite gallery at the "DJ booth"—a living
+                        mosaic of everyone's movements, painting a collective picture of the listening
+                        session's energy.
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">5</div>
+                    <div>
+                        <strong>Influence the Music</strong><br>
+                        The aggregate data from all visualizations—tempo, direction changes, flow states,
+                        energy levels—feeds into the selection algorithm. Your body movements directly
+                        influence which track plays next.
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <p>
+                    <strong>The Core Concept:</strong> This is decentralized, participatory music control
+                    through embodied action. Instead of clicking "skip" or "like," you dance, spin, and move.
+                    Your body's relationship with the music becomes visible, shareable, and influential.
+                    You're not just consuming culture—you're co-creating it, one rotation at a time.
+                </p>
+            </div>
+
+            <h3>What Makes It Special</h3>
+
+            <ul>
+                <li><strong>Embodied Interaction:</strong> No buttons, no menus—just your body and motion</li>
+                <li><strong>Collective Intelligence:</strong> Individual gestures aggregate into group expression</li>
+                <li><strong>Data as Art:</strong> Movement metrics become beautiful, shareable visualizations</li>
+                <li><strong>Participatory Culture:</strong> Listeners become co-curators of the musical experience</li>
+                <li><strong>Biofeedback Loop:</strong> Your energy shapes the music; the music shapes your energy</li>
+            </ul>
+        </section>
+
+        <!-- ========================================
+             TECHNICAL APPENDIX
+        ======================================== -->
+        <section id="technical">
+            <h2>Technical Appendix</h2>
+
+            <p>
+                Under the hood, Loob uses computer vision, biomechanical analysis, and real-time data
+                visualization to transform stick-spinning into meaningful musical input.
+            </p>
+
+            <h3>Architecture Overview</h3>
+
+            <h4>1. Hand Tracking: MediaPipe Hands</h4>
+            <p>
+                We use Google's MediaPipe Hands library for real-time hand pose detection. It identifies
+                21 3D landmarks per hand at ~30 FPS directly in the browser—no server required.
+            </p>
+
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Purpose</th>
+                        <th>Why We Chose It</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>MediaPipe Hands</td>
+                        <td>Detect both hands and 21 landmarks each</td>
+                        <td>Fast, accurate, runs in-browser via WebAssembly. No backend needed.</td>
+                    </tr>
+                    <tr>
+                        <td>WebGL Canvas</td>
+                        <td>Render hand tracking overlay and stick visualization</td>
+                        <td>Hardware-accelerated, smooth 30+ FPS rendering</td>
+                    </tr>
+                    <tr>
+                        <td>getUserMedia API</td>
+                        <td>Access webcam stream</td>
+                        <td>Native browser API, works on all modern devices</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>2. Rotation Detection Algorithm</h4>
+            <p>
+                The core mechanic is detecting stick rotation from two wrist positions. Here's how it works:
+            </p>
+
+            <ol>
+                <li>
+                    <strong>Stick Vector Construction:</strong> We calculate the vector from left wrist to
+                    right wrist: <code>stickVector = (rightWrist - leftWrist)</code>
+                </li>
+                <li>
+                    <strong>Cross Product for Direction:</strong> Compare current vector to previous frame:
+                    <code>cross = prev.x × curr.y - prev.y × curr.x</code>.
+                    Positive = counterclockwise, negative = clockwise.
+                </li>
+                <li>
+                    <strong>Angular Velocity Calculation:</strong> Measure angle change between vectors,
+                    convert to degrees/second, then to RPM: <code>rpm = (θ/360) × 60</code>
+                </li>
+                <li>
+                    <strong>Smoothness Metric:</strong> Calculate variance of recent RPM values over 10-frame
+                    window. Low variance = smooth, high variance = erratic.
+                </li>
+                <li>
+                    <strong>Flow State Detection:</strong> Sustained RPM > 20 for 5+ seconds triggers
+                    "flow state" flag—indicating deep engagement.
+                </li>
+            </ol>
+
+            <h4>3. Metrics Captured</h4>
+            <p>Each session records rich biomechanical and temporal data:</p>
+
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>What It Measures</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>RPM (Rotations Per Minute)</td>
+                        <td>Speed of rotation. Indicates energy and tempo alignment.</td>
+                    </tr>
+                    <tr>
+                        <td>Direction (CW/CCW)</td>
+                        <td>Rotational direction. Tracks preference and variability.</td>
+                    </tr>
+                    <tr>
+                        <td>Smoothness (0-100)</td>
+                        <td>Consistency of motion. High smoothness = meditative flow.</td>
+                    </tr>
+                    <tr>
+                        <td>Grip Width</td>
+                        <td>Distance between hands. Indicates comfort and embodiment.</td>
+                    </tr>
+                    <tr>
+                        <td>Direction Changes</td>
+                        <td>How often user switches rotation. Indicates playfulness.</td>
+                    </tr>
+                    <tr>
+                        <td>Flow State Time</td>
+                        <td>Seconds in sustained high-quality rotation. Deep engagement indicator.</td>
+                    </tr>
+                    <tr>
+                        <td>Total Rotations</td>
+                        <td>Accumulated rotations over session. Effort and endurance measure.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>4. Visualization Generation</h4>
+            <p>
+                Your movement data is converted into several visual representations:
+            </p>
+
+            <ul>
+                <li>
+                    <strong>Signature Mode:</strong> Circular pattern where radius = RPM, color = direction,
+                    opacity = smoothness. Creates unique "fingerprint" of your movement style.
+                </li>
+                <li>
+                    <strong>Trail Mode:</strong> Maps actual hand positions in 2D space, showing literal
+                    path of movement with color gradient over time.
+                </li>
+                <li>
+                    <strong>Spiral Mode:</strong> Time-based spiral expanding outward, encoding RPM and
+                    direction in the spiral's density and color.
+                </li>
+                <li>
+                    <strong>Compare Mode:</strong> Grid layout comparing multiple sessions side-by-side
+                    for pattern analysis.
+                </li>
+            </ul>
+
+            <p>
+                All visualizations use WebGL canvas rendering with gradient colors:
+                <code style="color: #00ff88;">Green (#00ff88)</code> for clockwise,
+                <code style="color: #ff6b6b;">Red (#ff6b6b)</code> for counterclockwise.
+            </p>
+
+            <h4>5. Data Structure</h4>
+            <p>
+                Sessions are exported as JSON with this structure:
+            </p>
+
+            <div style="background: #1a1a1a; padding: 1.5rem; border-radius: 4px; overflow-x: auto; margin: 1rem 0;">
+<pre style="color: #ccc; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.6;">
+{
+  "sessionId": "unique_id",
+  "startTime": 1708012345678,
+  "endTime": 1708012456789,
+  "preSession": {
+    "energy": 7,           // 1-10 scale
+    "mood": "playful",     // user-selected
+    "notes": "..."         // freeform text
+  },
+  "frames": [              // ~30 per second
+    {
+      "timestamp": 1708012345678,
+      "elapsed": 1.23,     // seconds
+      "leftHand": { "x": 320, "y": 240, "z": -0.5 },
+      "rightHand": { "x": 480, "y": 240, "z": -0.5 },
+      "stickVector": { "x": 160, "y": 0, "z": 0 },
+      "gripWidth": 24.5,   // cm
+      "rotation": {
+        "direction": "cw",
+        "angularVelocity": 180,  // deg/sec
+        "rpm": 30,
+        "smoothness": 85,
+        "acceleration": 2.5,
+        "inFlowState": true
+      }
+    },
+    ...
+  ],
+  "metrics": {
+    "duration": 123.4,
+    "avgRPM": 28.5,
+    "maxRPM": 45.2,
+    "totalRotations": 58.7,
+    "avgSmoothness": 78,
+    "flowStateTime": 45,
+    "gripStability": 92,
+    "clockwiseTime": 67.2,
+    "counterclockwiseTime": 56.2,
+    "directionChanges": 12,
+    "frameCount": 3702
+  },
+  "postSession": {
+    "notes": "...",
+    "timestamp": 1708012456789
+  }
+}
+</pre>
+            </div>
+
+            <h3>Key Design Decisions</h3>
+
+            <h4>Why Stick Spinning?</h4>
+            <p>
+                We needed a gesture that is:
+            </p>
+            <ul>
+                <li><strong>Simple:</strong> Anyone can do it, no skill required</li>
+                <li><strong>Expressive:</strong> Rich variation in speed, direction, smoothness</li>
+                <li><strong>Sustained:</strong> Can be maintained for minutes without fatigue</li>
+                <li><strong>Meditative:</strong> Repetitive motion induces flow states</li>
+                <li><strong>Camera-friendly:</strong> Both hands visible, easy to track</li>
+            </ul>
+
+            <h4>Why Browser-Based?</h4>
+            <p>
+                No app install = lower barrier to entry. MediaPipe runs entirely in-browser via WebAssembly,
+                giving us native-level performance without requiring downloads or permissions beyond camera access.
+            </p>
+
+            <h4>Why Two-Handed Tracking?</h4>
+            <p>
+                Requiring both hands creates a more embodied experience. Single-hand tracking would work
+                technically but feels less "whole body." The stick creates a tangible connection between
+                your two hands, making the rotation feel more physical and intentional.
+            </p>
+
+            <h4>Why Export JSON?</h4>
+            <p>
+                Raw data export enables:
+            </p>
+            <ul>
+                <li>Offline analysis and visualization</li>
+                <li>Personal data ownership (you keep your movement data)</li>
+                <li>Integration with other tools (music production, data science, art projects)</li>
+                <li>Longitudinal tracking (compare sessions over weeks/months)</li>
+            </ul>
+
+            <h4>Performance Optimizations</h4>
+            <ul>
+                <li><strong>30 FPS Cap:</strong> Higher framerates didn't improve accuracy but increased CPU load</li>
+                <li><strong>10-Frame Smoothness Window:</strong> Balances responsiveness with noise reduction</li>
+                <li><strong>5 RPM Threshold:</strong> Filters out micro-movements and jitter</li>
+                <li><strong>Device Pixel Ratio Scaling:</strong> Crisp rendering on retina displays</li>
+                <li><strong>Lazy JSON Generation:</strong> Only serialize when exporting, not every frame</li>
+            </ul>
+        </section>
+
+        <!-- ========================================
+             FUTURE VISION
+        ======================================== -->
+        <section id="future">
+            <h2>What's Next</h2>
+
+            <p>
+                The current implementation is a single-player prototype. The next phase involves:
+            </p>
+
+            <ul>
+                <li>
+                    <strong>Multi-User Sessions:</strong> WebSocket server aggregating movements from all
+                    active listeners in real-time
+                </li>
+                <li>
+                    <strong>Music Selection Algorithm:</strong> ML model trained on movement patterns to
+                    predict next-track preferences based on collective energy
+                </li>
+                <li>
+                    <strong>DJ Dashboard:</strong> Real-time view of listener movement gallery, heat maps
+                    of collective energy, trend analysis
+                </li>
+                <li>
+                    <strong>One-Handed Mode:</strong> Accessibility variant using single-hand gestures
+                    for users with mobility constraints
+                </li>
+                <li>
+                    <strong>Mobile Optimization:</strong> Accelerometer-based tracking for phone users
+                    without camera requirement
+                </li>
+                <li>
+                    <strong>Social Features:</strong> Share visualizations, challenge friends,
+                    leaderboards for flow state duration
+                </li>
+            </ul>
+        </section>
+
+        <!-- ========================================
+             CREDITS
+        ======================================== -->
+        <section id="credits">
+            <h2>Technology Stack</h2>
+            <ul>
+                <li><strong>MediaPipe Hands</strong> (Google) - Hand landmark detection</li>
+                <li><strong>Canvas API</strong> (W3C) - 2D rendering and visualization</li>
+                <li><strong>getUserMedia API</strong> (W3C) - Webcam access</li>
+                <li><strong>Vanilla JavaScript</strong> - No frameworks, just pure web standards</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>Loob is an experiment in embodied music interaction. All code runs locally in your browser.
+            No data is sent to servers. Your movements, your data, your art.</p>
+            <p style="margin-top: 1rem;">
+                <a href="index.html" class="back-link">← Back to Tracker</a>
+                <a href="visualize.html" class="back-link" style="margin-left: 1rem;">Visualizer →</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
