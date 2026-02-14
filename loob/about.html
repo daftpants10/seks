@@ -524,9 +524,10 @@
 
             <h4>Why Two-Handed Tracking?</h4>
             <p>
-                Requiring both hands creates a more embodied experience. Single-hand tracking would work
-                technically but feels less "whole body." The stick creates a tangible connection between
-                your two hands, making the rotation feel more physical and intentional.
+                Requiring both hands creates a more embodied experience. The stick creates a tangible connection between
+                your two hands, making the rotation feel more physical and intentional. However, we also offer
+                a <strong>one-handed mode</strong> for accessibility, artistic expression, and minimalist practice.
+                The one-handed tracker focuses on pure motion signature rather than biomechanical analysis.
             </p>
 
             <h4>Why Export JSON?</h4>
@@ -548,6 +549,213 @@
                 <li><strong>Device Pixel Ratio Scaling:</strong> Crisp rendering on retina displays</li>
                 <li><strong>Lazy JSON Generation:</strong> Only serialize when exporting, not every frame</li>
             </ul>
+        </section>
+
+        <!-- ========================================
+             ONE-HAND TRACKER WORKFLOW
+        ======================================== -->
+        <section id="one-hand">
+            <h2>⦿-⦿ One-Hand Tracker</h2>
+
+            <p>
+                For a more minimalist, focused experience, the one-hand tracker strips away the complexity
+                and creates a pure, meditative visualization tool. This mode is perfect for solo practice,
+                creating shareable art, and contributing to the DJ Collective.
+            </p>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <div>
+                        <strong>Start Camera</strong><br>
+                        Enable your webcam and prepare to spin with one hand. No stick required—just
+                        natural hand motion.
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <div>
+                        <strong>Begin Recording</strong><br>
+                        Hit "Record" and start spinning. The tracker only captures data when you're
+                        spinning at 15+ RPM—no junk data, just intentional motion.
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <div>
+                        <strong>Watch Your Constellation Form</strong><br>
+                        Against a black background, white dots appear every 15 frames—sparse, intentional,
+                        beautiful. The dots change size based on proximity to the camera (closer = bigger),
+                        creating depth perception.
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">4</div>
+                    <div>
+                        <strong>Stop & Review</strong><br>
+                        End your session and see your unique motion signature. Export as PNG for sharing,
+                        or view real-time metrics (RPM, direction, duration, total points).
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">5</div>
+                    <div>
+                        <strong>Upload to DJ Collective</strong><br>
+                        Share your session with the community. Add metadata (name, skill level, hand used),
+                        and your pattern joins the collective pool. Later, load all collective sessions in
+                        the visualizer to see how your style compares.
+                    </div>
+                </div>
+            </div>
+
+            <h3>Minimalist Design Philosophy</h3>
+
+            <ul>
+                <li><strong>Black Background:</strong> Pure minimalism—no distractions, just motion</li>
+                <li><strong>Sparse Sampling:</strong> One dot every 15 frames keeps patterns clean and intentional</li>
+                <li><strong>Depth-Based Sizing:</strong> Dot size varies from 2-12px based on z-axis proximity</li>
+                <li><strong>RPM Threshold:</strong> Only records when spinning at 15+ RPM to avoid capturing noise</li>
+                <li><strong>Real-Time Stats:</strong> Minimal sidebar showing live RPM, direction, points, and duration</li>
+            </ul>
+
+            <h3>The DJ Collective</h3>
+
+            <p>
+                The DJ Collective is a shared pool of movement sessions stored in your browser's localStorage.
+                When you upload a session, it includes:
+            </p>
+
+            <ul>
+                <li><strong>Movement Data:</strong> Position, rotation, and timing for every sampled frame</li>
+                <li><strong>Metrics:</strong> Average RPM, max RPM, duration, total points, and direction preference</li>
+                <li><strong>Metadata:</strong> Your name (optional), skill level, hand used, and upload timestamp</li>
+            </ul>
+
+            <div class="highlight-box">
+                <p>
+                    <strong>Privacy Note:</strong> All data stays local in your browser. The "DJ Collective"
+                    is currently a localStorage pool on your device. In future versions, this could become
+                    a real-time collaborative visualization shared across all listeners, but for now, it's
+                    a personal collection you can export and share manually.
+                </p>
+            </div>
+
+            <h3>Workflow Comparison</h3>
+
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Two-Hand Tracker</th>
+                        <th>One-Hand Tracker</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Hand Tracking</td>
+                        <td>Both hands with stick</td>
+                        <td>Single hand (middle finger tip)</td>
+                    </tr>
+                    <tr>
+                        <td>Visual Style</td>
+                        <td>Charts, graphs, data-rich</td>
+                        <td>Minimalist constellation (black + white)</td>
+                    </tr>
+                    <tr>
+                        <td>Data Capture</td>
+                        <td>Every frame (~30 FPS)</td>
+                        <td>Every 15 frames (sparse, clean)</td>
+                    </tr>
+                    <tr>
+                        <td>Use Case</td>
+                        <td>Full session analysis, training</td>
+                        <td>Artistic expression, DJ sharing</td>
+                    </tr>
+                    <tr>
+                        <td>Export Format</td>
+                        <td>Detailed JSON with all metrics</td>
+                        <td>Enhanced JSON + PNG visualization</td>
+                    </tr>
+                    <tr>
+                        <td>Collective Feature</td>
+                        <td>Not available</td>
+                        <td>Upload to DJ Collective</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Technical Details</h3>
+
+            <h4>Depth-Based Visualization</h4>
+            <p>
+                The one-hand tracker uses the z-coordinate from MediaPipe to create 3D depth perception
+                on a 2D canvas:
+            </p>
+
+            <div style="background: #1a1a1a; padding: 1.5rem; border-radius: 4px; overflow-x: auto; margin: 1rem 0;">
+<pre style="color: #ccc; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.6;">
+// Z is negative when closer, positive when farther
+const depthFactor = 1 - (point.z / 0.2);
+const radius = DOT_BASE_SIZE + (depthFactor * DOT_DEPTH_SCALE);
+const clampedRadius = Math.max(2, Math.min(12, radius));
+
+// Opacity also adjusts with depth
+const opacity = 0.4 + (depthFactor * 0.4); // 0.4 to 0.8
+</pre>
+            </div>
+
+            <h4>Enhanced JSON Structure</h4>
+            <p>
+                Sessions uploaded to the DJ Collective include additional metadata:
+            </p>
+
+            <div style="background: #1a1a1a; padding: 1.5rem; border-radius: 4px; overflow-x: auto; margin: 1rem 0;">
+<pre style="color: #ccc; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.6;">
+{
+  "sessionId": "session-1708012345678",
+  "startTime": 1708012345678,
+  "endTime": 1708012456789,
+  "frames": [
+    {
+      "timestamp": 1708012345678,
+      "position": { "x": 0.5, "y": 0.5, "z": -0.1 },
+      "rotation": {
+        "rpm": 45,
+        "direction": "CW",
+        "angles": [...]
+      }
+    },
+    ...
+  ],
+  "metrics": {
+    "duration": 10.5,
+    "totalPoints": 80,
+    "avgRPM": 42,
+    "maxRPM": 58,
+    "direction": "CW"
+  },
+  "metadata": {
+    "userName": "Anonymous",
+    "skillLevel": "intermediate",
+    "handType": "right",
+    "uploadTime": 1708012456789,
+    "userAgent": "Mozilla/5.0..."
+  }
+}
+</pre>
+            </div>
         </section>
 
         <!-- ========================================
@@ -574,8 +782,8 @@
                     of collective energy, trend analysis
                 </li>
                 <li>
-                    <strong>One-Handed Mode:</strong> Accessibility variant using single-hand gestures
-                    for users with mobility constraints
+                    <strong>Real-Time Collective:</strong> Upgrade DJ Collective from localStorage to
+                    live WebSocket-based sharing—see everyone's patterns in real-time
                 </li>
                 <li>
                     <strong>Mobile Optimization:</strong> Accelerometer-based tracking for phone users
@@ -605,8 +813,9 @@
             <p>Loob is an experiment in embodied music interaction. All code runs locally in your browser.
             No data is sent to servers. Your movements, your data, your art.</p>
             <p style="margin-top: 1rem;">
-                <a href="index.html" class="back-link">← Back to Tracker</a>
-                <a href="visualize.html" class="back-link" style="margin-left: 1rem;">Visualizer →</a>
+                <a href="index.html" class="back-link">Two-Hand Tracker</a>
+                <a href="one-hand.html" class="back-link" style="margin-left: 1rem;">⦿-⦿ One-Hand</a>
+                <a href="visualize.html" class="back-link" style="margin-left: 1rem;">Visualizer</a>
             </p>
         </footer>
     </div>
