@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loob Visualizer - Session Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #f0f0f0;
+            overflow-x: hidden;
+        }
+
+        .header {
+            padding: 2rem;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-bottom: 1px solid #333;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .upload-zone {
+            padding: 3rem 2rem;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+        }
+
+        .upload-area {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem;
+            border: 2px dashed #444;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #666;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .upload-area.dragover {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .session-list {
+            padding: 1rem 2rem;
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            background: #151515;
+            border-bottom: 1px solid #333;
+        }
+
+        .session-chip {
+            padding: 0.75rem 1.5rem;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .session-chip:hover {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+
+        .session-chip.active {
+            background: #00ff88;
+            color: #000;
+            border-color: #00ff88;
+        }
+
+        .session-chip .session-time {
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            min-height: calc(100vh - 300px);
+        }
+
+        .viz-container {
+            padding: 2rem;
+            background: #0a0a0a;
+        }
+
+        #viz-canvas {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
+            border-radius: 12px;
+            border: 1px solid #222;
+        }
+
+        .stats-panel {
+            background: #111;
+            padding: 2rem;
+            border-left: 1px solid #222;
+            overflow-y: auto;
+        }
+
+        .stat-group {
+            margin-bottom: 2rem;
+        }
+
+        .stat-group h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .stat-value {
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .stat-value.large {
+            font-size: 2rem;
+            font-weight: 300;
+        }
+
+        .stat-value.cw {
+            color: #00ff88;
+        }
+
+        .stat-value.ccw {
+            color: #ff6b6b;
+        }
+
+        .timeline {
+            padding: 2rem;
+            background: #151515;
+            border-top: 1px solid #222;
+        }
+
+        .timeline-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .play-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #00ff88;
+            border: none;
+            color: #000;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .timeline-slider {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: #222;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .timeline-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88 0%, #00ccff 100%);
+            border-radius: 4px;
+            transition: width 0.1s linear;
+        }
+
+        .timeline-time {
+            font-size: 0.9rem;
+            color: #666;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .legend {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        .legend-color.cw {
+            background: #00ff88;
+        }
+
+        .legend-color.ccw {
+            background: #ff6b6b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .viz-controls {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .viz-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .viz-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: #00ff88;
+        }
+
+        .viz-btn.active {
+            background: #00ff88;
+            color: #000;
+            border-color: #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌀 Loob Visualizer</h1>
+        <p>Transform your loob sessions into beautiful data art</p>
+    </div>
+
+    <div class="upload-zone">
+        <div class="upload-area" id="upload-area">
+            <div class="upload-icon">📊</div>
+            <div class="upload-text">Drop session JSON files here</div>
+            <div class="upload-hint">or click to browse</div>
+            <input type="file" id="file-input" accept=".json" multiple style="display: none;">
+        </div>
+    </div>
+
+    <div class="session-list" id="session-list" style="display: none;">
+        <!-- Session chips will be added here -->
+    </div>
+
+    <div class="main-container" id="main-container" style="display: none;">
+        <div class="viz-container" style="position: relative;">
+            <div class="viz-controls">
+                <button class="viz-btn active" data-mode="signature">Signature</button>
+                <button class="viz-btn" data-mode="trail">Trail</button>
+                <button class="viz-btn" data-mode="spiral">Spiral</button>
+                <button class="viz-btn" data-mode="compare">Compare</button>
+                <button class="viz-btn" id="export-image-btn" style="margin-left: 1rem;">📸 Export PNG</button>
+            </div>
+            <canvas id="viz-canvas"></canvas>
+        </div>
+
+        <div class="stats-panel" id="stats-panel">
+            <!-- Stats will be populated here -->
+        </div>
+    </div>
+
+    <div class="timeline" id="timeline" style="display: none;">
+        <div class="timeline-controls">
+            <button class="play-btn" id="play-btn">▶</button>
+            <div class="timeline-slider" id="timeline-slider">
+                <div class="timeline-progress" id="timeline-progress" style="width: 0%"></div>
+            </div>
+            <div class="timeline-time" id="timeline-time">0:00</div>
+        </div>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color cw"></div>
+                <span>Clockwise</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color ccw"></div>
+                <span>Counterclockwise</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="empty-state" id="empty-state">
+        <div class="empty-state-icon">🌀</div>
+        <p>Upload a session to begin visualization</p>
+    </div>
+
+    <script>
+        // ========================================
+        // State Management
+        // ========================================
+        const state = {
+            sessions: [],
+            activeSessionIndex: 0,
+            vizMode: 'signature',
+            playing: false,
+            playbackTime: 0,
+            playbackSpeed: 1
+        };
+
+        // ========================================
+        // DOM Elements
+        // ========================================
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const sessionList = document.getElementById('session-list');
+        const mainContainer = document.getElementById('main-container');
+        const emptyState = document.getElementById('empty-state');
+        const timeline = document.getElementById('timeline');
+        const playBtn = document.getElementById('play-btn');
+        const timelineSlider = document.getElementById('timeline-slider');
+        const timelineProgress = document.getElementById('timeline-progress');
+        const timelineTime = document.getElementById('timeline-time');
+        const vizCanvas = document.getElementById('viz-canvas');
+        const ctx = vizCanvas.getContext('2d');
+        const statsPanel = document.getElementById('stats-panel');
+
+        // Set canvas size
+        function resizeCanvas() {
+            const rect = vizCanvas.getBoundingClientRect();
+            vizCanvas.width = rect.width * window.devicePixelRatio;
+            vizCanvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            if (state.sessions.length > 0) {
+                renderVisualization();
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // ========================================
+        // File Upload
+        // ========================================
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFiles);
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles({ target: { files: e.dataTransfer.files } });
+        });
+
+        function handleFiles(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const session = JSON.parse(event.target.result);
+                        addSession(session);
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                        alert('Invalid JSON file: ' + file.name);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function addSession(session) {
+            state.sessions.push(session);
+            updateSessionList();
+            showVisualization();
+        }
+
+        function updateSessionList() {
+            sessionList.innerHTML = '';
+            state.sessions.forEach((session, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'session-chip' + (index === state.activeSessionIndex ? ' active' : '');
+
+                const date = new Date(session.startTime);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                chip.innerHTML = `
+                    <div>${dateStr}</div>
+                    <div class="session-time">${timeStr}</div>
+                `;
+                chip.addEventListener('click', () => {
+                    state.activeSessionIndex = index;
+                    updateSessionList();
+                    renderVisualization();
+                    updateStats();
+                });
+                sessionList.appendChild(chip);
+            });
+        }
+
+        function showVisualization() {
+            emptyState.style.display = 'none';
+            mainContainer.style.display = 'grid';
+            sessionList.style.display = 'flex';
+            timeline.style.display = 'block';
+            renderVisualization();
+            updateStats();
+        }
+
+        // ========================================
+        // Visualization Modes
+        // ========================================
+        document.querySelectorAll('.viz-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.viz-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.vizMode = btn.dataset.mode;
+                renderVisualization();
+            });
+        });
+
+        function renderVisualization() {
+            const session = state.sessions[state.activeSessionIndex];
+            if (!session) return;
+
+            // Clear canvas
+            const rect = vizCanvas.getBoundingClientRect();
+            ctx.clearRect(0, 0, rect.width, rect.height);
+
+            switch (state.vizMode) {
+                case 'signature':
+                    renderSignature(session);
+                    break;
+                case 'trail':
+                    renderTrail(session);
+                    break;
+                case 'spiral':
+                    renderSpiral(session);
+                    break;
+                case 'compare':
+                    renderCompare();
+                    break;
+            }
+        }
+
+        function renderSignature(session) {
+            const rect = vizCanvas.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const maxRadius = Math.min(rect.width, rect.height) * 0.35;
+
+            // Filter frames with rotation data
+            const frames = session.frames.filter(f => f.rotation && f.rotation.rpm > 5);
+            if (frames.length === 0) return;
+
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Draw circular signature based on RPM and direction
+            let angle = 0;
+            frames.forEach((frame, i) => {
+                const rpm = frame.rotation.rpm;
+                const direction = frame.rotation.direction;
+                const smoothness = frame.rotation.smoothness || 50;
+
+                // Radius varies with RPM
+                const radius = maxRadius * (rpm / 60);
+
+                // Color varies with direction and smoothness
+                const alpha = Math.min(1, smoothness / 100);
+                ctx.strokeStyle = direction === 'cw'
+                    ? `rgba(0, 255, 136, ${alpha})`
+                    : `rgba(255, 107, 107, ${alpha})`;
+
+                // Calculate position on circle
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+
+                if (i === 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+
+                // Increment angle based on angular velocity
+                const deltaAngle = (frame.rotation.angularVelocity || 0.1) * 0.01;
+                angle += deltaAngle * (direction === 'cw' ? 1 : -1);
+            });
+
+            ctx.stroke();
+
+            // Draw center point
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function renderTrail(session) {
+            const rect = vizCanvas.getBoundingClientRect();
+            const frames = session.frames.filter(f => f.rotation && f.rotation.rpm > 5);
+            if (frames.length === 0) return;
+
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+
+            // Map hand positions to canvas
+            const padding = 50;
+            const xValues = frames.map(f => f.leftHand.x);
+            const yValues = frames.map(f => f.leftHand.y);
+            const minX = Math.min(...xValues);
+            const maxX = Math.max(...xValues);
+            const minY = Math.min(...yValues);
+            const maxY = Math.max(...yValues);
+
+            const scaleX = (rect.width - padding * 2) / (maxX - minX);
+            const scaleY = (rect.height - padding * 2) / (maxY - minY);
+            const scale = Math.min(scaleX, scaleY);
+
+            const offsetX = (rect.width - (maxX - minX) * scale) / 2;
+            const offsetY = (rect.height - (maxY - minY) * scale) / 2;
+
+            // Draw motion trail
+            frames.forEach((frame, i) => {
+                const x = (frame.leftHand.x - minX) * scale + offsetX;
+                const y = (frame.leftHand.y - minY) * scale + offsetY;
+
+                const direction = frame.rotation.direction;
+                const alpha = Math.min(1, (i / frames.length) * 2);
+
+                ctx.strokeStyle = direction === 'cw'
+                    ? `rgba(0, 255, 136, ${alpha})`
+                    : `rgba(255, 107, 107, ${alpha})`;
+
+                if (i === 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                }
+            });
+        }
+
+        function renderSpiral(session) {
+            const rect = vizCanvas.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const frames = session.frames.filter(f => f.rotation && f.rotation.rpm > 5);
+            if (frames.length === 0) return;
+
+            ctx.lineWidth = 2;
+
+            let angle = 0;
+            let radius = 10;
+            const radiusIncrement = 200 / frames.length;
+
+            frames.forEach((frame, i) => {
+                const direction = frame.rotation.direction;
+                const rpm = frame.rotation.rpm;
+                const smoothness = frame.rotation.smoothness || 50;
+
+                const alpha = Math.min(1, smoothness / 100);
+                ctx.strokeStyle = direction === 'cw'
+                    ? `rgba(0, 255, 136, ${alpha})`
+                    : `rgba(255, 107, 107, ${alpha})`;
+
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+
+                if (i === 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                }
+
+                angle += (rpm / 60) * Math.PI * 2 * 0.1 * (direction === 'cw' ? 1 : -1);
+                radius += radiusIncrement;
+            });
+        }
+
+        function renderCompare() {
+            if (state.sessions.length < 2) {
+                ctx.fillStyle = '#666';
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'center';
+                const rect = vizCanvas.getBoundingClientRect();
+                ctx.fillText('Upload at least 2 sessions to compare', rect.width / 2, rect.height / 2);
+                return;
+            }
+
+            // Render multiple signatures side by side
+            const rect = vizCanvas.getBoundingClientRect();
+            const cols = Math.min(3, state.sessions.length);
+            const rows = Math.ceil(state.sessions.length / cols);
+            const cellWidth = rect.width / cols;
+            const cellHeight = rect.height / rows;
+
+            state.sessions.forEach((session, index) => {
+                const col = index % cols;
+                const row = Math.floor(index / cols);
+                const centerX = col * cellWidth + cellWidth / 2;
+                const centerY = row * cellHeight + cellHeight / 2;
+                const maxRadius = Math.min(cellWidth, cellHeight) * 0.3;
+
+                const frames = session.frames.filter(f => f.rotation && f.rotation.rpm > 5);
+                if (frames.length === 0) return;
+
+                let angle = 0;
+                ctx.lineWidth = 1.5;
+
+                frames.forEach((frame, i) => {
+                    const rpm = frame.rotation.rpm;
+                    const direction = frame.rotation.direction;
+                    const radius = maxRadius * (rpm / 60);
+
+                    ctx.strokeStyle = direction === 'cw'
+                        ? 'rgba(0, 255, 136, 0.6)'
+                        : 'rgba(255, 107, 107, 0.6)';
+
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+
+                    if (i === 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+
+                    const deltaAngle = (frame.rotation.angularVelocity || 0.1) * 0.01;
+                    angle += deltaAngle * (direction === 'cw' ? 1 : -1);
+                });
+
+                ctx.stroke();
+
+                // Label
+                ctx.fillStyle = '#666';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                const date = new Date(session.startTime).toLocaleDateString();
+                ctx.fillText(date, centerX, centerY + maxRadius + 20);
+            });
+        }
+
+        // ========================================
+        // Stats Panel
+        // ========================================
+        function updateStats() {
+            const session = state.sessions[state.activeSessionIndex];
+            if (!session) return;
+
+            const metrics = session.metrics || {};
+            const duration = metrics.duration || 0;
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+
+            statsPanel.innerHTML = `
+                <div class="stat-group">
+                    <h3>Overview</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Duration</span>
+                        <span class="stat-value large">${minutes}:${seconds.toString().padStart(2, '0')}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Rotations</span>
+                        <span class="stat-value large">${metrics.totalRotations || 0}</span>
+                    </div>
+                </div>
+
+                <div class="stat-group">
+                    <h3>Speed</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Average RPM</span>
+                        <span class="stat-value">${Math.round(metrics.avgRPM || 0)}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Peak RPM</span>
+                        <span class="stat-value">${Math.round(metrics.maxRPM || 0)}</span>
+                    </div>
+                </div>
+
+                <div class="stat-group">
+                    <h3>Quality</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Smoothness</span>
+                        <span class="stat-value">${metrics.avgSmoothness || 0}%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Flow State</span>
+                        <span class="stat-value">${metrics.flowStateTime || 0}s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Grip Stability</span>
+                        <span class="stat-value">${metrics.gripStability || 0}%</span>
+                    </div>
+                </div>
+
+                <div class="stat-group">
+                    <h3>Direction</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Clockwise</span>
+                        <span class="stat-value cw">${Math.round(metrics.clockwiseTime || 0)}s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Counterclockwise</span>
+                        <span class="stat-value ccw">${Math.round(metrics.counterclockwiseTime || 0)}s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Direction Changes</span>
+                        <span class="stat-value">${metrics.directionChanges || 0}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========================================
+        // Timeline Playback
+        // ========================================
+        playBtn.addEventListener('click', togglePlayback);
+        timelineSlider.addEventListener('click', seekTimeline);
+
+        function togglePlayback() {
+            state.playing = !state.playing;
+            playBtn.textContent = state.playing ? '⏸' : '▶';
+            if (state.playing) {
+                requestAnimationFrame(updatePlayback);
+            }
+        }
+
+        function updatePlayback() {
+            if (!state.playing) return;
+
+            const session = state.sessions[state.activeSessionIndex];
+            if (!session) return;
+
+            const duration = session.metrics.duration || 1;
+            state.playbackTime += 0.016 * state.playbackSpeed; // 60fps
+
+            if (state.playbackTime >= duration) {
+                state.playbackTime = 0;
+                state.playing = false;
+                playBtn.textContent = '▶';
+            }
+
+            updateTimelineUI();
+            requestAnimationFrame(updatePlayback);
+        }
+
+        function seekTimeline(e) {
+            const rect = timelineSlider.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percent = x / rect.width;
+
+            const session = state.sessions[state.activeSessionIndex];
+            if (!session) return;
+
+            state.playbackTime = percent * (session.metrics.duration || 1);
+            updateTimelineUI();
+        }
+
+        function updateTimelineUI() {
+            const session = state.sessions[state.activeSessionIndex];
+            if (!session) return;
+
+            const duration = session.metrics.duration || 1;
+            const percent = (state.playbackTime / duration) * 100;
+
+            timelineProgress.style.width = percent + '%';
+
+            const minutes = Math.floor(state.playbackTime / 60);
+            const seconds = Math.floor(state.playbackTime % 60);
+            timelineTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // ========================================
+        // Image Export
+        // ========================================
+        document.getElementById('export-image-btn').addEventListener('click', exportImage);
+
+        function exportImage() {
+            const session = state.sessions[state.activeSessionIndex];
+            if (!session) return;
+
+            // Convert canvas to PNG
+            vizCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `loob-${state.vizMode}-${session.sessionId}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+    </script>
+</body>
+</html>
