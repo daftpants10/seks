@@ -366,7 +366,7 @@
                         <span class="hud-value" id="hud-rpm">0 RPM</span>
                     </div>
                     <div class="hud-item">
-                        <span class="hud-label">Plane</span>
+                        <span class="hud-label">Smoothness</span>
                         <span class="hud-value" id="hud-plane">—</span>
                     </div>
                     <div class="hud-item">
@@ -447,7 +447,7 @@
                         <span class="metric-value" id="metric-rpm">0 RPM</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Plane Tilt</span>
+                        <span class="metric-label">Smoothness</span>
                         <span class="metric-value" id="metric-plane">—</span>
                     </div>
                     <div class="metric">
@@ -483,7 +483,14 @@
                         <label for="post-notes">Post-Session Reflection</label>
                         <textarea id="post-notes" placeholder="What did you notice? Any insights?"></textarea>
                     </div>
-                    <button id="export-btn" class="success">Download Session Data (JSON)</button>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Session Data Preview</label>
+                        <button id="preview-json-btn" style="margin-bottom: 0.5rem; width: 100%;">👁️ Preview JSON</button>
+                        <pre id="json-preview" style="display: none; max-height: 300px; overflow-y: auto; background: #f5f5f5; padding: 1rem; border-radius: 4px; font-size: 0.75rem; line-height: 1.4;"></pre>
+                    </div>
+
+                    <button id="export-btn" class="success">💾 Download Session Data (JSON)</button>
                     <button id="new-session-btn" style="margin-top: 0.5rem;">Start New Session</button>
                 </div>
             </div>
@@ -531,6 +538,7 @@
         const startBtn = document.getElementById('start-btn');
         const stopBtn = document.getElementById('stop-btn');
         const exportBtn = document.getElementById('export-btn');
+        const previewJsonBtn = document.getElementById('preview-json-btn');
         const newSessionBtn = document.getElementById('new-session-btn');
 
         const statusIndicator = document.getElementById('status-indicator');
@@ -788,22 +796,22 @@
                     }
                 }
 
-                // Calculate plane orientation
-                const planeNormal = [0, 0, 1]; // Simplified for 2D
-                const planeTilt = calculatePlaneTilt(stickVector);
-
                 rotation = {
                     direction,
                     angularVelocity: Math.abs(angularVelocity),
-                    rpm: Math.abs(rpm),
-                    planeNormal,
-                    planeTilt
+                    rpm: Math.abs(rpm)
                 };
 
                 state.rotationHistory.push(rotation);
                 if (state.rotationHistory.length > 30) {
                     state.rotationHistory.shift();
                 }
+
+                // Calculate advanced metrics after adding to history
+                const advancedMetrics = calculateAdvancedMetrics(rotation);
+                rotation.smoothness = advancedMetrics.smoothness;
+                rotation.acceleration = advancedMetrics.acceleration;
+                rotation.inFlowState = advancedMetrics.inFlowState;
             }
 
             state.lastStickVector = stickVector;
@@ -835,11 +843,31 @@
             return Math.acos(Math.max(-1, Math.min(1, cos))) * (180 / Math.PI);
         }
 
-        function calculatePlaneTilt(stickVector) {
-            // Calculate angle from horizontal (0° = horizontal, 90° = vertical)
-            const horizontal = Math.sqrt(stickVector.x * stickVector.x + stickVector.y * stickVector.y);
-            const vertical = Math.abs(stickVector.z);
-            return Math.atan2(vertical, horizontal) * (180 / Math.PI);
+        function calculateAdvancedMetrics(rotation) {
+            // Calculate smoothness (0-100, higher = more consistent)
+            const recentRPMs = state.rotationHistory.slice(-10).map(r => r.rpm);
+            const smoothness = recentRPMs.length > 2
+                ? 100 - Math.min(100, calculateVariance(recentRPMs))
+                : 0;
+
+            // Calculate acceleration (RPM change per second)
+            const acceleration = state.rotationHistory.length > 1
+                ? rotation.rpm - state.rotationHistory[state.rotationHistory.length - 1].rpm
+                : 0;
+
+            // Detect flow state (sustained high RPM > 20 for 5+ seconds)
+            const flowThreshold = 20; // RPM
+            const recentHighRPM = state.rotationHistory.slice(-15).filter(r => r.rpm > flowThreshold);
+            const inFlowState = recentHighRPM.length >= 10;
+
+            return { smoothness, acceleration, inFlowState };
+        }
+
+        function calculateVariance(values) {
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const squareDiffs = values.map(v => Math.pow(v - mean, 2));
+            const variance = squareDiffs.reduce((a, b) => a + b, 0) / values.length;
+            return Math.sqrt(variance);
         }
 
         // ========================================
@@ -863,10 +891,12 @@
                 document.getElementById('hud-rpm').textContent = `${Math.round(rotation.rpm)} RPM`;
                 document.getElementById('hud-rpm').className = `hud-value ${className}`;
 
-                const planeDesc = rotation.planeTilt < 30 ? 'Horizontal' :
-                                 rotation.planeTilt > 60 ? 'Vertical' : 'Tilted';
+                // Show smoothness instead of plane tilt
+                const smoothnessDesc = rotation.smoothness > 80 ? '🔥 Flow' :
+                                       rotation.smoothness > 60 ? 'Smooth' :
+                                       rotation.smoothness > 40 ? 'Steady' : 'Variable';
                 document.getElementById('hud-plane').textContent =
-                    `${planeDesc} (${Math.round(rotation.planeTilt)}°)`;
+                    `${smoothnessDesc} (${Math.round(rotation.smoothness)}%)`;
             } else {
                 document.getElementById('rotation-arrow').textContent = '◯';
                 document.getElementById('rotation-label').textContent = 'MOVE TO DETECT';
@@ -885,10 +915,12 @@
                 document.getElementById('metric-direction').className = `metric-value large ${className}`;
                 document.getElementById('metric-rpm').textContent = `${Math.round(rotation.rpm)} RPM`;
 
-                const planeDesc = rotation.planeTilt < 30 ? 'Horizontal' :
-                                 rotation.planeTilt > 60 ? 'Vertical' : 'Tilted';
+                // Show smoothness
+                const smoothnessDesc = rotation.smoothness > 80 ? '🔥 Flow State' :
+                                       rotation.smoothness > 60 ? 'Smooth' :
+                                       rotation.smoothness > 40 ? 'Steady' : 'Variable';
                 document.getElementById('metric-plane').textContent =
-                    `${planeDesc} (${Math.round(rotation.planeTilt)}°)`;
+                    `${smoothnessDesc} (${Math.round(rotation.smoothness)}%)`;
             } else {
                 document.getElementById('metric-direction').textContent = '—';
                 document.getElementById('metric-rpm').textContent = '0 RPM';
@@ -946,19 +978,47 @@
                 : 0;
             const maxRPM = rpms.length > 0 ? Math.max(...rpms) : 0;
 
-            const planeTilts = state.rotationHistory.map(r => r.planeTilt);
-            const avgPlaneTilt = planeTilts.length > 0
-                ? planeTilts.reduce((a, b) => a + b, 0) / planeTilts.length
+            // Calculate total rotations (RPM integrated over time)
+            const totalRotations = state.sessionData.frames
+                .filter(f => f.rotation && f.rotation.rpm > 5)
+                .reduce((sum, f, i, arr) => {
+                    if (i === 0) return 0;
+                    const timeDelta = (f.timestamp - arr[i-1].timestamp) / 60000; // minutes
+                    return sum + (f.rotation.rpm * timeDelta);
+                }, 0);
+
+            // Calculate average smoothness
+            const smoothnessValues = state.sessionData.frames
+                .filter(f => f.rotation && f.rotation.smoothness)
+                .map(f => f.rotation.smoothness);
+            const avgSmoothness = smoothnessValues.length > 0
+                ? smoothnessValues.reduce((a, b) => a + b, 0) / smoothnessValues.length
+                : 0;
+
+            // Calculate flow state time (high smoothness + high RPM)
+            const flowFrames = state.sessionData.frames
+                .filter(f => f.rotation && f.rotation.inFlowState);
+            const flowTime = flowFrames.length > 0
+                ? (flowFrames[flowFrames.length - 1].timestamp - flowFrames[0].timestamp) / 1000
+                : 0;
+
+            // Calculate grip stability (lower variance = more stable)
+            const gripWidths = state.sessionData.frames.map(f => f.gripWidth);
+            const gripStability = gripWidths.length > 2
+                ? 100 - Math.min(100, calculateVariance(gripWidths) * 10)
                 : 0;
 
             state.sessionData.metrics = {
                 duration,
                 avgRPM,
                 maxRPM,
+                totalRotations: Math.round(totalRotations * 10) / 10,
+                avgSmoothness: Math.round(avgSmoothness),
+                flowStateTime: Math.round(flowTime),
+                gripStability: Math.round(gripStability),
                 clockwiseTime: state.cwTime,
                 counterclockwiseTime: state.ccwTime,
                 directionChanges: state.directionChanges.length,
-                avgPlaneTilt,
                 frameCount: state.sessionData.frames.length
             };
 
@@ -979,6 +1039,38 @@
             document.getElementById('summary-ccw').textContent = `${Math.round(state.ccwTime)}s`;
 
             statusText.textContent = 'Session complete';
+        }
+
+        function previewJSON() {
+            // Capture current post-session notes
+            state.sessionData.postSession = {
+                notes: document.getElementById('post-notes').value,
+                timestamp: Date.now()
+            };
+
+            const previewEl = document.getElementById('json-preview');
+            const isVisible = previewEl.style.display === 'block';
+
+            if (isVisible) {
+                previewEl.style.display = 'none';
+                document.getElementById('preview-json-btn').textContent = '👁️ Preview JSON';
+            } else {
+                // Show summary instead of full data (frames can be huge)
+                const summary = {
+                    sessionId: state.sessionData.sessionId,
+                    startTime: new Date(state.sessionData.startTime).toISOString(),
+                    endTime: new Date(state.sessionData.endTime).toISOString(),
+                    preSession: state.sessionData.preSession,
+                    postSession: state.sessionData.postSession,
+                    metrics: state.sessionData.metrics,
+                    totalFrames: state.sessionData.frames.length,
+                    sampleFrames: state.sessionData.frames.slice(0, 3) // First 3 frames as sample
+                };
+
+                previewEl.textContent = JSON.stringify(summary, null, 2);
+                previewEl.style.display = 'block';
+                document.getElementById('preview-json-btn').textContent = '🙈 Hide Preview';
+            }
         }
 
         function exportSession() {
@@ -1019,6 +1111,7 @@
         startBtn.addEventListener('click', startSession);
         stopBtn.addEventListener('click', stopSession);
         exportBtn.addEventListener('click', exportSession);
+        previewJsonBtn.addEventListener('click', previewJSON);
         newSessionBtn.addEventListener('click', resetForNewSession);
 
         // ========================================
