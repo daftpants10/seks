@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⦿-⦿ One-Hand Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn.recording {
+            background: rgba(255, 50, 50, 0.3);
+            border-color: rgba(255, 50, 50, 0.6);
+        }
+
+        .btn.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        #stats {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .stat-label {
+            color: #999;
+        }
+
+        .stat-value {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #666;
+        }
+
+        #loading.hidden {
+            display: none;
+        }
+
+        .dot {
+            fill: rgba(255, 255, 255, 0.6);
+        }
+
+        .line {
+            stroke: rgba(255, 255, 255, 0.3);
+            stroke-width: 1;
+            fill: none;
+        }
+
+        .hand-dot {
+            fill: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+
+        <div id="controls">
+            <button class="btn" id="startBtn">Start Camera</button>
+            <button class="btn" id="recordBtn" disabled>Record</button>
+            <button class="btn" id="clearBtn">Clear</button>
+            <button class="btn" id="saveBtn">Save PNG</button>
+        </div>
+
+        <div id="stats">
+            <div class="stat-row">
+                <span class="stat-label">RPM</span>
+                <span class="stat-value" id="rpm">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Direction</span>
+                <span class="stat-value" id="direction">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Points</span>
+                <span class="stat-value" id="points">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Duration</span>
+                <span class="stat-value" id="duration">0s</span>
+            </div>
+        </div>
+
+        <div id="loading">
+            <h2>⦿-⦿</h2>
+            <p>Loading hand tracking...</p>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // Configuration
+        // ========================================
+        const SAMPLE_INTERVAL = 8; // Sample every N frames for constellation points
+        const MIN_RPM_THRESHOLD = 5; // Minimum RPM to consider as spinning
+
+        // ========================================
+        // State
+        // ========================================
+        const state = {
+            cameraActive: false,
+            recording: false,
+            frameCount: 0,
+            points: [], // Sampled positions for constellation
+            currentPosition: null,
+            rotation: {
+                angles: [],
+                rpm: 0,
+                direction: null
+            },
+            session: {
+                startTime: null,
+                frames: []
+            }
+        };
+
+        // ========================================
+        // DOM Elements
+        // ========================================
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const loading = document.getElementById('loading');
+
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // ========================================
+        // MediaPipe Hands Setup
+        // ========================================
+        const hands = new Hands({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+            }
+        });
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults(onResults);
+
+        // ========================================
+        // Hand Tracking Results
+        // ========================================
+        function onResults(results) {
+            if (!state.cameraActive) return;
+
+            state.frameCount++;
+
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const handLandmarks = results.multiHandLandmarks[0];
+
+                // Get middle finger tip (landmark 12) as the tracking point
+                const fingerTip = handLandmarks[12];
+                const x = fingerTip.x * canvas.width;
+                const y = fingerTip.y * canvas.height;
+                const z = fingerTip.z;
+
+                state.currentPosition = { x, y, z, timestamp: Date.now() };
+
+                // Calculate rotation metrics
+                calculateRotation(handLandmarks);
+
+                // Sample point for constellation if recording and spinning
+                if (state.recording && state.rotation.rpm > MIN_RPM_THRESHOLD) {
+                    if (state.frameCount % SAMPLE_INTERVAL === 0) {
+                        state.points.push({ x, y, z });
+                        state.session.frames.push({
+                            timestamp: Date.now(),
+                            position: { x: fingerTip.x, y: fingerTip.y, z: fingerTip.z },
+                            rotation: { ...state.rotation }
+                        });
+                    }
+                }
+
+                // Draw constellation
+                drawConstellation();
+
+                // Draw current hand position
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Update stats
+                updateStats();
+            }
+        }
+
+        // ========================================
+        // Rotation Calculation
+        // ========================================
+        function calculateRotation(landmarks) {
+            // Use palm base (landmark 0) and middle finger base (landmark 9)
+            const palmBase = landmarks[0];
+            const middleBase = landmarks[9];
+
+            const dx = middleBase.x - palmBase.x;
+            const dy = middleBase.y - palmBase.y;
+            const angle = Math.atan2(dy, dx);
+
+            state.rotation.angles.push({
+                angle,
+                timestamp: Date.now()
+            });
+
+            // Keep only last 30 angles (0.5 seconds at 60fps)
+            if (state.rotation.angles.length > 30) {
+                state.rotation.angles.shift();
+            }
+
+            // Calculate RPM from angle changes
+            if (state.rotation.angles.length > 2) {
+                const recent = state.rotation.angles.slice(-10);
+                let totalDelta = 0;
+                let totalTime = 0;
+
+                for (let i = 1; i < recent.length; i++) {
+                    let delta = recent[i].angle - recent[i - 1].angle;
+
+                    // Handle angle wrap-around
+                    if (delta > Math.PI) delta -= 2 * Math.PI;
+                    if (delta < -Math.PI) delta += 2 * Math.PI;
+
+                    totalDelta += delta;
+                    totalTime += recent[i].timestamp - recent[i - 1].timestamp;
+                }
+
+                if (totalTime > 0) {
+                    const avgAngularVelocity = totalDelta / totalTime; // radians per ms
+                    const rpm = Math.abs(avgAngularVelocity) * 1000 * 60 / (2 * Math.PI);
+                    state.rotation.rpm = rpm;
+                    state.rotation.direction = totalDelta > 0 ? 'CW' : 'CCW';
+                }
+            }
+        }
+
+        // ========================================
+        // Constellation Visualization
+        // ========================================
+        function drawConstellation() {
+            if (state.points.length < 2) return;
+
+            // Draw lines connecting consecutive points
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(state.points[0].x, state.points[0].y);
+
+            for (let i = 1; i < state.points.length; i++) {
+                ctx.lineTo(state.points[i].x, state.points[i].y);
+            }
+            ctx.stroke();
+
+            // Draw dots at each sampled point
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            for (const point of state.points) {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // ========================================
+        // Stats Update
+        // ========================================
+        function updateStats() {
+            document.getElementById('rpm').textContent = Math.round(state.rotation.rpm);
+            document.getElementById('direction').textContent = state.rotation.direction || '-';
+            document.getElementById('points').textContent = state.points.length;
+
+            if (state.session.startTime) {
+                const duration = Math.floor((Date.now() - state.session.startTime) / 1000);
+                document.getElementById('duration').textContent = duration + 's';
+            }
+        }
+
+        // ========================================
+        // Camera Control
+        // ========================================
+        let camera;
+
+        startBtn.addEventListener('click', async () => {
+            if (!state.cameraActive) {
+                try {
+                    camera = new Camera(video, {
+                        onFrame: async () => {
+                            await hands.send({ image: video });
+                        },
+                        width: 1280,
+                        height: 720
+                    });
+
+                    await camera.start();
+                    state.cameraActive = true;
+                    startBtn.textContent = 'Stop Camera';
+                    startBtn.classList.add('active');
+                    recordBtn.disabled = false;
+                    loading.classList.add('hidden');
+                } catch (error) {
+                    console.error('Camera error:', error);
+                    alert('Failed to start camera. Please allow camera access.');
+                }
+            } else {
+                if (camera) {
+                    camera.stop();
+                }
+                state.cameraActive = false;
+                startBtn.textContent = 'Start Camera';
+                startBtn.classList.remove('active');
+                recordBtn.disabled = true;
+            }
+        });
+
+        // ========================================
+        // Recording Control
+        // ========================================
+        recordBtn.addEventListener('click', () => {
+            if (!state.recording) {
+                // Start recording
+                state.recording = true;
+                state.session.startTime = Date.now();
+                state.session.frames = [];
+                recordBtn.textContent = 'Stop Recording';
+                recordBtn.classList.add('recording');
+            } else {
+                // Stop recording
+                state.recording = false;
+                recordBtn.textContent = 'Record';
+                recordBtn.classList.remove('recording');
+
+                // Save session
+                saveSession();
+            }
+        });
+
+        // ========================================
+        // Clear Canvas
+        // ========================================
+        clearBtn.addEventListener('click', () => {
+            state.points = [];
+            state.rotation.angles = [];
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            updateStats();
+        });
+
+        // ========================================
+        // Save PNG
+        // ========================================
+        saveBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `loob-constellation-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // ========================================
+        // Save Session
+        // ========================================
+        function saveSession() {
+            if (state.session.frames.length === 0) return;
+
+            const sessionData = {
+                sessionId: `session-${Date.now()}`,
+                startTime: state.session.startTime,
+                endTime: Date.now(),
+                frames: state.session.frames,
+                metrics: calculateSessionMetrics()
+            };
+
+            // Download as JSON
+            const blob = new Blob([JSON.stringify(sessionData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `loob-session-${sessionData.sessionId}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ========================================
+        // Calculate Session Metrics
+        // ========================================
+        function calculateSessionMetrics() {
+            const frames = state.session.frames;
+            if (frames.length === 0) return {};
+
+            const duration = (state.session.endTime - state.session.startTime) / 1000;
+            const rpms = frames.map(f => f.rotation.rpm).filter(rpm => rpm > 0);
+            const avgRPM = rpms.reduce((a, b) => a + b, 0) / rpms.length || 0;
+            const maxRPM = Math.max(...rpms, 0);
+
+            return {
+                duration,
+                totalPoints: state.points.length,
+                avgRPM: Math.round(avgRPM),
+                maxRPM: Math.round(maxRPM),
+                direction: state.rotation.direction
+            };
+        }
+    </script>
+</body>
+</html>
