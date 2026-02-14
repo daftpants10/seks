@@ -479,6 +479,16 @@
                         <span class="metric-label">CCW Time</span>
                         <span class="metric-value" id="summary-ccw">—</span>
                     </div>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Your Loob Signature</label>
+                        <canvas id="preview-canvas" width="300" height="300" style="width: 100%; border-radius: 8px; background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%); border: 1px solid #ddd;"></canvas>
+                        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                            <button id="export-viz-btn" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;">📸 Save Image</button>
+                            <button id="open-visualizer-btn" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;">🎨 Full Viz</button>
+                        </div>
+                    </div>
+
                     <div class="form-group" style="margin-top: 1rem;">
                         <label for="post-notes">Post-Session Reflection</label>
                         <textarea id="post-notes" placeholder="What did you notice? Any insights?"></textarea>
@@ -1038,6 +1048,9 @@
             document.getElementById('summary-cw').textContent = `${Math.round(state.cwTime)}s`;
             document.getElementById('summary-ccw').textContent = `${Math.round(state.ccwTime)}s`;
 
+            // Render visualization preview
+            renderPreviewVisualization();
+
             statusText.textContent = 'Session complete';
         }
 
@@ -1106,12 +1119,116 @@
         }
 
         // ========================================
+        // Visualization Preview
+        // ========================================
+        function renderPreviewVisualization() {
+            const previewCanvas = document.getElementById('preview-canvas');
+            const pctx = previewCanvas.getContext('2d');
+
+            // Clear canvas
+            pctx.clearRect(0, 0, 300, 300);
+
+            const centerX = 150;
+            const centerY = 150;
+            const maxRadius = 120;
+
+            // Filter frames with rotation data
+            const frames = state.sessionData.frames.filter(f => f.rotation && f.rotation.rpm > 5);
+            if (frames.length === 0) {
+                pctx.fillStyle = '#666';
+                pctx.font = '14px sans-serif';
+                pctx.textAlign = 'center';
+                pctx.fillText('No rotation data', centerX, centerY);
+                return;
+            }
+
+            pctx.lineWidth = 2;
+            pctx.lineCap = 'round';
+            pctx.lineJoin = 'round';
+
+            // Draw circular signature
+            let angle = 0;
+            frames.forEach((frame, i) => {
+                const rpm = frame.rotation.rpm;
+                const direction = frame.rotation.direction;
+                const smoothness = frame.rotation.smoothness || 50;
+
+                // Radius varies with RPM
+                const radius = maxRadius * (rpm / 60);
+
+                // Color varies with direction and smoothness
+                const alpha = Math.min(1, smoothness / 100);
+                pctx.strokeStyle = direction === 'cw'
+                    ? `rgba(0, 255, 136, ${alpha})`
+                    : `rgba(255, 107, 107, ${alpha})`;
+
+                // Calculate position
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+
+                if (i === 0) {
+                    pctx.beginPath();
+                    pctx.moveTo(x, y);
+                } else {
+                    pctx.lineTo(x, y);
+                }
+
+                // Increment angle
+                const deltaAngle = (frame.rotation.angularVelocity || 0.1) * 0.01;
+                angle += deltaAngle * (direction === 'cw' ? 1 : -1);
+            });
+
+            pctx.stroke();
+
+            // Draw center point
+            pctx.fillStyle = '#fff';
+            pctx.beginPath();
+            pctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+            pctx.fill();
+        }
+
+        function exportVisualizationImage() {
+            const previewCanvas = document.getElementById('preview-canvas');
+            previewCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `loob-signature-${state.sessionData.sessionId}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+
+        function openFullVisualizer() {
+            // Save session data first
+            const dataStr = JSON.stringify(state.sessionData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            // Open visualizer in new tab with instructions
+            const visualizerWindow = window.open('visualize.html', '_blank');
+
+            // Create a download link for the session
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `loob-session-${state.sessionData.sessionId}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert('Session JSON downloaded! Drag it into the visualizer to see full interactive view.');
+        }
+
+        // ========================================
         // Event Listeners
         // ========================================
         startBtn.addEventListener('click', startSession);
         stopBtn.addEventListener('click', stopSession);
         exportBtn.addEventListener('click', exportSession);
         previewJsonBtn.addEventListener('click', previewJSON);
+        document.getElementById('export-viz-btn').addEventListener('click', exportVisualizationImage);
+        document.getElementById('open-visualizer-btn').addEventListener('click', openFullVisualizer);
         newSessionBtn.addEventListener('click', resetForNewSession);
 
         // ========================================

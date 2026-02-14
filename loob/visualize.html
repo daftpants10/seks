@@ -335,6 +335,7 @@
                 <button class="viz-btn" data-mode="trail">Trail</button>
                 <button class="viz-btn" data-mode="spiral">Spiral</button>
                 <button class="viz-btn" data-mode="compare">Compare</button>
+                <button class="viz-btn" id="export-image-btn" style="margin-left: 1rem;">📸 Export PNG</button>
             </div>
             <canvas id="viz-canvas"></canvas>
         </div>
@@ -862,6 +863,28 @@
             const minutes = Math.floor(state.playbackTime / 60);
             const seconds = Math.floor(state.playbackTime % 60);
             timelineTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // ========================================
+        // Image Export
+        // ========================================
+        document.getElementById('export-image-btn').addEventListener('click', exportImage);
+
+        function exportImage() {
+            const session = state.sessions[state.activeSessionIndex];
+            if (!session) return;
+
+            // Convert canvas to PNG
+            vizCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `loob-${state.vizMode}-${session.sessionId}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
         }
     </script>
 </body>
