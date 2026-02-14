@@ -36,6 +36,11 @@
             height: 100%;
             object-fit: cover;
             opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #video.active {
+            opacity: 0.2;
         }
 
         #canvas {
@@ -207,6 +212,7 @@
 
         <div id="controls">
             <button class="btn" id="startBtn">Start Camera</button>
+            <button class="btn" id="toggleVideoBtn" disabled>Show Video (20%)</button>
             <button class="btn" id="recordBtn" disabled>Record</button>
             <button class="btn" id="clearBtn">Clear</button>
             <button class="btn" id="saveBtn">Save PNG</button>
@@ -305,6 +311,7 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
+        const toggleVideoBtn = document.getElementById('toggleVideoBtn');
         const recordBtn = document.getElementById('recordBtn');
         const clearBtn = document.getElementById('clearBtn');
         const saveBtn = document.getElementById('saveBtn');
@@ -507,8 +514,11 @@
 
                     await camera.start();
                     state.cameraActive = true;
+                    video.classList.add('active'); // Show camera at 20% opacity by default
                     startBtn.textContent = 'Stop Camera';
                     startBtn.classList.add('active');
+                    toggleVideoBtn.disabled = false;
+                    toggleVideoBtn.textContent = 'Hide Video';
                     recordBtn.disabled = false;
                     loading.classList.add('hidden');
                 } catch (error) {
@@ -520,9 +530,25 @@
                     camera.stop();
                 }
                 state.cameraActive = false;
+                video.classList.remove('active'); // Hide camera feed
                 startBtn.textContent = 'Start Camera';
                 startBtn.classList.remove('active');
+                toggleVideoBtn.disabled = true;
+                toggleVideoBtn.textContent = 'Show Video (20%)';
                 recordBtn.disabled = true;
+            }
+        });
+
+        // ========================================
+        // Toggle Video Visibility
+        // ========================================
+        toggleVideoBtn.addEventListener('click', () => {
+            if (video.classList.contains('active')) {
+                video.classList.remove('active');
+                toggleVideoBtn.textContent = 'Show Video (20%)';
+            } else {
+                video.classList.add('active');
+                toggleVideoBtn.textContent = 'Hide Video';
             }
         });
 
