@@ -322,6 +322,12 @@
             <div class="upload-hint">or click to browse</div>
             <input type="file" id="file-input" accept=".json" multiple style="display: none;">
         </div>
+        <div style="text-align: center; margin-top: 1rem;">
+            <button id="load-collective-btn" style="padding: 0.75rem 2rem; background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); color: #00ff88; border-radius: 6px; cursor: pointer; font-size: 0.95rem;">
+                Load DJ Collective Sessions
+            </button>
+            <span id="collective-count" style="margin-left: 1rem; color: #666; font-size: 0.9rem;"></span>
+        </div>
     </div>
 
     <div class="session-list" id="session-list" style="display: none;">
@@ -395,6 +401,8 @@
         const playBtn = document.getElementById('play-btn');
         const timelineSlider = document.getElementById('timeline-slider');
         const timelineProgress = document.getElementById('timeline-progress');
+        const loadCollectiveBtn = document.getElementById('load-collective-btn');
+        const collectiveCount = document.getElementById('collective-count');
         const timelineTime = document.getElementById('timeline-time');
         const vizCanvas = document.getElementById('viz-canvas');
         const ctx = vizCanvas.getContext('2d');
@@ -434,6 +442,35 @@
             uploadArea.classList.remove('dragover');
             handleFiles({ target: { files: e.dataTransfer.files } });
         });
+
+        // ========================================
+        // Load DJ Collective Sessions
+        // ========================================
+        function updateCollectiveCount() {
+            const collectiveSessions = JSON.parse(localStorage.getItem('djCollective') || '[]');
+            if (collectiveSessions.length > 0) {
+                collectiveCount.textContent = `(${collectiveSessions.length} session${collectiveSessions.length > 1 ? 's' : ''} available)`;
+            } else {
+                collectiveCount.textContent = '(No sessions yet)';
+            }
+        }
+
+        loadCollectiveBtn.addEventListener('click', () => {
+            const collectiveSessions = JSON.parse(localStorage.getItem('djCollective') || '[]');
+            if (collectiveSessions.length === 0) {
+                alert('No collective sessions found. Record and upload a session from one-hand.html first!');
+                return;
+            }
+
+            collectiveSessions.forEach(session => {
+                addSession(session);
+            });
+
+            alert(`✅ Loaded ${collectiveSessions.length} session${collectiveSessions.length > 1 ? 's' : ''} from the DJ Collective!`);
+        });
+
+        // Update count on page load
+        updateCollectiveCount();
 
         function handleFiles(e) {
             const files = Array.from(e.target.files);
