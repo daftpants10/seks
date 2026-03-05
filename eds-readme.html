@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How to Use EDS — seksEDS</title>
+  <meta name="theme-color" content="#0d0d0d" />
+  <style>
+    :root {
+      --bg: #0d0d0d; --surface: #141414; --ink: #d8d8d0;
+      --muted: #5a5a54; --accent: #c8f53c; --gold: #e8a020;
+      --line: #1e1e1c; --colw: 560px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--ink);
+      font: 14px/1.75 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      -webkit-font-smoothing: antialiased; min-height: 100vh;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: 1000; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: .5;
+    }
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,13,13,.88); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-inner {
+      max-width: var(--colw); margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px;
+    }
+    .header-back {
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none;
+    }
+    .header-back:hover { color: var(--ink); }
+    .header-label { font-size: 11px; letter-spacing: .14em; color: var(--accent); opacity: .7; }
+
+    .shell { max-width: var(--colw); margin: 0 auto; padding: 0 20px 80px; }
+
+    /* HERO */
+    .hero { padding: 52px 0 40px; border-bottom: 1px solid var(--line); }
+    .hero-eyebrow {
+      font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 20px;
+    }
+    .hero-title {
+      font-size: clamp(28px, 7vw, 44px); font-weight: 700; line-height: 1.05;
+      letter-spacing: -.02em;
+      font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
+      color: var(--ink); margin-bottom: 20px;
+    }
+    .hero-sub { font-size: 13px; color: var(--muted); line-height: 1.85; max-width: 420px; }
+
+    /* SECTIONS */
+    .section { padding: 40px 0; border-bottom: 1px solid var(--line); }
+    .section-label {
+      font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 18px;
+    }
+    .section-body { font-size: 14px; color: var(--ink); line-height: 1.8; }
+    .section-body + .section-body { margin-top: 14px; }
+
+    /* CHAIN — the system diagram */
+    .chain {
+      display: flex; flex-direction: column; gap: 0;
+      margin: 4px 0;
+    }
+    .chain-step {
+      display: grid; grid-template-columns: 28px 1fr;
+      gap: 0 16px; align-items: start;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .chain-step:last-child { border-bottom: none; }
+    .chain-num {
+      font-size: 11px; color: var(--accent); opacity: .7;
+      padding-top: 2px; letter-spacing: .08em;
+    }
+    .chain-content {}
+    .chain-title {
+      font-size: 13px; font-weight: 700; color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
+      margin-bottom: 4px; letter-spacing: -.01em;
+    }
+    .chain-desc { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+    /* ROOMS TABLE */
+    .rooms-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }
+    .room-row {
+      display: grid; grid-template-columns: 52px 1fr 1fr;
+      gap: 0 16px; padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+      align-items: start;
+    }
+    .room-row:last-child { border-bottom: none; }
+    .room-id {
+      font-size: 11px; color: var(--accent); opacity: .7;
+      letter-spacing: .1em; padding-top: 1px;
+    }
+    .room-principle {
+      font-size: 13px; color: var(--ink); font-weight: 600;
+      font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
+    }
+    .room-sound { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    /* QUESTIONNAIRE */
+    .q-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }
+    .q-item {
+      display: grid; grid-template-columns: 24px 1fr;
+      gap: 0 12px; padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+      align-items: start; font-size: 13px;
+    }
+    .q-item:last-child { border-bottom: none; }
+    .q-arrow { color: var(--muted); padding-top: 1px; }
+    .q-text { color: var(--ink); line-height: 1.65; }
+    .q-options { color: var(--muted); font-size: 11px; margin-top: 3px; }
+
+    /* CALLOUT */
+    .callout {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--accent);
+      padding: 18px 20px; border-radius: 2px;
+      margin-top: 20px;
+    }
+    .callout-text { font-size: 13px; color: var(--ink); line-height: 1.8; }
+
+    /* FOOTER */
+    .footer {
+      padding: 24px 0 48px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid var(--line);
+      font-size: 12px; color: var(--muted);
+    }
+    .footer a { color: inherit; text-decoration: none; }
+    .footer a:hover { color: var(--ink); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <a href="EDS.html" class="header-back">← Genesis</a>
+    <span class="header-label">How to Use</span>
+  </div>
+</div>
+
+<div class="shell">
+
+  <div class="hero">
+    <div class="hero-eyebrow">Experience Design Studios — System</div>
+    <h1 class="hero-title">How to<br>Use EDS</h1>
+    <p class="hero-sub">A worldbuilding system for regenerative dancefloor design. Each studio is a complete unit. Together they form a curriculum that moves through you.</p>
+  </div>
+
+  <!-- THE IDEA -->
+  <div class="section">
+    <div class="section-label">The Idea</div>
+    <div class="section-body">
+      EDS is not a venue. It's not a lineup. It's a system for designing experiences that teach movement philosophy through music and space — without explaining anything.
+    </div>
+    <div class="section-body">
+      Each of the 8 studios is built around a single cheatcode: a principle from the seks movement practice. The room embodies it. The music transmits it. The body receives it. Nobody has to know it's happening.
+    </div>
+    <div class="section-body">
+      At seks.design parties, rooms rotate. Each event activates a different combination of studios, which changes the movement practice, the crowd dynamic, and what gets commissioned. The parties <em>are</em> the curriculum.
+    </div>
+  </div>
+
+  <!-- THE SYSTEM -->
+  <div class="section">
+    <div class="section-label">The System</div>
+    <div class="chain">
+      <div class="chain-step">
+        <div class="chain-num">01</div>
+        <div class="chain-content">
+          <div class="chain-title">Cheatcode</div>
+          <div class="chain-desc">The underlying movement philosophy. A principle for how the body listens, moves, and relates to other bodies. Eight principles. Eight studios.</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-num">02</div>
+        <div class="chain-content">
+          <div class="chain-title">Sonic World</div>
+          <div class="chain-desc">The genre, energy, and texture of music that best carries that principle into the body. Minimal techno for planes of reference. Ambient for texture and balance. Festival sound for scale and sky. Each genre teaches something specific.</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-num">03</div>
+        <div class="chain-content">
+          <div class="chain-title">Room Design</div>
+          <div class="chain-desc">The physical space built to make the principle unavoidable. Not decoration — architecture that enforces the lesson. Where is the booth? What does the floor feel like? Who has sightlines to what? The room is the instrument.</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-num">04</div>
+        <div class="chain-content">
+          <div class="chain-title">DJ / Artist Curation</div>
+          <div class="chain-desc">An artist selects a studio that resonates and curates a set to that cheatcode. Not background music — a listening practice disguised as a set. The artist's answers to the soundsystem questionnaire directly shape how the room is built around them.</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-num">05</div>
+        <div class="chain-content">
+          <div class="chain-title">Commissioned Experience</div>
+          <div class="chain-desc">Art, installation, and multisensory work commissioned to extend the principle — not decorate the room. Each studio has a brief. The brief tells collaborators: what is the body learning here, and how does your work deepen that?</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-num">06</div>
+        <div class="chain-content">
+          <div class="chain-title">The Party</div>
+          <div class="chain-desc">A seks.design event activates a curated set of studios. The combination is the programme. Oscillating through rooms over the course of a night means moving through different body states, different listening modes, different crowd densities and energies. You leave having learned something you can't name.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE 8 STUDIOS -->
+  <div class="section">
+    <div class="section-label">The 8 Studios</div>
+    <div class="rooms-list">
+      <div class="room-row">
+        <div class="room-id">EDS 01</div>
+        <div class="room-principle">The Infinity</div>
+        <div class="room-sound">minimal techno — planes of reference, center booth, elevation options, movement-reactive visuals</div>
+      </div>
+      <div class="room-row">
+        <div class="room-id">EDS 02</div>
+        <div class="room-principle">The Senses</div>
+        <div class="room-sound">ambient / soundsystem — basement, carpet and wood, DJ faces the wall, mirrors reveal the floor</div>
+      </div>
+      <div class="room-row">
+        <div class="room-id">EDS 03</div>
+        <div class="room-principle">The Code</div>
+        <div class="room-sound">organic / eclectic — loft space, plants, small objects for isolation practice, something for every body</div>
+      </div>
+      <div class="room-row">
+        <div class="room-id">EDS 04</div>
+        <div class="room-principle">The Here</div>
+        <div class="room-sound">classic club — you are present, the DJ is present, the crowd is the architecture</div>
+      </div>
+      <div class="room-row">
+        <div class="room-id">EDS 05</div>
+        <div class="room-principle">The Pattern</div>
+        <div class="room-sound">outdoor festival — sky above, earth below, 4-point surround, power minimal, moves you whether you want it to or not</div>
+      </div>
+      <div class="room-row">
+        <div class="room-id">EDS 06</div>
+        <div class="room-principle">The Formation</div>
+        <div class="room-sound">bathroom — transitional space, genre-blending, dissociated, music overheard not intended</div>
+      </div>
+      <div class="room-row">
+        <div class="room-id">EDS 07</div>
+        <div class="room-principle">The Transformation</div>
+        <div class="room-sound">tbd — the room where structured things dissolve. pyramid becomes whole.</div>
+      </div>
+      <div class="room-row">
+        <div class="room-id">EDS 08</div>
+        <div class="room-principle">The Lotus</div>
+        <div class="room-sound">festival / club hybrid — cosy, minimal, art car maybe, communities overlap, everyone has a direction</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOR DJS -->
+  <div class="section">
+    <div class="section-label">For DJs + Sound Artists</div>
+    <div class="section-body">
+      EDS is a framework for artists who want their sets to mean something beyond the tracklist. You don't have to explain the philosophy. You just have to know which room you're building — and let the space do the rest.
+    </div>
+    <div class="callout">
+      <div class="callout-text">
+        Pick the studio whose principle resonates. Build your set as if the music itself is the movement instruction. Answer the soundsystem questions. Your answers shape how we build the room around you — and who we invite into it.
+      </div>
+    </div>
+  </div>
+
+  <!-- SOUNDSYSTEM QUESTIONNAIRE -->
+  <div class="section">
+    <div class="section-label">Soundsystem Questionnaire</div>
+    <div class="section-body" style="margin-bottom: 16px;">
+      Every EDS artist completes this. Answers go directly into the room brief and inform the commissions built around you.
+    </div>
+    <div class="q-list">
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">Where is the booth?</div>
+          <div class="q-options">center / wall / elevated / hidden / other</div>
+        </div>
+      </div>
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">What is your monitoring experience?</div>
+          <div class="q-options">wedge / in-ear / room fill / nothing / hybrid</div>
+        </div>
+      </div>
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">Are you facing the crowd?</div>
+          <div class="q-options">yes / no / sometimes / I don't know who the crowd is yet</div>
+        </div>
+      </div>
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">Who is the crowd?</div>
+          <div class="q-options">strangers / community / mixed / unknown / whoever shows up</div>
+        </div>
+      </div>
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">What is the posture of the crowd?</div>
+          <div class="q-options">standing / sitting / lying down / moving / all of the above</div>
+        </div>
+      </div>
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">Who do you want to include?</div>
+          <div class="q-options">open answer</div>
+        </div>
+      </div>
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">What does the floor feel like underfoot?</div>
+          <div class="q-options">open answer</div>
+        </div>
+      </div>
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">What is the first sound they hear walking in?</div>
+          <div class="q-options">open answer</div>
+        </div>
+      </div>
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">What is the last?</div>
+          <div class="q-options">open answer</div>
+        </div>
+      </div>
+      <div class="q-item">
+        <div class="q-arrow">→</div>
+        <div>
+          <div class="q-text">Which cheatcode are you building toward?</div>
+          <div class="q-options">pick from the 8 studios — or make a case for a new one</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOR COMMISSIONERS -->
+  <div class="section">
+    <div class="section-label">For Commissioners + Collaborators</div>
+    <div class="section-body">
+      Each studio has a brief. The brief tells you: what is the body learning in this room, what is the sonic world, who is the crowd, and what does the space feel like.
+    </div>
+    <div class="section-body">
+      We commission work that <em>extends</em> the principle — not decorates the room. The question is not "what looks good here" but "what deepens what the body is already learning."
+    </div>
+    <div class="section-body">
+      Art, installation, scent, lighting design, floor materials, objects, thresholds, transitions between rooms — all of it is commissioning territory. If it changes how the body moves or listens, it belongs in the brief.
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS AT PARTIES -->
+  <div class="section">
+    <div class="section-label">At seks.design Parties</div>
+    <div class="section-body">
+      Events don't have a fixed configuration. Each night activates a curated set of studios — the combination is the programme.
+    </div>
+    <div class="section-body">
+      Moving through rooms over the course of a night means moving through body states: from minimal and referential to ambient and textural to open-sky and scale. Each transition is designed. The path through the rooms is the arc of the evening.
+    </div>
+    <div class="callout">
+      <div class="callout-text">
+        The graphic is the floor plan. The floor plan is the principle. The principle is the music. It's all one thing — and the party is just one version of it running live.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="EDS.html">← Genesis</a>
+    <span>seksEDS — system documentation</span>
+  </div>
+
+</div>
+</body>
+</html>
