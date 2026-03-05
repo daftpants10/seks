@@ -3,34 +3,281 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Experience Design Studios — seks.design</title>
+  <title>seksEDS — Experience Design Studios</title>
+  <meta name="description" content="seksEDS — 8 multisensory room studies, one cheat code each." />
+  <meta name="theme-color" content="#0d0d0d" />
   <style>
-    body {
-      font:16px/1.6 ui-sans-serif, system-ui, -apple-system, Inter, Segoe UI, Roboto, Helvetica, Arial;
-      background:#fff; color:#3a3a40;
-      margin:0; padding:40px; -webkit-font-smoothing:antialiased;
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --ink: #d8d8d0;
+      --muted: #5a5a54;
+      --accent: #c8f53c;
+      --line: #222220;
+      --colw: 560px;
     }
-    .shell{max-width:540px; margin:0 auto;}
-    h1{font-size:22px; font-weight:700; text-align:center; margin-bottom:20px;}
-    .brief{padding:16px 0; border-bottom:1px solid #ececec;}
-    .brief:first-of-type{border-top:1px solid #ececec;}
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.65 ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* grain overlay */
+    body::before {
+      content: "";
+      position: fixed; inset: 0; z-index: 1000; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: .5;
+    }
+
+    /* header */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,13,13,.85);
+      backdrop-filter: blur(10px) saturate(120%);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-inner {
+      max-width: var(--colw); margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px;
+    }
+    .header-logo {
+      font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none;
+    }
+    .header-logo:hover { color: var(--ink); }
+    .header-tag {
+      font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--accent); opacity: .8;
+    }
+
+    /* hero */
+    .hero {
+      max-width: var(--colw); margin: 0 auto;
+      padding: 64px 20px 48px;
+      border-bottom: 1px solid var(--line);
+    }
+    .hero-kicker {
+      font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 16px;
+    }
+    .hero-title {
+      font-size: clamp(28px, 6vw, 42px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -.01em;
+      font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
+      margin-bottom: 20px;
+      color: var(--ink);
+    }
+    .hero-title em { color: var(--accent); font-style: normal; }
+    .hero-body {
+      font-size: 14px; color: var(--muted); max-width: 440px; line-height: 1.75;
+    }
+
+    /* index list */
+    .index {
+      max-width: var(--colw); margin: 0 auto; padding: 0 20px 80px;
+    }
+    .index-label {
+      font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+      color: var(--muted); padding: 28px 0 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .study {
+      display: block;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--line);
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      transition: background .15s;
+    }
+    .study:hover { background: var(--surface); margin: 0 -20px; padding: 20px; }
+    .study:hover .study-arrow { opacity: 1; transform: translateX(0); }
+    .study:hover .study-num { color: var(--accent); }
+
+    .study-inner {
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .study-num {
+      font-size: 11px; letter-spacing: .1em;
+      color: var(--muted); min-width: 24px; padding-top: 3px;
+      transition: color .15s;
+    }
+    .study-content { flex: 1; }
+    .study-title {
+      font-size: 15px; font-weight: 600;
+      font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
+      color: var(--ink); margin-bottom: 5px; line-height: 1.3;
+    }
+    .study-sub {
+      font-size: 12px; color: var(--muted); line-height: 1.5;
+    }
+    .study-status {
+      font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+      margin-top: 8px; color: var(--muted);
+    }
+    .study-status.live { color: var(--accent); }
+    .study-arrow {
+      font-size: 14px; color: var(--muted);
+      opacity: 0; transform: translateX(-4px);
+      transition: opacity .15s, transform .15s;
+      padding-top: 2px;
+    }
+
+    /* footer */
+    .footer {
+      max-width: var(--colw); margin: 0 auto;
+      padding: 24px 20px 48px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid var(--line);
+      font-size: 12px; color: var(--muted);
+    }
+    .footer a { color: inherit; text-decoration: none; }
+    .footer a:hover { color: var(--ink); }
   </style>
   <script>
-    // simple passcode protection
-    document.addEventListener("DOMContentLoaded", function() {
-      const pass = prompt("Enter passcode to access EDS Briefs:");
-      if(pass !== "seks2025") {  // <-- change passcode here
-        alert("Incorrect passcode. Returning to homepage.");
+    document.addEventListener("DOMContentLoaded", function () {
+      const pass = prompt("↯ enter passcode");
+      if (pass !== "seks2025") {
+        alert("access denied.");
         window.location.href = "index.html";
       }
     });
   </script>
 </head>
 <body>
-  <main class="shell">
-    <h1>Design Briefs (beta)</h1>
-    <div class="brief"><strong>Brief 1:</strong> Placeholder — write your first members-only note here.</div>
-    <div class="brief"><strong>Brief 2:</strong> Add more design briefs as needed.</div>
-  </main>
+
+  <div class="header">
+    <div class="header-inner">
+      <a href="index.html" class="header-logo">seks.design</a>
+      <span class="header-tag">EDS</span>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-kicker">Experience Design Studios</div>
+    <h1 class="hero-title">8 cheat codes.<br><em>8 rooms.</em></h1>
+    <p class="hero-body">
+      Each studio is a multisensory room built around one principle.
+      You enter. You pick up a stick. Something shifts.
+    </p>
+  </div>
+
+  <div class="index">
+    <div class="index-label">Case Studies</div>
+
+    <a href="eds-1.html" class="study">
+      <div class="study-inner">
+        <div class="study-num">01</div>
+        <div class="study-content">
+          <div class="study-title">Remember the Game</div>
+          <div class="study-sub">Welcome to the human game. The goal of the game is to remember that you're playing the game.</div>
+          <div class="study-status">— coming soon</div>
+        </div>
+        <div class="study-arrow">→</div>
+      </div>
+    </a>
+
+    <a href="eds-2.html" class="study">
+      <div class="study-inner">
+        <div class="study-num">02</div>
+        <div class="study-content">
+          <div class="study-title">Infinite Dimensions</div>
+          <div class="study-sub">The game is played on ∞ dimensions, with ∞ levels.</div>
+          <div class="study-status">— coming soon</div>
+        </div>
+        <div class="study-arrow">→</div>
+      </div>
+    </a>
+
+    <a href="eds-3.html" class="study">
+      <div class="study-inner">
+        <div class="study-num">03</div>
+        <div class="study-content">
+          <div class="study-title">The More You Remember</div>
+          <div class="study-sub">The more levels of the game that you remember you are playing, the more fun and consequential the game becomes.</div>
+          <div class="study-status">— coming soon</div>
+        </div>
+        <div class="study-arrow">→</div>
+      </div>
+    </a>
+
+    <a href="eds-4.html" class="study">
+      <div class="study-inner">
+        <div class="study-num">04</div>
+        <div class="study-content">
+          <div class="study-title">Bleed-Through</div>
+          <div class="study-sub">Yawning, sneezing, or hiccups can be signs that the levels of the game are bleeding through into 3D.</div>
+          <div class="study-status">— coming soon</div>
+        </div>
+        <div class="study-arrow">→</div>
+      </div>
+    </a>
+
+    <a href="eds-5.html" class="study">
+      <div class="study-inner">
+        <div class="study-num">05</div>
+        <div class="study-content">
+          <div class="study-title">The Access Point</div>
+          <div class="study-sub">The 3D is the access point to all levels of the game, until proven otherwise.</div>
+          <div class="study-status">— coming soon</div>
+        </div>
+        <div class="study-arrow">→</div>
+      </div>
+    </a>
+
+    <a href="eds-6.html" class="study">
+      <div class="study-inner">
+        <div class="study-num">06</div>
+        <div class="study-content">
+          <div class="study-title">Design Your Reality</div>
+          <div class="study-sub">You design your reality. Learn how to move your body and the world will follow.</div>
+          <div class="study-status">— coming soon</div>
+        </div>
+        <div class="study-arrow">→</div>
+      </div>
+    </a>
+
+    <a href="eds-7.html" class="study">
+      <div class="study-inner">
+        <div class="study-num">07</div>
+        <div class="study-content">
+          <div class="study-title">Find the Others</div>
+          <div class="study-sub">Find the others.</div>
+          <div class="study-status">— coming soon</div>
+        </div>
+        <div class="study-arrow">→</div>
+      </div>
+    </a>
+
+    <a href="eds-8.html" class="study">
+      <div class="study-inner">
+        <div class="study-num">08</div>
+        <div class="study-content">
+          <div class="study-title">Stay Awake</div>
+          <div class="study-sub">Stay awake, build stuff, help out.</div>
+          <div class="study-status">— coming soon</div>
+        </div>
+        <div class="study-arrow">→</div>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="footer">
+    <a href="index.html">← seks.design</a>
+    <span>seksEDS</span>
+  </div>
+
 </body>
 </html>

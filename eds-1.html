@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Remember the Game — seksEDS</title>
+  <meta name="theme-color" content="#0d0d0d" />
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --ink: #d8d8d0;
+      --muted: #5a5a54;
+      --accent: #c8f53c;
+      --line: #222220;
+      --colw: 560px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--ink);
+      font: 15px/1.65 ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+      -webkit-font-smoothing: antialiased; min-height: 100vh;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: 1000; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: .5;
+    }
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,13,13,.85); backdrop-filter: blur(10px) saturate(120%);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-inner {
+      max-width: var(--colw); margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px;
+    }
+    .header-back { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+    .header-back:hover { color: var(--ink); }
+    .header-num { font-size: 11px; letter-spacing: .12em; color: var(--accent); opacity: .8; }
+    .shell { max-width: var(--colw); margin: 0 auto; padding: 0 20px 80px; }
+    .hero { padding: 56px 0 40px; border-bottom: 1px solid var(--line); }
+    .hero-kicker {
+      font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    .hero-code {
+      font-size: 13px; color: var(--accent); margin-bottom: 20px;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      line-height: 1.6; max-width: 480px;
+    }
+    .hero-title {
+      font-size: clamp(26px, 5.5vw, 38px); font-weight: 700;
+      line-height: 1.1; letter-spacing: -.01em;
+      font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
+      color: var(--ink);
+    }
+    .section { padding: 36px 0; border-bottom: 1px solid var(--line); }
+    .section-label {
+      font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    .placeholder {
+      font-size: 13px; color: var(--muted); line-height: 1.8;
+      border-left: 2px solid var(--line); padding-left: 16px;
+      font-style: italic;
+    }
+    .footer {
+      padding: 24px 0 48px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid var(--line);
+      font-size: 12px; color: var(--muted);
+    }
+    .footer a { color: inherit; text-decoration: none; }
+    .footer a:hover { color: var(--ink); }
+    .nav-pair { display: flex; gap: 16px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-inner">
+      <a href="EDS.html" class="header-back">← EDS</a>
+      <span class="header-num">01 / 08</span>
+    </div>
+  </div>
+
+  <div class="shell">
+
+    <div class="hero">
+      <div class="hero-kicker">Cheat Code 01</div>
+      <div class="hero-code">"Welcome to the human game. The goal of the game is to remember that you're playing the game."</div>
+      <h1 class="hero-title">Remember the Game</h1>
+    </div>
+
+    <div class="section">
+      <div class="section-label">The Room</div>
+      <div class="placeholder">Description of the physical space — what you see, hear, smell, feel when you enter. The architecture of the experience before the stick is picked up.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">The Stick</div>
+      <div class="placeholder">How the stick works in this room. What it activates, what it senses, what changes when you hold it or move it.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">The Principle in Action</div>
+      <div class="placeholder">How the cheat code maps onto the designed experience. What the visitor is meant to feel or realise. The designed insight.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Notes</div>
+      <div class="placeholder">Materials, constraints, iterations, observations from testing. Anything that doesn't fit above.</div>
+    </div>
+
+    <div class="footer">
+      <a href="EDS.html">← all studies</a>
+      <div class="nav-pair">
+        <a href="eds-2.html">02 →</a>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
