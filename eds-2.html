@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Navigate the Game — seksEDS</title>
+  <meta name="theme-color" content="#0d0d0d" />
+  <style>
+    :root {
+      --bg: #0d0d0d; --surface: #141414; --ink: #d8d8d0;
+      --muted: #5a5a54; --accent: #c8f53c; --gold: #e8a020;
+      --line: #1e1e1c; --colw: 560px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--ink);
+      font: 15px/1.65 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      -webkit-font-smoothing: antialiased; min-height: 100vh;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: 1000; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: .5;
+    }
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,13,13,.88); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-inner {
+      max-width: var(--colw); margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px;
+    }
+    .header-back { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+    .header-back:hover { color: var(--ink); }
+    .header-num { font-size: 11px; letter-spacing: .12em; color: var(--accent); opacity: .8; }
+    .shell { max-width: var(--colw); margin: 0 auto; padding: 0 20px 80px; }
+
+    /* HERO */
+    .hero {
+      padding: 52px 0 40px; border-bottom: 1px solid var(--line);
+      display: flex; flex-direction: column; align-items: flex-start; gap: 24px;
+    }
+    .hero-glyph { color: var(--ink); opacity: .85; }
+    .hero-glyph svg { display: block; }
+    .hero-kicker {
+      font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .hero-code {
+      font-size: 13px; color: var(--accent); line-height: 1.65;
+      max-width: 460px; font-family: ui-monospace, Menlo, Consolas, monospace;
+    }
+    .hero-title {
+      font-size: clamp(26px, 5.5vw, 38px); font-weight: 700;
+      line-height: 1.1; letter-spacing: -.01em;
+      font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
+      color: var(--ink);
+    }
+
+    /* SECTIONS */
+    .section { padding: 36px 0; border-bottom: 1px solid var(--line); }
+    .section-label {
+      font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    .section-body { font-size: 14px; color: var(--ink); line-height: 1.75; }
+    .section-body.muted { color: var(--muted); font-style: italic; }
+    .section-note {
+      font-size: 12px; color: var(--muted); margin-top: 10px;
+      border-left: 2px solid var(--line); padding-left: 12px;
+    }
+
+    /* STICK MOVEMENT */
+    .movement-box {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--accent);
+      padding: 18px 20px; border-radius: 2px;
+    }
+    .movement-text {
+      font-size: 14px; color: var(--ink); line-height: 1.8; margin-bottom: 10px;
+    }
+    .movement-note {
+      font-size: 12px; color: var(--muted); line-height: 1.6;
+    }
+
+    /* MOODBOARD */
+    .moodboard-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      margin-top: 4px;
+    }
+    .moodboard-slot {
+      aspect-ratio: 1; background: var(--surface);
+      border: 1px dashed var(--line); border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .moodboard-slot span {
+      font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--line);
+    }
+
+    /* SOUNDCLOUD */
+    .soundcloud-slot {
+      background: var(--surface); border: 1px dashed var(--line);
+      border-radius: 2px; padding: 24px 20px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 80px; margin-top: 4px;
+    }
+    .soundcloud-slot span {
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--line);
+    }
+
+    /* BLUEPRINT */
+    .blueprint-slot {
+      background: var(--surface); border: 1px dashed var(--line);
+      border-radius: 2px; padding: 40px 20px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 120px; margin-top: 4px;
+    }
+    .blueprint-slot span {
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--line);
+    }
+
+    /* NOTES */
+    .placeholder {
+      font-size: 13px; color: var(--muted); line-height: 1.8;
+      border-left: 2px solid var(--line); padding-left: 16px;
+      font-style: italic;
+    }
+
+    /* FOOTER */
+    .footer {
+      padding: 24px 0 48px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
+    }
+    .footer a { color: inherit; text-decoration: none; }
+    .footer a:hover { color: var(--ink); }
+    .nav-pair { display: flex; gap: 16px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-inner">
+      <a href="EDS.html" class="header-back">← Genesis</a>
+      <span class="header-num">02 / 08</span>
+    </div>
+  </div>
+
+  <div class="shell">
+
+    <div class="hero">
+      <div class="hero-kicker">EDS 02 — The Spark — 1 → 5 senses</div>
+      <svg width="72" height="190" viewBox="0 0 72 190"
+     fill="none" stroke="currentColor" stroke-width="1.35"
+     stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="36" cy="24" r="21"/>
+  <path d="M 18 42 Q 20 52 30 50"/>
+  <line x1="30" y1="50" x2="52" y2="50"/>
+  <line x1="52" y1="50" x2="52" y2="86"/>
+  <path d="M 22 86 Q 36 78 52 86"/>
+  <circle cx="36" cy="99" r="14"/>
+  <circle cx="36" cy="122" r="3"  fill="currentColor" stroke="none"/>
+  <circle cx="36" cy="135" r="3"  fill="currentColor" stroke="none"/>
+  <circle cx="36" cy="148" r="3"  fill="currentColor" stroke="none"/>
+  <circle cx="36" cy="161" r="3"  fill="currentColor" stroke="none"/>
+  <circle cx="36" cy="174" r="3"  fill="currentColor" stroke="none"/>
+</svg>
+      <div class="hero-code">"The game is played on ∞ dimensions, with ∞ levels."</div>
+      <h1 class="hero-title">Navigate the Game</h1>
+    </div>
+
+    <div class="section">
+      <div class="section-label">The Stick — Movement Practice</div>
+      <div class="movement-box">
+        <div class="movement-text">Tap the stick on the floor five times. Pause between each tap. One for sight. One for sound. One for touch. One for smell. One for taste. Name each sense as you tap.</div>
+        <div class="movement-note">Five senses, five taps. You are now playing on all channels simultaneously.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">The Room</div>
+      <div class="section-body">Five zones in the room. Each zone activates one sense through the stick. Light, tone, texture, scent, taste marker. The stick is the key that unlocks each zone.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">The Principle in Action</div>
+      <div class="section-body">1 fires into 5. The self deploys its instruments. These are the 5 channels through which the multidimensional game is experienced in 3D.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Moodboard</div>
+      <div class="moodboard-grid">
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Soundcloud — Set or Reference</div>
+      <div class="soundcloud-slot"><span>soundcloud embed</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Blueprint</div>
+      <div class="blueprint-slot"><span>floor plan / sketch</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Notes</div>
+      <div class="placeholder">Materials, constraints, iterations, observations from testing. Anything that doesn't fit above.</div>
+    </div>
+
+    <div class="footer">
+      <a href="EDS.html">← all</a>
+      <div class="nav-pair">
+        <a href="eds-1.html">← 01</a> <a href="eds-3.html">03 →</a>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
