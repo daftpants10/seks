@@ -3,23 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bleed-Through — seksEDS</title>
+  <title>The Access Point — seksEDS</title>
   <meta name="theme-color" content="#0d0d0d" />
   <style>
     :root {
-      --bg: #0d0d0d;
-      --surface: #141414;
-      --ink: #d8d8d0;
-      --muted: #5a5a54;
-      --accent: #c8f53c;
-      --line: #222220;
-      --colw: 560px;
+      --bg: #0d0d0d; --surface: #141414; --ink: #d8d8d0;
+      --muted: #5a5a54; --accent: #c8f53c; --gold: #e8a020;
+      --line: #1e1e1c; --colw: 560px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
       background: var(--bg); color: var(--ink);
-      font: 15px/1.65 ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+      font: 15px/1.65 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
       -webkit-font-smoothing: antialiased; min-height: 100vh;
     }
     body::before {
@@ -29,7 +25,7 @@
     }
     .header {
       position: sticky; top: 0; z-index: 100;
-      background: rgba(13,13,13,.85); backdrop-filter: blur(10px) saturate(120%);
+      background: rgba(13,13,13,.88); backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--line);
     }
     .header-inner {
@@ -37,19 +33,25 @@
       display: flex; justify-content: space-between; align-items: center;
       padding: 12px 20px;
     }
-    .header-back { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+    .header-back { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
     .header-back:hover { color: var(--ink); }
     .header-num { font-size: 11px; letter-spacing: .12em; color: var(--accent); opacity: .8; }
     .shell { max-width: var(--colw); margin: 0 auto; padding: 0 20px 80px; }
-    .hero { padding: 56px 0 40px; border-bottom: 1px solid var(--line); }
+
+    /* HERO */
+    .hero {
+      padding: 52px 0 40px; border-bottom: 1px solid var(--line);
+      display: flex; flex-direction: column; align-items: flex-start; gap: 24px;
+    }
+    .hero-glyph { color: var(--ink); opacity: .85; }
+    .hero-glyph svg { display: block; }
     .hero-kicker {
-      font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 14px;
+      font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--muted);
     }
     .hero-code {
-      font-size: 13px; color: var(--accent); margin-bottom: 20px;
-      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
-      line-height: 1.6; max-width: 480px;
+      font-size: 13px; color: var(--accent); line-height: 1.65;
+      max-width: 460px; font-family: ui-monospace, Menlo, Consolas, monospace;
     }
     .hero-title {
       font-size: clamp(26px, 5.5vw, 38px); font-weight: 700;
@@ -57,21 +59,85 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
       color: var(--ink);
     }
+
+    /* SECTIONS */
     .section { padding: 36px 0; border-bottom: 1px solid var(--line); }
     .section-label {
-      font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+      font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
       color: var(--muted); margin-bottom: 14px;
     }
+    .section-body { font-size: 14px; color: var(--ink); line-height: 1.75; }
+    .section-body.muted { color: var(--muted); font-style: italic; }
+    .section-note {
+      font-size: 12px; color: var(--muted); margin-top: 10px;
+      border-left: 2px solid var(--line); padding-left: 12px;
+    }
+
+    /* STICK MOVEMENT */
+    .movement-box {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--accent);
+      padding: 18px 20px; border-radius: 2px;
+    }
+    .movement-text {
+      font-size: 14px; color: var(--ink); line-height: 1.8; margin-bottom: 10px;
+    }
+    .movement-note {
+      font-size: 12px; color: var(--muted); line-height: 1.6;
+    }
+
+    /* MOODBOARD */
+    .moodboard-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      margin-top: 4px;
+    }
+    .moodboard-slot {
+      aspect-ratio: 1; background: var(--surface);
+      border: 1px dashed var(--line); border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .moodboard-slot span {
+      font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--line);
+    }
+
+    /* SOUNDCLOUD */
+    .soundcloud-slot {
+      background: var(--surface); border: 1px dashed var(--line);
+      border-radius: 2px; padding: 24px 20px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 80px; margin-top: 4px;
+    }
+    .soundcloud-slot span {
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--line);
+    }
+
+    /* BLUEPRINT */
+    .blueprint-slot {
+      background: var(--surface); border: 1px dashed var(--line);
+      border-radius: 2px; padding: 40px 20px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 120px; margin-top: 4px;
+    }
+    .blueprint-slot span {
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--line);
+    }
+
+    /* NOTES */
     .placeholder {
       font-size: 13px; color: var(--muted); line-height: 1.8;
       border-left: 2px solid var(--line); padding-left: 16px;
       font-style: italic;
     }
+
+    /* FOOTER */
     .footer {
       padding: 24px 0 48px;
       display: flex; justify-content: space-between; align-items: center;
-      border-top: 1px solid var(--line);
-      font-size: 12px; color: var(--muted);
+      border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
     }
     .footer a { color: inherit; text-decoration: none; }
     .footer a:hover { color: var(--ink); }
@@ -82,7 +148,7 @@
 
   <div class="header">
     <div class="header-inner">
-      <a href="EDS.html" class="header-back">← EDS</a>
+      <a href="EDS.html" class="header-back">← Genesis</a>
       <span class="header-num">04 / 08</span>
     </div>
   </div>
@@ -90,24 +156,62 @@
   <div class="shell">
 
     <div class="hero">
-      <div class="hero-kicker">Cheat Code 04</div>
-      <div class="hero-code">"Yawning, sneezing, or hiccups can be seen as signs that the levels of the game are bleeding through into 3D. It can manifest as synchronicities, coincidences, or absurdities."</div>
-      <h1 class="hero-title">Bleed-Through</h1>
+      <div class="hero-kicker">EDS 04 — The Here — 3D at centre</div>
+      <svg width="156" height="108" viewBox="0 0 156 108"
+     fill="none" stroke="currentColor" stroke-width="1.35"
+     stroke-linecap="round">
+  <line x1="78" y1="0"   x2="78"  y2="108"/>
+  <line x1="0"  y1="54"  x2="156" y2="54"/>
+  <path d="M 78,54 C 58,46 58,10 78,2 C 98,10 98,46 78,54"/>
+  <circle cx="78" cy="20" r="2" fill="none"/>
+  <path d="M 78,54 C 70,34 34,34 26,54 C 34,74 70,74 78,54"/>
+  <circle cx="56" cy="54" r="2" fill="none"/>
+  <path d="M 78,54 C 86,34 122,34 130,54 C 122,74 86,74 78,54"/>
+  <circle cx="100" cy="54" r="2" fill="none"/>
+  <circle cx="78" cy="54" r="2.5" fill="currentColor" stroke="none"/>
+</svg>
+      <div class="hero-code">"The 3D is the access point to all levels of the game, until proven otherwise."</div>
+      <h1 class="hero-title">The Access Point</h1>
+    </div>
+
+    <div class="section">
+      <div class="section-label">The Stick — Movement Practice</div>
+      <div class="movement-box">
+        <div class="movement-text">Plant the stick. Let it stand on its own or hold it loosely upright. Look up. Breathe slowly. Let the awe in. Stay for as long as the awe lasts.</div>
+        <div class="movement-note">The awe experience is the portal. The sunset, the vastness, the overwhelm — these are the membrane thinning. You don't have to go anywhere. You are already at the access point.</div>
+      </div>
     </div>
 
     <div class="section">
       <div class="section-label">The Room</div>
-      <div class="placeholder">Description of the physical space — what you see, hear, smell, feel when you enter. The architecture of the experience before the stick is picked up.</div>
-    </div>
-
-    <div class="section">
-      <div class="section-label">The Stick</div>
-      <div class="placeholder">How the stick works in this room. What it activates, what it senses, what changes when you hold it or move it.</div>
+      <div class="section-body">A room designed to produce awe. An immersive ceiling, a horizon, a threshold between dark and light. The stick planted at the centre is the user's anchor to 3D while the senses stretch.</div>
     </div>
 
     <div class="section">
       <div class="section-label">The Principle in Action</div>
-      <div class="placeholder">How the cheat code maps onto the designed experience. What the visitor is meant to feel or realise. The designed insight.</div>
+      <div class="section-body">The vesica piscis is the overlap of two circles — two dimensions of reality intersecting. The centre point is HERE. NOW. This is how you access all dimensions: through the present body.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Moodboard</div>
+      <div class="moodboard-grid">
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+        <div class="moodboard-slot"><span>image</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Soundcloud — Set or Reference</div>
+      <div class="soundcloud-slot"><span>soundcloud embed</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Blueprint</div>
+      <div class="blueprint-slot"><span>floor plan / sketch</span></div>
     </div>
 
     <div class="section">
@@ -116,9 +220,9 @@
     </div>
 
     <div class="footer">
-      <a href="EDS.html">← all studies</a>
+      <a href="EDS.html">← all</a>
       <div class="nav-pair">
-        <a href="eds-3.html">← 03</a><a href="eds-5.html">05 →</a>
+        <a href="eds-3.html">← 03</a> <a href="eds-5.html">05 →</a>
       </div>
     </div>
 
