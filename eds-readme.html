@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>How to Use EDS / seksEDS</title>
+  <title>EDS / seksEDS</title>
   <meta name="theme-color" content="#0d0d0d" />
   <style>
     :root {
@@ -38,7 +38,6 @@
       color: var(--muted); text-decoration: none;
     }
     .header-back:hover { color: var(--ink); }
-    .header-label { font-size: 11px; letter-spacing: .14em; color: var(--accent); opacity: .7; }
 
     .shell { max-width: var(--colw); margin: 0 auto; padding: 0 20px 80px; }
 
@@ -65,23 +64,15 @@
     .section-body { font-size: 14px; color: var(--ink); line-height: 1.8; }
     .section-body + .section-body { margin-top: 14px; }
 
-    /* CHAIN — the system diagram */
-    .chain {
-      display: flex; flex-direction: column; gap: 0;
-      margin: 4px 0;
-    }
+    /* CHAIN */
+    .chain { display: flex; flex-direction: column; gap: 0; margin: 4px 0; }
     .chain-step {
       display: grid; grid-template-columns: 28px 1fr;
       gap: 0 16px; align-items: start;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--line);
+      padding: 14px 0; border-bottom: 1px solid var(--line);
     }
     .chain-step:last-child { border-bottom: none; }
-    .chain-num {
-      font-size: 11px; color: var(--accent); opacity: .7;
-      padding-top: 2px; letter-spacing: .08em;
-    }
-    .chain-content {}
+    .chain-num { font-size: 11px; color: var(--accent); opacity: .7; padding-top: 2px; letter-spacing: .08em; }
     .chain-title {
       font-size: 13px; font-weight: 700; color: var(--ink);
       font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
@@ -89,27 +80,36 @@
     }
     .chain-desc { font-size: 13px; color: var(--muted); line-height: 1.7; }
 
-    /* ROOMS TABLE */
+    /* BLUEPRINT TABLE */
+    .bp-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    .bp-table th {
+      font-size: 10px; letter-spacing: .15em; text-transform: uppercase;
+      color: var(--muted); font-weight: 400; text-align: left;
+      padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line);
+    }
+    .bp-table td {
+      font-size: 12px; color: var(--ink); line-height: 1.6;
+      padding: 11px 10px 11px 0; border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    .bp-table tr:last-child td { border-bottom: none; }
+    .bp-table td.studio-id { color: var(--accent); opacity: .7; font-size: 11px; white-space: nowrap; }
+    .bp-table td.studio-name { font-weight: 600; white-space: nowrap; }
+    .bp-table td.studio-room { color: var(--muted); }
+
+    /* ROOMS LIST */
     .rooms-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }
     .room-row {
-      display: grid; grid-template-columns: 52px 1fr 1fr;
-      gap: 0 16px; padding: 13px 0;
-      border-bottom: 1px solid var(--line);
-      align-items: start;
+      display: grid; grid-template-columns: 52px 1fr;
+      gap: 0 16px; padding: 11px 0;
+      border-bottom: 1px solid var(--line); align-items: start;
     }
     .room-row:last-child { border-bottom: none; }
-    .room-id {
-      font-size: 11px; color: var(--accent); opacity: .7;
-      letter-spacing: .1em; padding-top: 1px;
-    }
-    .room-principle {
-      font-size: 13px; color: var(--ink); font-weight: 600;
-      font-family: ui-sans-serif, system-ui, -apple-system, Helvetica, Arial;
-    }
-    .room-sound { font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .room-id { font-size: 11px; color: var(--accent); opacity: .7; letter-spacing: .1em; padding-top: 1px; }
+    .room-name { font-size: 13px; color: var(--ink); line-height: 1.6; }
 
     /* QUESTIONNAIRE */
-    .q-list { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }
+    .q-list { display: flex; flex-direction: column; gap: 0; margin-top: 16px; }
     .q-item {
       display: grid; grid-template-columns: 24px 1fr;
       gap: 0 12px; padding: 11px 0;
@@ -119,17 +119,6 @@
     .q-item:last-child { border-bottom: none; }
     .q-arrow { color: var(--muted); padding-top: 1px; }
     .q-text { color: var(--ink); line-height: 1.65; }
-    .q-options { color: var(--muted); font-size: 11px; margin-top: 3px; }
-
-    /* CALLOUT */
-    .callout {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-left: 3px solid var(--accent);
-      padding: 18px 20px; border-radius: 2px;
-      margin-top: 20px;
-    }
-    .callout-text { font-size: 13px; color: var(--ink); line-height: 1.8; }
 
     /* FOOTER */
     .footer {
@@ -147,137 +136,164 @@
 <div class="header">
   <div class="header-inner">
     <a href="EDS.html" class="header-back">← Genesis</a>
-    <span class="header-label">How to Use</span>
   </div>
 </div>
 
 <div class="shell">
 
   <div class="hero">
-    <div class="hero-eyebrow">Experience Design Studios / System</div>
-    <h1 class="hero-title">How to<br>Use EDS</h1>
-    <p class="hero-sub">A worldbuilding system for regenerative dancefloor design. Each studio is a complete unit. Together they form a curriculum that moves through you.</p>
+    <div class="hero-eyebrow">Experience Design Studios</div>
+    <h1 class="hero-title">EDS</h1>
+    <p class="hero-sub">The goal is to collect blueprints for different dancefloors, ways to embody that through movement or the ⦿-⦿, and eventually arrive at a new system for how we think of collective listening spaces.</p>
   </div>
 
   <!-- THE IDEA -->
   <div class="section">
     <div class="section-label">The Idea</div>
     <div class="section-body">
-      EDS is a system for designing experiences that teach movement philosophy through music and space. Wordlessly. The room does the work.
+      EDS is a system for designing interactive experiences. Our goal is to match artists with rooms, allowing for the listener to feel good.
     </div>
     <div class="section-body">
-      Each of the 8 studios is built around a single cheatcode: a principle from the seks movement practice. The room embodies it. The music transmits it. The body receives it.
+      The 8 EDS blueprints are examples of how artists have imagined different listening spaces.
     </div>
-    <div class="section-body">
-      At seks.design activations, rooms rotate. Each activation runs a different combination of studios, which changes the movement practice, the crowd dynamic, and what gets commissioned. The activations <em>are</em> the curriculum.
+  </div>
+
+  <!-- BLUEPRINT ANATOMY -->
+  <div class="section">
+    <div class="section-label">Each Blueprint Contains</div>
+    <div class="section-body" style="margin-bottom: 16px; color: var(--muted);">
+      Every EDS page follows the same structure.
     </div>
+    <div class="chain">
+      <div class="chain-step">
+        <div class="chain-num">01</div>
+        <div>
+          <div class="chain-title">Cheatcode</div>
+          <div class="chain-desc">The underlying principle, mapped 1 to 8.</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-num">02</div>
+        <div>
+          <div class="chain-title">Room</div>
+          <div class="chain-desc">A one-liner description of the space, in the words of the artist.</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-num">03</div>
+        <div>
+          <div class="chain-title">Reference Set</div>
+          <div class="chain-desc">A set or sound reference that carries the room.</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-num">04</div>
+        <div>
+          <div class="chain-title">Moodboard</div>
+          <div class="chain-desc">Visual references for the space.</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-num">05</div>
+        <div>
+          <div class="chain-title">Notes</div>
+          <div class="chain-desc">Materials, constraints, observations from the artist.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE 8 BLUEPRINTS TABLE -->
+  <div class="section">
+    <div class="section-label">The 8 Blueprints</div>
+    <table class="bp-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Studio</th>
+          <th>Room</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="studio-id"><a href="eds-1.html" style="color: inherit; text-decoration: none;">EDS 01</a></td>
+          <td class="studio-name"><a href="eds-1.html" style="color: inherit; text-decoration: none;">The Infinity</a></td>
+          <td class="studio-room">A dark room. One source of light. Something changes when you enter.</td>
+        </tr>
+        <tr>
+          <td class="studio-id"><a href="eds-2.html" style="color: inherit; text-decoration: none;">EDS 02</a></td>
+          <td class="studio-name"><a href="eds-2.html" style="color: inherit; text-decoration: none;">Navigate the Game</a></td>
+          <td class="studio-room">Five zones. Each activates one sense. Light, tone, texture, scent, taste.</td>
+        </tr>
+        <tr>
+          <td class="studio-id"><a href="eds-3.html" style="color: inherit; text-decoration: none;">EDS 03</a></td>
+          <td class="studio-name"><a href="eds-3.html" style="color: inherit; text-decoration: none;">The Code</a></td>
+          <td class="studio-room">A room that responds to movement history. The longer you stay, the more it reveals.</td>
+        </tr>
+        <tr>
+          <td class="studio-id"><a href="eds-4.html" style="color: inherit; text-decoration: none;">EDS 04</a></td>
+          <td class="studio-name"><a href="eds-4.html" style="color: inherit; text-decoration: none;">The Access Point</a></td>
+          <td class="studio-room">A room designed to produce awe. Immersive ceiling, a horizon, a threshold.</td>
+        </tr>
+        <tr>
+          <td class="studio-id"><a href="eds-5.html" style="color: inherit; text-decoration: none;">EDS 05</a></td>
+          <td class="studio-name"><a href="eds-5.html" style="color: inherit; text-decoration: none;">Bleed-Through</a></td>
+          <td class="studio-room">A space of mirrors and echoes. What you do gets reflected, with a delay.</td>
+        </tr>
+        <tr>
+          <td class="studio-id"><a href="eds-6.html" style="color: inherit; text-decoration: none;">EDS 06</a></td>
+          <td class="studio-name"><a href="eds-6.html" style="color: inherit; text-decoration: none;">Find Your Tribe</a></td>
+          <td class="studio-room">The collective signal is louder than the individual signal.</td>
+        </tr>
+        <tr>
+          <td class="studio-id"><a href="eds-7.html" style="color: inherit; text-decoration: none;">EDS 07</a></td>
+          <td class="studio-name"><a href="eds-7.html" style="color: inherit; text-decoration: none;">Build Pyramids</a></td>
+          <td class="studio-room">Each step inward narrows the space and deepens the experience.</td>
+        </tr>
+        <tr>
+          <td class="studio-id"><a href="eds-8.html" style="color: inherit; text-decoration: none;">EDS 08</a></td>
+          <td class="studio-name"><a href="eds-8.html" style="color: inherit; text-decoration: none;">The Lotus</a></td>
+          <td class="studio-room">A room that only works when many people are in it together. Alone, nothing happens.</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- THE SYSTEM -->
   <div class="section">
     <div class="section-label">The System</div>
-    <div class="chain">
-      <div class="chain-step">
-        <div class="chain-num">01</div>
-        <div class="chain-content">
-          <div class="chain-title">Cheatcode</div>
-          <div class="chain-desc">The underlying movement philosophy. A principle for how the body listens, moves, and relates to other bodies. Eight principles. Eight studios.</div>
-        </div>
-      </div>
-      <div class="chain-step">
-        <div class="chain-num">02</div>
-        <div class="chain-content">
-          <div class="chain-title">Sonic World</div>
-          <div class="chain-desc">The genre, energy, and texture of music that best carries that principle into the body. Minimal techno for planes of reference. Ambient for texture and balance. Festival sound for scale and sky. Each genre teaches something specific.</div>
-        </div>
-      </div>
-      <div class="chain-step">
-        <div class="chain-num">03</div>
-        <div class="chain-content">
-          <div class="chain-title">Room Design</div>
-          <div class="chain-desc">The physical space built to make the principle unavoidable. Architecture that enforces the lesson. Where is the booth? What does the floor feel like? Who has sightlines to what? The room is the instrument.</div>
-        </div>
-      </div>
-      <div class="chain-step">
-        <div class="chain-num">04</div>
-        <div class="chain-content">
-          <div class="chain-title">DJ / Artist Curation</div>
-          <div class="chain-desc">An artist selects a studio that resonates and curates a set to that cheatcode. A listening practice disguised as a set. The artist's answers to the questionnaire directly shape how the room is built around them.</div>
-        </div>
-      </div>
-      <div class="chain-step">
-        <div class="chain-num">05</div>
-        <div class="chain-content">
-          <div class="chain-title">Commissioned Experience</div>
-          <div class="chain-desc">Art, installation, and multisensory work commissioned to extend the principle. Each studio has a brief. The brief tells collaborators: what is the body learning here, and how does your work deepen that?</div>
-        </div>
-      </div>
-      <div class="chain-step">
-        <div class="chain-num">06</div>
-        <div class="chain-content">
-          <div class="chain-title">The Activation</div>
-          <div class="chain-desc">A seks.design activation runs a curated set of studios. The combination is the programme. Oscillating through rooms over the course of a night means moving through different body states, different listening modes, different crowd densities and energies. You leave having learned something you can't name.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- THE 8 STUDIOS -->
-  <div class="section">
-    <div class="section-label">The 8 Studios</div>
     <div class="rooms-list">
       <div class="room-row">
         <div class="room-id">EDS 01</div>
-        <div class="room-principle">The Infinity</div>
-        <div class="room-sound">minimal techno. planes of reference, center booth, elevation options, movement-reactive visuals</div>
+        <div class="room-name">The Infinity / minimal techno / planes of reference, center booth, elevation</div>
       </div>
       <div class="room-row">
         <div class="room-id">EDS 02</div>
-        <div class="room-principle">The Senses</div>
-        <div class="room-sound">ambient / soundsystem. basement, carpet and wood, DJ faces the wall, mirrors reveal the floor</div>
+        <div class="room-name">Navigate the Game / ambient soundsystem / basement, carpet and wood, DJ faces the wall</div>
       </div>
       <div class="room-row">
         <div class="room-id">EDS 03</div>
-        <div class="room-principle">The Code</div>
-        <div class="room-sound">organic / eclectic. loft space, plants, small objects for isolation practice, something for every body</div>
+        <div class="room-name">The Code / organic eclectic / loft, plants, something for every body</div>
       </div>
       <div class="room-row">
         <div class="room-id">EDS 04</div>
-        <div class="room-principle">The Here</div>
-        <div class="room-sound">classic club. you are present, the DJ is present, the crowd is the architecture</div>
+        <div class="room-name">The Access Point / classic club / you are present, the DJ is present, crowd is architecture</div>
       </div>
       <div class="room-row">
         <div class="room-id">EDS 05</div>
-        <div class="room-principle">The Pattern</div>
-        <div class="room-sound">outdoor festival. sky above, earth below, 4-point surround, power minimal, moves you whether you want it to or not</div>
+        <div class="room-name">Bleed-Through / outdoor festival / sky above, earth below, 4-point surround</div>
       </div>
       <div class="room-row">
         <div class="room-id">EDS 06</div>
-        <div class="room-principle">The Formation</div>
-        <div class="room-sound">bathroom. transitional space, genre-blending, dissociated, music overheard not intended</div>
+        <div class="room-name">Find Your Tribe / transitional / genre-blending, music overheard not intended</div>
       </div>
       <div class="room-row">
         <div class="room-id">EDS 07</div>
-        <div class="room-principle">The Transformation</div>
-        <div class="room-sound">tbd. the room where structured things dissolve. pyramid becomes whole.</div>
+        <div class="room-name">Build Pyramids / the room where structured things dissolve</div>
       </div>
       <div class="room-row">
         <div class="room-id">EDS 08</div>
-        <div class="room-principle">The Lotus</div>
-        <div class="room-sound">festival / club hybrid. cosy, minimal, art car maybe, communities overlap, everyone has a direction</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- FOR DJS -->
-  <div class="section">
-    <div class="section-label">For DJs + Sound Artists</div>
-    <div class="section-body">
-      EDS is a framework for artists who want their sets to mean something beyond the tracklist. Know which room you're building, and let the space do the rest.
-    </div>
-    <div class="callout">
-      <div class="callout-text">
-        Pick the studio whose principle resonates. Build your set as if the music itself is the movement instruction. Answer the soundsystem questions. Your answers shape how we build the room around you, and who we invite into it.
+        <div class="room-name">The Lotus / festival club hybrid / cosy, minimal, communities overlap</div>
       </div>
     </div>
   </div>
@@ -285,110 +301,50 @@
   <!-- THE QUESTIONNAIRE -->
   <div class="section">
     <div class="section-label">The Questionnaire</div>
-    <div class="section-body" style="margin-bottom: 16px;">
-      Every EDS artist completes this. Answers go directly into the room brief and inform the commissions built around you.
+    <div class="section-body">
+      Based on deep listening by Judith Beker, we want to understand listening as a practice of the habitus, as a process that affects the collective space. We do an onboarding where we help worldbuild with the artist what is their dream room and figure out how to build it together.
     </div>
     <div class="q-list">
       <div class="q-item">
         <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">Where is the booth?</div>
-          <div class="q-options">center / wall / elevated / hidden / other</div>
-        </div>
+        <div class="q-text">What does the room feel like before the music starts?</div>
       </div>
       <div class="q-item">
         <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">What is your monitoring experience?</div>
-          <div class="q-options">wedge / in-ear / room fill / nothing / hybrid</div>
-        </div>
+        <div class="q-text">Who is in the room, and where are they in relation to the sound?</div>
       </div>
       <div class="q-item">
         <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">Are you facing the crowd?</div>
-          <div class="q-options">yes / no / sometimes / I don't know who the crowd is yet</div>
-        </div>
+        <div class="q-text">What is the first sound they hear walking in?</div>
       </div>
       <div class="q-item">
         <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">Who is the crowd?</div>
-          <div class="q-options">strangers / community / mixed / unknown / whoever shows up</div>
-        </div>
+        <div class="q-text">What does collective listening mean in this space?</div>
       </div>
       <div class="q-item">
         <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">What is the posture of the crowd?</div>
-          <div class="q-options">standing / sitting / lying down / moving / all of the above</div>
-        </div>
+        <div class="q-text">What does the floor feel like underfoot?</div>
       </div>
       <div class="q-item">
         <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">Who do you want to include?</div>
-          <div class="q-options">open answer</div>
-        </div>
-      </div>
-      <div class="q-item">
-        <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">What does the floor feel like underfoot?</div>
-          <div class="q-options">open answer</div>
-        </div>
-      </div>
-      <div class="q-item">
-        <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">What is the first sound they hear walking in?</div>
-          <div class="q-options">open answer</div>
-        </div>
-      </div>
-      <div class="q-item">
-        <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">What is the last?</div>
-          <div class="q-options">open answer</div>
-        </div>
-      </div>
-      <div class="q-item">
-        <div class="q-arrow">→</div>
-        <div>
-          <div class="q-text">Which cheatcode are you building toward?</div>
-          <div class="q-options">pick from the 8 studios, or make a case for a new one</div>
-        </div>
+        <div class="q-text">Which cheatcode are you building toward?</div>
       </div>
     </div>
   </div>
 
   <!-- FOR COMMISSIONERS -->
   <div class="section">
-    <div class="section-label">For Commissioners + Collaborators</div>
-    <div class="section-body">
-      Each studio has a brief. The brief tells you: what is the body learning in this room, what is the sonic world, who is the crowd, and what does the space feel like.
-    </div>
-    <div class="section-body">
-      We commission work that <em>extends</em> the principle. The guiding question: what deepens what the body is already learning?
-    </div>
-    <div class="section-body">
-      Art, installation, scent, lighting design, floor materials, objects, thresholds, transitions between rooms. All of it is commissioning territory. If it changes how the body moves or listens, it belongs in the brief.
+    <div class="section-label">For Commissioners</div>
+    <div class="section-body" style="color: var(--muted);">
+      Each studio has a brief. The guiding question: what deepens what the body is already learning? Art, installation, scent, lighting, floor materials, thresholds. If it changes how the body moves or listens, it belongs.
     </div>
   </div>
 
-  <!-- HOW IT WORKS AT ACTIVATIONS -->
+  <!-- AT ACTIVATIONS -->
   <div class="section">
     <div class="section-label">At seks.design Activations</div>
-    <div class="section-body">
-      Each activation runs a curated set of studios. The combination is the programme.
-    </div>
-    <div class="section-body">
-      Moving through rooms over the course of a night means moving through body states: from minimal and referential to ambient and textural to open-sky and scale. Each transition is designed. The path through the rooms is the arc of the evening.
-    </div>
-    <div class="callout">
-      <div class="callout-text">
-        The graphic is the floor plan. The floor plan is the principle. The principle is the music. It's all one thing, and the activation is just one version of it running live.
-      </div>
+    <div class="section-body" style="color: var(--muted);">
+      Each activation runs a curated set of studios. Moving through rooms over a night means moving through body states. The path through the rooms is the arc of the evening.
     </div>
   </div>
 
