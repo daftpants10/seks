@@ -853,86 +853,87 @@
   const W = canvas.width, H = canvas.height;
   const CX = W / 2, CY = H / 2;
 
-  const GREEN = '#3ddd3d';
-  const BG    = '#060608';
-  const R     = 28;   // circle radius
-  const LINE  = 78;   // orientation line length
+  const BG   = '#060608';
+  const R    = 28;
+  const LINE = 78;
 
   let t = 0;
-  const ghosts = [];   // { x, y, angle, age }
+  const ghosts = [];   // { x, y, angle, hue, age }
 
-  // Lissajous-like wander that covers the canvas
+  // ~50% slower: all frequency multipliers halved
   function wanderPos(t) {
     return {
-      x: CX + Math.sin(t * 0.014)       * (CX - R - 18)
-            + Math.sin(t * 0.033 + 1.2) * (CX - R - 18) * 0.28,
-      y: CY + Math.cos(t * 0.017 + 0.8) * (CY - R - 18)
-            + Math.cos(t * 0.041)        * (CY - R - 18) * 0.28
+      x: CX + Math.sin(t * 0.007)        * (CX - R - 18)
+            + Math.sin(t * 0.0165 + 1.2) * (CX - R - 18) * 0.28,
+      y: CY + Math.cos(t * 0.0085 + 0.8) * (CY - R - 18)
+            + Math.cos(t * 0.0205)        * (CY - R - 18) * 0.28
     };
   }
 
+  // Hue drifts slowly with position + gentle time oscillation
+  function ringHue(x, y, t) {
+    const posHue = 110 + (x / W) * 130 + (y / H) * 30;
+    return posHue + Math.sin(t * 0.004) * 18;
+  }
+
   function draw() {
-    // ── Background ──
     ctx.fillStyle = BG;
     ctx.fillRect(0, 0, W, H);
 
     const cur  = wanderPos(t);
     const prev = wanderPos(t - 6);
 
-    // Orientation angle: mostly downward, slight lean into velocity
     const dx = cur.x - prev.x;
     const dy = cur.y - prev.y;
-    const speed = Math.sqrt(dx*dx + dy*dy);
-    const movAngle = Math.atan2(dy, dx);
-    const angle = Math.PI / 2 + movAngle * 0.22;  // down-biased tilt
+    const speed = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.PI / 2 + Math.atan2(dy, dx) * 0.22;
 
-    // Record ghost every 18 frames
-    if (t % 18 === 0) {
-      ghosts.push({ x: cur.x, y: cur.y, angle, age: 0 });
-      if (ghosts.length > 14) ghosts.shift();
+    const hue = ringHue(cur.x, cur.y, t);
+    const col = `hsl(${hue}, 75%, 58%)`;
+
+    // Record ghost every 24 frames
+    if (t % 24 === 0) {
+      ghosts.push({ x: cur.x, y: cur.y, angle, hue, age: 0 });
+      if (ghosts.length > 12) ghosts.shift();
     }
     ghosts.forEach(g => g.age++);
 
-    // ── Ghost circles (trail) ──
+    // ── Ghost circles ──
     ghosts.forEach(g => {
-      const alpha = Math.max(0, 0.22 - g.age * 0.013);
+      const alpha = Math.max(0, 0.2 - g.age * 0.014);
+      const gCol  = `hsl(${g.hue}, 70%, 52%)`;
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.strokeStyle = GREEN;
+      ctx.strokeStyle = gCol;
       ctx.lineWidth   = 1.2;
 
-      // Dashed arc for older ghosts
-      const dashLen = Math.max(2, 8 - g.age * 0.4);
+      const dashLen = Math.max(2, 8 - g.age * 0.5);
       ctx.setLineDash([dashLen, dashLen * 1.5]);
-
       ctx.beginPath();
       ctx.arc(g.x, g.y, R, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Ghost line
       ctx.setLineDash([]);
       ctx.beginPath();
       ctx.moveTo(g.x, g.y);
-      ctx.lineTo(
-        g.x + Math.cos(g.angle) * LINE * 0.6,
-        g.y + Math.sin(g.angle) * LINE * 0.6
-      );
+      ctx.lineTo(g.x + Math.cos(g.angle) * LINE * 0.55,
+                 g.y + Math.sin(g.angle) * LINE * 0.55);
       ctx.stroke();
 
       ctx.restore();
     });
 
     // ── Main figure ──
-    ctx.strokeStyle = GREEN;
-    ctx.fillStyle   = GREEN;
+    ctx.strokeStyle = col;
+    ctx.fillStyle   = col;
     ctx.lineCap     = 'round';
     ctx.setLineDash([]);
 
-    // Circle — dashed when moving fast, solid when slow
+    // Circle — dashes gently when moving, proportional to speed
     ctx.lineWidth = 1.6;
-    if (speed > 2.2) {
-      const dashAmt = Math.min(12, speed * 1.8);
-      ctx.setLineDash([dashAmt, dashAmt * 0.9]);
+    if (speed > 1.0) {
+      const d = Math.min(10, speed * 2.2);
+      ctx.setLineDash([d, d]);
     }
     ctx.beginPath();
     ctx.arc(cur.x, cur.y, R, 0, Math.PI * 2);
