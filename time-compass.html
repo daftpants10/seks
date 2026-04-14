@@ -220,66 +220,72 @@
     .ax-era   { background: #1a2818; color: #60b070; }
     .ax-heart { background: #281818; color: #c06050; }
 
-    /* ── SLIDE 4 – THE SESSION ── */
+    /* ── SLIDE 4 – THE STICK ── */
     #slide-4 {
       background: var(--black);
       border-top: 1px solid #1a1a1f;
+      align-items: flex-start;
+      padding-top: 100px;
+      padding-bottom: 100px;
     }
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      max-width: 1000px;
+    .s4-inner {
+      max-width: 760px;
       width: 100%;
-      margin-top: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 64px;
     }
 
-    @media (max-width: 700px) {
-      .cards { grid-template-columns: 1fr; }
+    .s4-text { max-width: 620px; }
+
+    .data-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 1px solid #1a1a1f;
     }
 
-    .card {
-      border: 1px solid #1e1e26;
-      border-radius: 6px;
-      padding: 28px 24px;
-    }
-
-    .card-num {
+    .data-head {
       font-family: 'Courier New', monospace;
-      font-size: 11px;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
       color: var(--accent);
-      letter-spacing: 0.2em;
-      margin-bottom: 14px;
+      margin-bottom: 12px !important;
     }
 
-    .card h3 {
-      font-size: 20px;
-      font-weight: 400;
-      letter-spacing: -0.01em;
-      margin-bottom: 10px;
+    .data-list {
+      list-style: none;
     }
 
-    .card p {
-      font-size: 13px;
+    .data-list li {
+      font-size: 14px;
+      color: var(--dim);
+      padding: 5px 0;
+      border-bottom: 1px solid #131318;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    .data-list li:last-child { border-bottom: none; }
+
+    .s4-closing-block {
+      padding-top: 28px;
+      border-top: 1px solid #1a1a1f;
+    }
+
+    .s4-closing-block p {
+      font-size: 18px;
       line-height: 1.7;
       color: var(--dim);
-      margin: 0;
     }
 
-    .s4-header {
-      text-align: center;
-      max-width: 620px;
-    }
-
-    .closing {
-      margin-top: 72px;
-      text-align: center;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--dim);
+    .s4-closing-block em {
+      color: var(--white);
+      font-style: italic;
     }
 
     /* ── NAV DOTS ── */
@@ -377,23 +383,42 @@
       <h2>Time as Space</h2>
       <p>
         The map is (not) arbitrary. You give each direction a meaning.
-        From silence to movement, customize your parameters.
+        From silence to movement, set your own parameters.
       </p>
 
       <ul class="axes-list">
         <li>
-          <span class="axis-glyph ax-bpm">BPM</span>
-          <span><strong style="color:#f0ede8">BPM</strong></span>
+          <span class="axis-glyph ax-era">○○</span>
+          <div>
+            <strong style="color:#f0ede8">Rings</strong>
+            <div style="margin-top:4px">Any linear metric. Year. Rating 1–10. The 1–12 of a clock. Distance from home. Rings draw the depth of the space.</div>
+          </div>
         </li>
         <li>
-          <span class="axis-glyph ax-key">KEY</span>
-          <span><strong style="color:#f0ede8">Key</strong></span>
+          <span class="axis-glyph ax-key" style="font-size:13px">●</span>
+          <div>
+            <strong style="color:#f0ede8">Colour</strong>
+            <div style="margin-top:4px">Mapped to sentiment — composite of key, BPM, energy — or to context: weather, location, the moment you Shazamed it.</div>
+          </div>
         </li>
         <li>
-          <span class="axis-glyph ax-era">ERA</span>
-          <span><strong style="color:#f0ede8">Year</strong></span>
+          <span class="axis-glyph ax-bpm" style="font-size:15px">◉</span>
+          <div>
+            <strong style="color:#f0ede8">Size</strong>
+            <div style="margin-top:4px">The dot expands and contracts. Heart rate. Intensity. Energy level. You feel it before you read it.</div>
+          </div>
+        </li>
+        <li>
+          <span class="axis-glyph ax-heart">↗</span>
+          <div>
+            <strong style="color:#f0ede8">Orientation</strong>
+            <div style="margin-top:4px">Direction of travel through the space. Tracers show where you came from and where you're heading.</div>
+          </div>
         </li>
       </ul>
+      <p style="font-size:12px; color:#555; margin-top:8px; font-family:'Courier New',monospace;">
+        + many more. any data a song carries.
+      </p>
     </div>
 
     <canvas id="map-canvas" width="420" height="420"></canvas>
@@ -401,48 +426,57 @@
 </section>
 
 <!-- ══════════════════════════════════════════
-     SLIDE 4 — THE SESSION
+     SLIDE 4 — SEKSTOYS INTEGRATION
 ══════════════════════════════════════════ -->
 <section id="slide-4">
-  <div class="s4-header">
-    <p class="slide-label">03 / The Loop</p>
-    <h2>Track, discover,<br />export, return.</h2>
-    <p>
-      A session on the Time Compass leaves a record. Not a playlist — a <strong>territory</strong>.
-      A shape made of where you went, what pulled you, what you found out there.
-    </p>
-  </div>
+  <div class="s4-inner">
+    <div class="s4-text">
+      <p class="slide-label">03 / The Stick</p>
+      <h2>Your library<br />is a landscape.<br /><em>Dig.</em></h2>
+      <p>
+        Connect your phone or watch to the stick.
+        The stick is the interface. Different movements surface different tracks —
+        not by algorithm, but by the shape of what you've already listened to.
+      </p>
+      <p>
+        Every track you add gets folded into the map.
+        The stick reads the space around your current position and shows you
+        what lives nearby — similar tempo, same era, related mood.
+        <strong>You're not searching. You're digging.</strong>
+      </p>
 
-  <div class="cards">
-    <div class="card">
-      <p class="card-num">01</p>
-      <h3>Input</h3>
-      <p>
-        Drop a YouTube link, scan a track, or let the mic identify what's playing.
-        The backend resolves BPM, key, and year — and places it on your map.
-      </p>
+      <div class="data-split">
+        <div>
+          <p class="data-head">Real-time</p>
+          <ul class="data-list">
+            <li>Heart rate</li>
+            <li>Heart rate variability</li>
+            <li>Breathing</li>
+            <li>Footsteps</li>
+          </ul>
+        </div>
+        <div>
+          <p class="data-head">Metadata</p>
+          <ul class="data-list">
+            <li>Artist</li>
+            <li>Rating</li>
+            <li>Year</li>
+            <li>Play history</li>
+          </ul>
+        </div>
+      </div>
     </div>
-    <div class="card">
-      <p class="card-num">02</p>
-      <h3>Discover</h3>
-      <p>
-        As your dot moves, nearby blips appear: other tracks that live in the same region.
-        Same era, similar tempo, related mood. The map suggests where to go next.
-      </p>
-    </div>
-    <div class="card">
-      <p class="card-num">03</p>
-      <h3>Export</h3>
-      <p>
-        At the end of the night, export your session as a generative artwork —
-        the path you made, the regions you visited, the music you found.
-        Add the tracks to your library.
-      </p>
-    </div>
-  </div>
 
-  <div class="closing">
-    Time is not a line &nbsp;·&nbsp; Time is a space &nbsp;·&nbsp; Navigate it
+    <div class="s4-closing-block">
+      <p>
+        This is a tool that connects your <em>experience</em> of music
+        with your <em>memory</em> of it — letting you find the symmetries
+        and patterns in what you listen to, when, and why.
+      </p>
+      <p style="margin-top:16px; font-family:'Courier New',monospace; font-size:11px; letter-spacing:0.15em; color:#444; text-transform:uppercase;">
+        Time is not a line &nbsp;·&nbsp; Time is a space &nbsp;·&nbsp; Navigate it
+      </p>
+    </div>
   </div>
 </section>
 
@@ -561,16 +595,49 @@
     // Trail
     const pos = dotPos(t);
     trail.push({...pos});
-    if (trail.length > 80) trail.shift();
+    if (trail.length > 100) trail.shift();
 
+    // Fading trail
     for (let i = 1; i < trail.length; i++) {
-      const alpha = (i / trail.length) * 0.35;
+      const frac = i / trail.length;
       ctx.beginPath();
       ctx.moveTo(trail[i-1].x, trail[i-1].y);
       ctx.lineTo(trail[i].x, trail[i].y);
-      ctx.strokeStyle = `rgba(240,237,232,${alpha})`;
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = `rgba(240,237,232,${frac * 0.3})`;
+      ctx.lineWidth = frac * 2;
       ctx.stroke();
+    }
+
+    // Orientation tracers — dotted lines from the dot
+    if (trail.length > 6) {
+      const prev = trail[trail.length - 6];
+      const dx = pos.x - prev.x;
+      const dy = pos.y - prev.y;
+      const len = Math.sqrt(dx*dx + dy*dy) || 1;
+      const nx = dx / len, ny = dy / len;     // forward unit vector
+      const px = -ny, py = nx;               // perpendicular
+
+      ctx.save();
+      ctx.setLineDash([2, 5]);
+      ctx.lineWidth = 1;
+
+      // Forward tracer
+      ctx.beginPath();
+      ctx.moveTo(pos.x + nx * 10, pos.y + ny * 10);
+      ctx.lineTo(pos.x + nx * 38, pos.y + ny * 38);
+      ctx.strokeStyle = 'rgba(240,237,232,0.5)';
+      ctx.stroke();
+
+      // Side whiskers
+      [-1, 1].forEach(side => {
+        ctx.beginPath();
+        ctx.moveTo(pos.x + px * side * 10, pos.y + py * side * 10);
+        ctx.lineTo(pos.x + px * side * 26, pos.y + py * side * 26);
+        ctx.strokeStyle = 'rgba(240,237,232,0.22)';
+        ctx.stroke();
+      });
+
+      ctx.restore();
     }
 
     // The dot
@@ -629,32 +696,42 @@
   function draw() {
     ctx.clearRect(0, 0, W, H);
 
-    // Background grid
-    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= W; x += W/8) {
-      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
-    }
-    for (let y = 0; y <= H; y += H/8) {
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-    }
-
-    // Axis labels
-    ctx.font = '10px Courier New';
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.textAlign = 'center';
-    ctx.fillText('MAJOR', cx, 18);
-    ctx.fillText('MINOR', cx, H - 8);
-    ctx.textAlign = 'left';
-    ctx.fillText('SLOW', 6, cy + 4);
-    ctx.textAlign = 'right';
-    ctx.fillText('FAST', W - 6, cy + 4);
+    // Concentric rings — labelled with ring parameter (Year)
+    const rings = [
+      { r: 60,  label: '—',    alpha: 0.12 },
+      { r: 110, label: '1980', alpha: 0.10 },
+      { r: 160, label: '1990', alpha: 0.09 },
+      { r: 200, label: '2000', alpha: 0.08 },
+    ];
+    rings.forEach(({ r, label, alpha }) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(200,169,110,${alpha})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Label at top of each ring
+      ctx.font = '8px Courier New';
+      ctx.fillStyle = `rgba(200,169,110,${alpha * 3})`;
+      ctx.textAlign = 'center';
+      ctx.fillText(label, cx, cy - r + 12);
+    });
 
     // Cross-hair
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
+
+    // Axis labels
+    ctx.font = '9px Courier New';
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.textAlign = 'center';
+    ctx.fillText('MAJOR', cx, 14);
+    ctx.fillText('MINOR', cx, H - 5);
+    ctx.textAlign = 'left';
+    ctx.fillText('SLOW', 5, cy - 4);
+    ctx.textAlign = 'right';
+    ctx.fillText('FAST', W - 5, cy - 4);
 
     // Blips
     blips.forEach(([nx, ny, label, hue, sz]) => {
