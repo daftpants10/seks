@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Compass</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #060608;
+      --white: #f0ede8;
+      --dim: #888078;
+      --accent: #c8a96e;
+    }
+
+    html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Georgia', serif;
+      overflow-x: hidden;
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      min-height: 100vh;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── SLIDE 1 – THE FLOOR ── */
+    #slide-1 { background: var(--black); }
+
+    #canvas-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    #compass-canvas {
+      opacity: 0.55;
+    }
+
+    .s1-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 680px;
+    }
+
+    .eyebrow {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: clamp(52px, 10vw, 96px);
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin-bottom: 28px;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .tagline {
+      font-size: clamp(15px, 2.5vw, 19px);
+      color: var(--dim);
+      line-height: 1.65;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--dim);
+      text-transform: uppercase;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.85} }
+
+    /* ── SLIDE 2 – THE COMPASS ── */
+    #slide-2 {
+      background: var(--black);
+      border-top: 1px solid #1a1a1f;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    @media (max-width: 700px) {
+      .two-col { grid-template-columns: 1fr; gap: 48px; }
+    }
+
+    #hud-demo {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 0 auto;
+    }
+
+    #hud-canvas { border-radius: 50%; }
+
+    .slide-label {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.75;
+      color: var(--dim);
+      margin-bottom: 16px;
+    }
+
+    p strong { color: var(--white); font-weight: 400; }
+
+    /* ── SLIDE 3 – THE MAP ── */
+    #slide-3 {
+      background: #07070a;
+      border-top: 1px solid #1a1a1f;
+    }
+
+    .map-layout {
+      max-width: 1100px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    @media (max-width: 700px) {
+      .map-layout { grid-template-columns: 1fr; gap: 48px; }
+    }
+
+    #map-canvas {
+      width: 100%;
+      border: 1px solid #1e1e26;
+      border-radius: 4px;
+    }
+
+    .axes-list {
+      list-style: none;
+      margin: 24px 0;
+    }
+
+    .axes-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid #18181f;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--dim);
+    }
+
+    .axes-list li:last-child { border-bottom: none; }
+
+    .axis-glyph {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    .ax-bpm   { background: #1a2030; color: #6090d0; }
+    .ax-key   { background: #201828; color: #a060c0; }
+    .ax-era   { background: #1a2818; color: #60b070; }
+    .ax-heart { background: #281818; color: #c06050; }
+
+    /* ── SLIDE 4 – THE SESSION ── */
+    #slide-4 {
+      background: var(--black);
+      border-top: 1px solid #1a1a1f;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1000px;
+      width: 100%;
+      margin-top: 48px;
+    }
+
+    @media (max-width: 700px) {
+      .cards { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      border: 1px solid #1e1e26;
+      border-radius: 6px;
+      padding: 28px 24px;
+    }
+
+    .card-num {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      margin-bottom: 14px;
+    }
+
+    .card h3 {
+      font-size: 20px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--dim);
+      margin: 0;
+    }
+
+    .s4-header {
+      text-align: center;
+      max-width: 620px;
+    }
+
+    .closing {
+      margin-top: 72px;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    /* ── NAV DOTS ── */
+    #nav-dots {
+      position: fixed;
+      right: 28px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .nav-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--dim);
+      cursor: pointer;
+      transition: background .3s, transform .3s;
+    }
+
+    .nav-dot.active {
+      background: var(--accent);
+      transform: scale(1.5);
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav-dots">
+  <div class="nav-dot active" data-target="#slide-1"></div>
+  <div class="nav-dot" data-target="#slide-2"></div>
+  <div class="nav-dot" data-target="#slide-3"></div>
+  <div class="nav-dot" data-target="#slide-4"></div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 1 — THE FLOOR
+══════════════════════════════════════════ -->
+<section id="slide-1">
+  <div id="canvas-wrap">
+    <canvas id="compass-canvas" width="700" height="700"></canvas>
+  </div>
+
+  <div class="s1-content">
+    <p class="eyebrow">A tool for the dancefloor</p>
+    <h1>Time<br /><em>Compass</em></h1>
+    <p class="tagline">
+      Time on the dancefloor doesn't move in a line.<br />
+      It stretches. It collapses. It circles back.<br />
+      This is a compass for navigating it.
+    </p>
+  </div>
+
+  <div class="scroll-hint">scroll</div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 2 — THE HUD
+══════════════════════════════════════════ -->
+<section id="slide-2">
+  <div class="two-col">
+    <div id="hud-demo">
+      <canvas id="hud-canvas" width="320" height="320"></canvas>
+    </div>
+    <div>
+      <p class="slide-label">01 / The Interface</p>
+      <h2>A dot.<br />A colour wheel.<br />A map.</h2>
+      <p>
+        The HUD is minimal: <strong>one dot on a dark screen</strong>, surrounded by a living colour wheel.
+        The dot is you. Its position on the map reflects where you are — in tempo, in mood, in time.
+      </p>
+      <p>
+        As the music shifts — as the BPM climbs, as the key turns minor, as the era changes —
+        the dot moves. <strong>You watch yourself move through music space</strong> the way a pilot watches a horizon.
+      </p>
+      <p>
+        Built for Apple Watch. Works in any browser.
+        The mic listens. The map draws itself.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 3 — THE MAP
+══════════════════════════════════════════ -->
+<section id="slide-3">
+  <div class="map-layout">
+    <div>
+      <p class="slide-label">02 / The Axes</p>
+      <h2>Every axis<br />is a dimension<br />of time.</h2>
+      <p>
+        The map is not arbitrary. Each direction has meaning.
+        Start at rest — resting heart rate, silence — and move.
+      </p>
+
+      <ul class="axes-list">
+        <li>
+          <span class="axis-glyph ax-bpm">BPM</span>
+          <span><strong style="color:#f0ede8">East / West — Tempo.</strong> Move east as the BPM climbs. 90 BPM is near centre. 140 BPM is deep east. The music pulls you there.</span>
+        </li>
+        <li>
+          <span class="axis-glyph ax-key">KEY</span>
+          <span><strong style="color:#f0ede8">North / South — Mood.</strong> North is major, open, bright. South is minor, inward, dark. Northwest is euphoric. Southwest is melancholic.</span>
+        </li>
+        <li>
+          <span class="axis-glyph ax-era">ERA</span>
+          <span><strong style="color:#f0ede8">Colour — Era.</strong> The colour wheel marks time. 1980s glow amber. 1990s shift to violet. 2010s into cold blue. The hue tells you when you are.</span>
+        </li>
+        <li>
+          <span class="axis-glyph ax-heart">♥</span>
+          <span><strong style="color:#f0ede8">Scale — Intensity.</strong> Your heart rate and the music's energy expand or contract the dot. Bigger means more. You feel it before you see it.</span>
+        </li>
+      </ul>
+    </div>
+
+    <canvas id="map-canvas" width="420" height="420"></canvas>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 4 — THE SESSION
+══════════════════════════════════════════ -->
+<section id="slide-4">
+  <div class="s4-header">
+    <p class="slide-label">03 / The Loop</p>
+    <h2>Track, discover,<br />export, return.</h2>
+    <p>
+      A session on the Time Compass leaves a record. Not a playlist — a <strong>territory</strong>.
+      A shape made of where you went, what pulled you, what you found out there.
+    </p>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <p class="card-num">01</p>
+      <h3>Input</h3>
+      <p>
+        Drop a YouTube link, scan a track, or let the mic identify what's playing.
+        The backend resolves BPM, key, and year — and places it on your map.
+      </p>
+    </div>
+    <div class="card">
+      <p class="card-num">02</p>
+      <h3>Discover</h3>
+      <p>
+        As your dot moves, nearby blips appear: other tracks that live in the same region.
+        Same era, similar tempo, related mood. The map suggests where to go next.
+      </p>
+    </div>
+    <div class="card">
+      <p class="card-num">03</p>
+      <h3>Export</h3>
+      <p>
+        At the end of the night, export your session as a generative artwork —
+        the path you made, the regions you visited, the music you found.
+        Add the tracks to your library.
+      </p>
+    </div>
+  </div>
+
+  <div class="closing">
+    Time is not a line &nbsp;·&nbsp; Time is a space &nbsp;·&nbsp; Navigate it
+  </div>
+</section>
+
+<script>
+/* ──────────────────────────────────────────
+   SLIDE 1 — rotating colour-wheel compass
+────────────────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('compass-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2;
+  let t = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Colour wheel rings
+    for (let r = 280; r >= 60; r -= 28) {
+      const grad = ctx.createConicalGradient
+        ? null
+        : null;
+      // Use arc segments instead
+      const segments = 120;
+      for (let i = 0; i < segments; i++) {
+        const a1 = (i / segments) * Math.PI * 2 + t * 0.003;
+        const a2 = ((i + 1) / segments) * Math.PI * 2 + t * 0.003;
+        const hue = (i / segments) * 360;
+        const alpha = 0.06 + (r / 280) * 0.08;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, a1, a2);
+        ctx.closePath();
+        ctx.fillStyle = `hsla(${hue}, 70%, 55%, ${alpha})`;
+        ctx.fill();
+      }
+    }
+
+    // Cardinal lines
+    ctx.save();
+    ctx.rotate(t * 0.001);
+    ctx.strokeStyle = 'rgba(200,169,110,0.15)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * 40, cy + Math.sin(angle) * 40);
+      ctx.lineTo(cx + Math.cos(angle) * 290, cy + Math.sin(angle) * 290);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Centre dot — breathing
+    const breathe = 6 + Math.sin(t * 0.04) * 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, breathe, 0, Math.PI * 2);
+    ctx.fillStyle = '#f0ede8';
+    ctx.fill();
+
+    // Soft glow
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60);
+    grd.addColorStop(0, 'rgba(240,237,232,0.18)');
+    grd.addColorStop(1, 'rgba(240,237,232,0)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    t++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ──────────────────────────────────────────
+   SLIDE 2 — live HUD demo
+────────────────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('hud-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2;
+  let t = 0;
+
+  // Simulated dot path — wanders around centre
+  function dotPos(t) {
+    return {
+      x: cx + Math.sin(t * 0.018) * 55 + Math.sin(t * 0.031) * 22,
+      y: cy + Math.cos(t * 0.022) * 45 + Math.cos(t * 0.041) * 18
+    };
+  }
+
+  const trail = [];
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Colour wheel (outer ring only)
+    const segments = 180;
+    for (let i = 0; i < segments; i++) {
+      const a1 = (i / segments) * Math.PI * 2;
+      const a2 = ((i + 1) / segments) * Math.PI * 2;
+      const hue = (i / segments) * 360;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 148, a1, a2);
+      ctx.arc(cx, cy, 130, a2, a1, true);
+      ctx.closePath();
+      ctx.fillStyle = `hsla(${hue}, 65%, 55%, 0.75)`;
+      ctx.fill();
+    }
+
+    // Inner dark circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, 128, 0, Math.PI * 2);
+    ctx.fillStyle = '#060608';
+    ctx.fill();
+
+    // Trail
+    const pos = dotPos(t);
+    trail.push({...pos});
+    if (trail.length > 80) trail.shift();
+
+    for (let i = 1; i < trail.length; i++) {
+      const alpha = (i / trail.length) * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(trail[i-1].x, trail[i-1].y);
+      ctx.lineTo(trail[i].x, trail[i].y);
+      ctx.strokeStyle = `rgba(240,237,232,${alpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // The dot
+    const breathe = 5 + Math.sin(t * 0.05) * 2;
+    const grd = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, 30);
+    grd.addColorStop(0, 'rgba(240,237,232,0.22)');
+    grd.addColorStop(1, 'rgba(240,237,232,0)');
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 30, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, breathe, 0, Math.PI * 2);
+    ctx.fillStyle = '#f0ede8';
+    ctx.fill();
+
+    t++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ──────────────────────────────────────────
+   SLIDE 3 — static map with blips
+────────────────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('map-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2;
+  let t = 0;
+
+  // Track blips: [normX(-1..1), normY(-1..1), label, hue, size]
+  const blips = [
+    [ 0.0,  0.0, 'rest',           40, 4 ],
+    [ 0.55, -0.35, '128bpm / min', 270, 5 ],
+    [ 0.7,  0.5,  '135bpm / maj',  200, 5 ],
+    [-0.3,  -0.6, '90bpm / min',   290, 4 ],
+    [ 0.3,  0.6,  '110bpm / maj',  160, 4 ],
+    [-0.6,  0.4,  '80bpm / maj',   40,  4 ],
+    [ 0.85,-0.7,  '142bpm / min',  240, 6 ],
+    [-0.2,  0.2,  '96bpm / maj',   80,  3 ],
+    [ 0.45, 0.0,  '122bpm',        180, 4 ],
+  ];
+
+  // You-dot wanders around the 128/minor region
+  function youPos(t) {
+    return {
+      x: cx + (0.55 + Math.sin(t*0.015)*0.08) * (W/2 - 30),
+      y: cy + (-0.35 + Math.cos(t*0.019)*0.06) * (H/2 - 30)
+    };
+  }
+
+  const trail = [];
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Background grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= W; x += W/8) {
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    }
+    for (let y = 0; y <= H; y += H/8) {
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+
+    // Axis labels
+    ctx.font = '10px Courier New';
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.textAlign = 'center';
+    ctx.fillText('MAJOR', cx, 18);
+    ctx.fillText('MINOR', cx, H - 8);
+    ctx.textAlign = 'left';
+    ctx.fillText('SLOW', 6, cy + 4);
+    ctx.textAlign = 'right';
+    ctx.fillText('FAST', W - 6, cy + 4);
+
+    // Cross-hair
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
+
+    // Blips
+    blips.forEach(([nx, ny, label, hue, sz]) => {
+      const bx = cx + nx * (W/2 - 30);
+      const by = cy + ny * (H/2 - 30); // y flipped: north=major=up
+
+      const grd = ctx.createRadialGradient(bx,by,0,bx,by,sz*4);
+      grd.addColorStop(0, `hsla(${hue},70%,60%,0.3)`);
+      grd.addColorStop(1, `hsla(${hue},70%,60%,0)`);
+      ctx.beginPath();
+      ctx.arc(bx, by, sz*4, 0, Math.PI*2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(bx, by, sz, 0, Math.PI*2);
+      ctx.fillStyle = `hsl(${hue},65%,62%)`;
+      ctx.fill();
+    });
+
+    // You-dot trail
+    const you = youPos(t);
+    trail.push({...you});
+    if (trail.length > 120) trail.shift();
+
+    for (let i = 1; i < trail.length; i++) {
+      ctx.beginPath();
+      ctx.moveTo(trail[i-1].x, trail[i-1].y);
+      ctx.lineTo(trail[i].x, trail[i].y);
+      ctx.strokeStyle = `rgba(200,169,110,${(i/trail.length)*0.4})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // You dot
+    const breathe = 5 + Math.sin(t * 0.06) * 2;
+    const yGrd = ctx.createRadialGradient(you.x, you.y, 0, you.x, you.y, 24);
+    yGrd.addColorStop(0, 'rgba(200,169,110,0.4)');
+    yGrd.addColorStop(1, 'rgba(200,169,110,0)');
+    ctx.beginPath();
+    ctx.arc(you.x, you.y, 24, 0, Math.PI*2);
+    ctx.fillStyle = yGrd;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(you.x, you.y, breathe, 0, Math.PI*2);
+    ctx.fillStyle = '#c8a96e';
+    ctx.fill();
+
+    // "YOU" label
+    ctx.font = '9px Courier New';
+    ctx.fillStyle = 'rgba(200,169,110,0.7)';
+    ctx.textAlign = 'center';
+    ctx.fillText('YOU', you.x, you.y - breathe - 7);
+
+    t++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ──────────────────────────────────────────
+   NAV DOTS
+────────────────────────────────────────── */
+(function() {
+  const slides = ['#slide-1','#slide-2','#slide-3','#slide-4'];
+  const dots = document.querySelectorAll('.nav-dot');
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      document.querySelector(dot.dataset.target).scrollIntoView({behavior:'smooth'});
+    });
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = slides.indexOf('#' + entry.target.id);
+        dots.forEach((d,i) => d.classList.toggle('active', i === idx));
+      }
+    });
+  }, { threshold: 0.5 });
+
+  slides.forEach(id => observer.observe(document.querySelector(id)));
+})();
+</script>
+</body>
+</html>
