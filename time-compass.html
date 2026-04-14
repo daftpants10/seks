@@ -224,68 +224,42 @@
     #slide-4 {
       background: var(--black);
       border-top: 1px solid #1a1a1f;
-      align-items: flex-start;
-      padding-top: 100px;
-      padding-bottom: 100px;
+      align-items: center;
+      justify-content: center;
     }
 
     .s4-inner {
-      max-width: 760px;
+      max-width: 1000px;
       width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 64px;
-    }
-
-    .s4-text { max-width: 620px; }
-
-    .data-split {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 32px;
-      margin-top: 36px;
-      padding-top: 28px;
-      border-top: 1px solid #1a1a1f;
+      gap: 80px;
+      align-items: center;
     }
 
-    .data-head {
-      font-family: 'Courier New', monospace;
-      font-size: 10px;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 12px !important;
+    @media (max-width: 700px) {
+      .s4-inner { grid-template-columns: 1fr; gap: 48px; }
     }
 
-    .data-list {
-      list-style: none;
-    }
-
-    .data-list li {
-      font-size: 14px;
-      color: var(--dim);
-      padding: 5px 0;
-      border-bottom: 1px solid #131318;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.05em;
-    }
-
-    .data-list li:last-child { border-bottom: none; }
+    .s4-text { display: flex; flex-direction: column; gap: 20px; }
 
     .s4-closing-block {
-      padding-top: 28px;
+      padding-top: 24px;
       border-top: 1px solid #1a1a1f;
     }
 
     .s4-closing-block p {
-      font-size: 18px;
-      line-height: 1.7;
-      color: var(--dim);
-    }
-
-    .s4-closing-block em {
+      font-size: 22px;
+      line-height: 1.5;
       color: var(--white);
       font-style: italic;
+    }
+
+    #stick-canvas {
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+      display: block;
     }
 
     /* ── NAV DOTS ── */
@@ -401,27 +375,21 @@
   <div class="s4-inner">
     <div class="s4-text">
       <p class="slide-label">03 / Find the Others</p>
-      <h2>Dig together.<br /><em>Anonymously.</em></h2>
+      <h2>Dig together.</h2>
+      <p>Every track deepens the map.</p>
       <p>
-        The more tracks you add, the richer the map.
-        Cross-reference with everyone else's — without names, without profiles.
+        1996 minimal techno. 2001 deep house.<br />
+        Afternoon. 128 BPM.<br />
+        Someone out there has the same shape.
       </p>
-      <p>
-        1996 minimal techno. 2001 deep house. Afternoon. 128 BPM.<br />
-        Someone out there has the same shape.<br />
-        The map finds them.
-      </p>
-      <p>
-        The more overlap, the more you share.
-        A digging plateau. A shared territory.
-        No follower counts. No feeds.
-        Just the music, and who else was there.
-      </p>
+      <p>The overlap grows. The territory opens.</p>
+
+      <div class="s4-closing-block">
+        <p>Find the others.</p>
+      </div>
     </div>
 
-    <div class="s4-closing-block">
-      <p><em>Find the others.</em></p>
-    </div>
+    <canvas id="stick-canvas" width="340" height="440"></canvas>
   </div>
 </section>
 
@@ -731,6 +699,141 @@
     ctx.fillStyle = 'rgba(200,169,110,0.7)';
     ctx.textAlign = 'center';
     ctx.fillText('YOU', you.x, you.y - breathe - 7);
+
+    t++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ──────────────────────────────────────────
+   SLIDE 4 — stick figure + watch illustration
+────────────────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('stick-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  let t = 0;
+
+  // Person dot position (upper-left area)
+  const px = 110, py = 90;
+  // Watch centre (lower-right area)
+  const wx = 230, wy = 340;
+
+  function drawRounded(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = '#f0ede8';
+    ctx.fillStyle   = '#f0ede8';
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+
+    // ── Cord (organic bezier, gently swaying) ──
+    const sway = Math.sin(t * 0.018) * 10;
+    ctx.beginPath();
+    ctx.moveTo(px + 28, py + 35);               // right arm tip
+    ctx.bezierCurveTo(
+      px + 100 + sway,  py + 10,
+      wx - 80  - sway,  wy - 120,
+      wx,               wy - 44               // top strap entry
+    );
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+
+    // ── Watch ──
+    const ww = 54, wh = 64, wr = 10;
+
+    // Straps
+    ctx.lineWidth = 2.5;
+    drawRounded(wx - 14, wy - wh/2 - 20, 28, 22, 4);
+    ctx.stroke();
+    drawRounded(wx - 14, wy + wh/2 - 2,  28, 22, 4);
+    ctx.stroke();
+
+    // Body
+    ctx.lineWidth = 3.5;
+    drawRounded(wx - ww/2, wy - wh/2, ww, wh, wr);
+    ctx.stroke();
+
+    // Crown (side button)
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(wx + ww/2,     wy - 8);
+    ctx.lineTo(wx + ww/2 + 8, wy - 8);
+    ctx.lineTo(wx + ww/2 + 8, wy + 8);
+    ctx.lineTo(wx + ww/2,     wy + 8);
+    ctx.stroke();
+
+    // Watch face dot
+    ctx.beginPath();
+    ctx.arc(wx, wy, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Subtle time-hand
+    const handAngle = -Math.PI / 2 + t * 0.008;
+    ctx.beginPath();
+    ctx.moveTo(wx, wy);
+    ctx.lineTo(wx + Math.cos(handAngle) * 16, wy + Math.sin(handAngle) * 16);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#060608';
+    ctx.stroke();
+    ctx.strokeStyle = '#f0ede8';
+
+    // ── Stick figure ──
+    ctx.lineWidth = 3.5;
+
+    // Head dot
+    ctx.beginPath();
+    ctx.arc(px, py, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Body
+    ctx.beginPath();
+    ctx.moveTo(px, py + 18);
+    ctx.lineTo(px, py + 62);
+    ctx.stroke();
+
+    // Left arm (hanging natural)
+    ctx.beginPath();
+    ctx.moveTo(px, py + 30);
+    ctx.quadraticCurveTo(px - 40, py + 44, px - 30, py + 68);
+    ctx.stroke();
+
+    // Right arm (to cord — raised slightly)
+    ctx.beginPath();
+    ctx.moveTo(px, py + 30);
+    ctx.quadraticCurveTo(px + 22, py + 22, px + 28, py + 35);
+    ctx.stroke();
+
+    // Dot at wrist (connection point)
+    ctx.beginPath();
+    ctx.arc(px + 28, py + 35, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Legs
+    ctx.beginPath();
+    ctx.moveTo(px, py + 62);
+    ctx.quadraticCurveTo(px - 10, py + 88, px - 22, py + 108);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(px, py + 62);
+    ctx.quadraticCurveTo(px + 10, py + 88, px + 22, py + 108);
+    ctx.stroke();
 
     t++;
     requestAnimationFrame(draw);
