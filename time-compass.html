@@ -257,9 +257,10 @@
 
     #stick-canvas {
       width: 100%;
-      max-width: 340px;
+      max-width: 380px;
       margin: 0 auto;
       display: block;
+      border-radius: 6px;
     }
 
     /* ── NAV DOTS ── */
@@ -389,7 +390,7 @@
       </div>
     </div>
 
-    <canvas id="stick-canvas" width="340" height="440"></canvas>
+    <canvas id="stick-canvas" width="380" height="380"></canvas>
   </div>
 </section>
 
@@ -707,133 +708,118 @@
 })();
 
 /* ──────────────────────────────────────────
-   SLIDE 4 — stick figure + watch illustration
+   SLIDE 4 — movement animation (circle + line + dot)
 ────────────────────────────────────────── */
 (function() {
   const canvas = document.getElementById('stick-canvas');
-  const ctx = canvas.getContext('2d');
+  const ctx    = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
+  const CX = W / 2, CY = H / 2;
+
+  const GREEN = '#2db52d';
+  const BG    = '#edeae0';
+  const R     = 28;   // circle radius
+  const LINE  = 78;   // orientation line length
+
   let t = 0;
+  const ghosts = [];   // { x, y, angle, age }
 
-  // Person dot position (upper-left area)
-  const px = 110, py = 90;
-  // Watch centre (lower-right area)
-  const wx = 230, wy = 340;
-
-  function drawRounded(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
-    ctx.closePath();
+  // Lissajous-like wander that covers the canvas
+  function wanderPos(t) {
+    return {
+      x: CX + Math.sin(t * 0.014)       * (CX - R - 18)
+            + Math.sin(t * 0.033 + 1.2) * (CX - R - 18) * 0.28,
+      y: CY + Math.cos(t * 0.017 + 0.8) * (CY - R - 18)
+            + Math.cos(t * 0.041)        * (CY - R - 18) * 0.28
+    };
   }
 
   function draw() {
-    ctx.clearRect(0, 0, W, H);
+    // ── Background ──
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, W, H);
 
-    ctx.strokeStyle = '#f0ede8';
-    ctx.fillStyle   = '#f0ede8';
+    const cur  = wanderPos(t);
+    const prev = wanderPos(t - 6);
+
+    // Orientation angle: mostly downward, slight lean into velocity
+    const dx = cur.x - prev.x;
+    const dy = cur.y - prev.y;
+    const speed = Math.sqrt(dx*dx + dy*dy);
+    const movAngle = Math.atan2(dy, dx);
+    const angle = Math.PI / 2 + movAngle * 0.22;  // down-biased tilt
+
+    // Record ghost every 18 frames
+    if (t % 18 === 0) {
+      ghosts.push({ x: cur.x, y: cur.y, angle, age: 0 });
+      if (ghosts.length > 14) ghosts.shift();
+    }
+    ghosts.forEach(g => g.age++);
+
+    // ── Ghost circles (trail) ──
+    ghosts.forEach(g => {
+      const alpha = Math.max(0, 0.22 - g.age * 0.013);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = GREEN;
+      ctx.lineWidth   = 1.2;
+
+      // Dashed arc for older ghosts
+      const dashLen = Math.max(2, 8 - g.age * 0.4);
+      ctx.setLineDash([dashLen, dashLen * 1.5]);
+
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, R, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Ghost line
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(g.x, g.y);
+      ctx.lineTo(
+        g.x + Math.cos(g.angle) * LINE * 0.6,
+        g.y + Math.sin(g.angle) * LINE * 0.6
+      );
+      ctx.stroke();
+
+      ctx.restore();
+    });
+
+    // ── Main figure ──
+    ctx.strokeStyle = GREEN;
+    ctx.fillStyle   = GREEN;
     ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
+    ctx.setLineDash([]);
 
-    // ── Cord (organic bezier, gently swaying) ──
-    const sway = Math.sin(t * 0.018) * 10;
+    // Circle — dashed when moving fast, solid when slow
+    ctx.lineWidth = 1.6;
+    if (speed > 2.2) {
+      const dashAmt = Math.min(12, speed * 1.8);
+      ctx.setLineDash([dashAmt, dashAmt * 0.9]);
+    }
     ctx.beginPath();
-    ctx.moveTo(px + 28, py + 35);               // right arm tip
-    ctx.bezierCurveTo(
-      px + 100 + sway,  py + 10,
-      wx - 80  - sway,  wy - 120,
-      wx,               wy - 44               // top strap entry
-    );
-    ctx.lineWidth = 3.5;
+    ctx.arc(cur.x, cur.y, R, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.setLineDash([]);
 
-    // ── Watch ──
-    const ww = 54, wh = 64, wr = 10;
-
-    // Straps
-    ctx.lineWidth = 2.5;
-    drawRounded(wx - 14, wy - wh/2 - 20, 28, 22, 4);
-    ctx.stroke();
-    drawRounded(wx - 14, wy + wh/2 - 2,  28, 22, 4);
-    ctx.stroke();
-
-    // Body
-    ctx.lineWidth = 3.5;
-    drawRounded(wx - ww/2, wy - wh/2, ww, wh, wr);
-    ctx.stroke();
-
-    // Crown (side button)
-    ctx.lineWidth = 2.5;
+    // Center dot
     ctx.beginPath();
-    ctx.moveTo(wx + ww/2,     wy - 8);
-    ctx.lineTo(wx + ww/2 + 8, wy - 8);
-    ctx.lineTo(wx + ww/2 + 8, wy + 8);
-    ctx.lineTo(wx + ww/2,     wy + 8);
-    ctx.stroke();
-
-    // Watch face dot
-    ctx.beginPath();
-    ctx.arc(wx, wy, 7, 0, Math.PI * 2);
+    ctx.arc(cur.x, cur.y, 3.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Subtle time-hand
-    const handAngle = -Math.PI / 2 + t * 0.008;
+    // Orientation line
+    const ex = cur.x + Math.cos(angle) * LINE;
+    const ey = cur.y + Math.sin(angle) * LINE;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(wx, wy);
-    ctx.lineTo(wx + Math.cos(handAngle) * 16, wy + Math.sin(handAngle) * 16);
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#060608';
+    ctx.moveTo(cur.x, cur.y);
+    ctx.lineTo(ex, ey);
     ctx.stroke();
-    ctx.strokeStyle = '#f0ede8';
 
-    // ── Stick figure ──
-    ctx.lineWidth = 3.5;
-
-    // Head dot
+    // Terminal dot
     ctx.beginPath();
-    ctx.arc(px, py, 18, 0, Math.PI * 2);
+    ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
     ctx.fill();
-
-    // Body
-    ctx.beginPath();
-    ctx.moveTo(px, py + 18);
-    ctx.lineTo(px, py + 62);
-    ctx.stroke();
-
-    // Left arm (hanging natural)
-    ctx.beginPath();
-    ctx.moveTo(px, py + 30);
-    ctx.quadraticCurveTo(px - 40, py + 44, px - 30, py + 68);
-    ctx.stroke();
-
-    // Right arm (to cord — raised slightly)
-    ctx.beginPath();
-    ctx.moveTo(px, py + 30);
-    ctx.quadraticCurveTo(px + 22, py + 22, px + 28, py + 35);
-    ctx.stroke();
-
-    // Dot at wrist (connection point)
-    ctx.beginPath();
-    ctx.arc(px + 28, py + 35, 5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Legs
-    ctx.beginPath();
-    ctx.moveTo(px, py + 62);
-    ctx.quadraticCurveTo(px - 10, py + 88, px - 22, py + 108);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(px, py + 62);
-    ctx.quadraticCurveTo(px + 10, py + 88, px + 22, py + 108);
-    ctx.stroke();
 
     t++;
     requestAnimationFrame(draw);
