@@ -334,13 +334,7 @@
   </div>
 
   <div class="s1-content">
-    <p class="eyebrow">A tool for the dancefloor</p>
     <h1>Time<br /><em>Compass</em></h1>
-    <p class="tagline">
-      Time on the dancefloor doesn't move in a line.<br />
-      It stretches. It collapses. It circles back.<br />
-      This is a compass for navigating it.
-    </p>
   </div>
 
   <div class="scroll-hint">scroll</div>
@@ -356,19 +350,8 @@
     </div>
     <div>
       <p class="slide-label">01 / The Interface</p>
-      <h2>A dot.<br />A colour wheel.<br />A map.</h2>
-      <p>
-        The HUD is minimal: <strong>one dot on a dark screen</strong>, surrounded by a living colour wheel.
-        The dot is you. Its position on the map reflects where you are — in tempo, in mood, in time.
-      </p>
-      <p>
-        As the music shifts — as the BPM climbs, as the key turns minor, as the era changes —
-        the dot moves. <strong>You watch yourself move through music space</strong> the way a pilot watches a horizon.
-      </p>
-      <p>
-        Built for Apple Watch. Works in any browser.
-        The mic listens. The map draws itself.
-      </p>
+      <h2>A dot.<br />You.</h2>
+      <p>The dot is where you are — in tempo, in mood, in time.<br />The map draws itself.</p>
     </div>
   </div>
 </section>
@@ -381,44 +364,30 @@
     <div>
       <p class="slide-label">02 / Time as Space</p>
       <h2>Time as Space</h2>
-      <p>
-        The map is (not) arbitrary. You give each direction a meaning.
-        From silence to movement, set your own parameters.
-      </p>
+      <p>The map is (not) arbitrary.<br />What would you put on the axes?</p>
 
       <ul class="axes-list">
         <li>
           <span class="axis-glyph ax-era">○○</span>
-          <div>
-            <strong style="color:#f0ede8">Rings</strong>
-            <div style="margin-top:4px">Any linear metric. Year. Rating 1–10. The 1–12 of a clock. Distance from home. Rings draw the depth of the space.</div>
-          </div>
+          <strong style="color:#f0ede8">Rings</strong>
+          <span>Year · Rating · any 1–12</span>
         </li>
         <li>
           <span class="axis-glyph ax-key" style="font-size:13px">●</span>
-          <div>
-            <strong style="color:#f0ede8">Colour</strong>
-            <div style="margin-top:4px">Mapped to sentiment — composite of key, BPM, energy — or to context: weather, location, the moment you Shazamed it.</div>
-          </div>
+          <strong style="color:#f0ede8">Colour</strong>
+          <span>Key · BPM · sentiment · weather · location</span>
         </li>
         <li>
           <span class="axis-glyph ax-bpm" style="font-size:15px">◉</span>
-          <div>
-            <strong style="color:#f0ede8">Size</strong>
-            <div style="margin-top:4px">The dot expands and contracts. Heart rate. Intensity. Energy level. You feel it before you read it.</div>
-          </div>
+          <strong style="color:#f0ede8">Size</strong>
+          <span>Heart rate · intensity · energy</span>
         </li>
         <li>
           <span class="axis-glyph ax-heart">↗</span>
-          <div>
-            <strong style="color:#f0ede8">Orientation</strong>
-            <div style="margin-top:4px">Direction of travel through the space. Tracers show where you came from and where you're heading.</div>
-          </div>
+          <strong style="color:#f0ede8">Orientation</strong>
+          <span>Direction of travel</span>
         </li>
       </ul>
-      <p style="font-size:12px; color:#555; margin-top:8px; font-family:'Courier New',monospace;">
-        + many more. any data a song carries.
-      </p>
     </div>
 
     <canvas id="map-canvas" width="420" height="420"></canvas>
@@ -431,51 +400,27 @@
 <section id="slide-4">
   <div class="s4-inner">
     <div class="s4-text">
-      <p class="slide-label">03 / The Stick</p>
-      <h2>Your library<br />is a landscape.<br /><em>Dig.</em></h2>
+      <p class="slide-label">03 / Find the Others</p>
+      <h2>Dig together.<br /><em>Anonymously.</em></h2>
       <p>
-        Connect your phone or watch to the stick.
-        The stick is the interface. Different movements surface different tracks —
-        not by algorithm, but by the shape of what you've already listened to.
+        The more tracks you add, the richer the map.
+        Cross-reference with everyone else's — without names, without profiles.
       </p>
       <p>
-        Every track you add gets folded into the map.
-        The stick reads the space around your current position and shows you
-        what lives nearby — similar tempo, same era, related mood.
-        <strong>You're not searching. You're digging.</strong>
+        1996 minimal techno. 2001 deep house. Afternoon. 128 BPM.<br />
+        Someone out there has the same shape.<br />
+        The map finds them.
       </p>
-
-      <div class="data-split">
-        <div>
-          <p class="data-head">Real-time</p>
-          <ul class="data-list">
-            <li>Heart rate</li>
-            <li>Heart rate variability</li>
-            <li>Breathing</li>
-            <li>Footsteps</li>
-          </ul>
-        </div>
-        <div>
-          <p class="data-head">Metadata</p>
-          <ul class="data-list">
-            <li>Artist</li>
-            <li>Rating</li>
-            <li>Year</li>
-            <li>Play history</li>
-          </ul>
-        </div>
-      </div>
+      <p>
+        The more overlap, the more you share.
+        A digging plateau. A shared territory.
+        No follower counts. No feeds.
+        Just the music, and who else was there.
+      </p>
     </div>
 
     <div class="s4-closing-block">
-      <p>
-        This is a tool that connects your <em>experience</em> of music
-        with your <em>memory</em> of it — letting you find the symmetries
-        and patterns in what you listen to, when, and why.
-      </p>
-      <p style="margin-top:16px; font-family:'Courier New',monospace; font-size:11px; letter-spacing:0.15em; color:#444; text-transform:uppercase;">
-        Time is not a line &nbsp;·&nbsp; Time is a space &nbsp;·&nbsp; Navigate it
-      </p>
+      <p><em>Find the others.</em></p>
     </div>
   </div>
 </section>
