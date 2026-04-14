@@ -288,6 +288,143 @@
       background: var(--accent);
       transform: scale(1.5);
     }
+
+    /* ── PLAYER ── */
+    body { padding-bottom: 80px; }
+
+    #tc-player {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 80px;
+      background: #06060a;
+      border-top: 1px solid #18181f;
+      z-index: 200;
+    }
+
+    #tcp-inner {
+      position: relative;
+      height: 100%;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    #tcp-stick-line {
+      position: absolute;
+      left: 40px; right: 40px;
+      top: 44px;
+      height: 1px;
+      background: rgba(240,237,232,0.1);
+      pointer-events: none;
+    }
+
+    .tcp-node {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 180px;
+      transform: translateX(-50%);
+      cursor: default;
+    }
+
+    #tcp-a { left: 28%; }
+    #tcp-b { left: 66%; }
+
+    .tcp-circle {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 26px; height: 26px;
+      border: 1.5px solid rgba(240,237,232,0.35);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .25s;
+    }
+    .tcp-node:hover .tcp-circle { border-color: rgba(240,237,232,0.85); }
+
+    .tcp-cdot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(240,237,232,0.55);
+      transition: background .25s;
+    }
+    .tcp-node:hover .tcp-cdot { background: rgba(240,237,232,1); }
+
+    .tcp-stem {
+      position: absolute;
+      top: 34px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px; height: 10px;
+      background: rgba(240,237,232,0.18);
+    }
+
+    .tcp-label {
+      position: absolute;
+      top: 50px;
+      width: 100%;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tl-artist { color: rgba(240,237,232,0.65); text-transform: uppercase; }
+    .tl-sep    { color: rgba(240,237,232,0.25); margin: 0 5px; }
+    .tl-title  { color: rgba(240,237,232,0.4); font-style: italic; }
+
+    .tcp-popup {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 188px;
+      background: #0d0d12;
+      border: 1px solid #22222c;
+      border-radius: 4px;
+      padding: 14px 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s;
+    }
+    .tcp-node:hover .tcp-popup { opacity: 1; pointer-events: auto; }
+
+    .tcp-pop-artist {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 5px;
+    }
+    .tcp-pop-title {
+      font-size: 13px;
+      color: var(--white);
+      font-style: italic;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .tcp-pop-details {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      color: var(--dim);
+      line-height: 2;
+    }
+    .tcp-pop-link {
+      display: block;
+      margin-top: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: rgba(240,237,232,0.28);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color .2s;
+    }
+    .tcp-pop-link:hover { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -716,8 +853,8 @@
   const W = canvas.width, H = canvas.height;
   const CX = W / 2, CY = H / 2;
 
-  const GREEN = '#2db52d';
-  const BG    = '#edeae0';
+  const GREEN = '#3ddd3d';
+  const BG    = '#060608';
   const R     = 28;   // circle radius
   const LINE  = 78;   // orientation line length
 
@@ -851,6 +988,93 @@
 
   slides.forEach(id => observer.observe(document.querySelector(id)));
 })();
+/* ──────────────────────────────────────────
+   PLAYER — random track set on each load
+────────────────────────────────────────── */
+(function() {
+  const SETS = [
+    [
+      {
+        artist: 'Glob',
+        title: 'Deejay Glob',
+        year: '—', label: 'Glob', style: 'Minimal Techno',
+        bpm: '—', key: '—',
+        url: 'https://www.discogs.com/release/36734497-glob-deejay-glob'
+      },
+      {
+        artist: 'Uniile',
+        title: 'Uniile 2',
+        year: '—', label: '—', style: 'Experimental Electronic',
+        bpm: '—', key: '—',
+        url: 'https://www.discogs.com/release/11916050-Uniile-Uniile-2'
+      }
+    ]
+  ];
+
+  const set = SETS[Math.floor(Math.random() * SETS.length)];
+
+  ['tcp-a', 'tcp-b'].forEach((id, i) => {
+    const node  = document.getElementById(id);
+    const track = set[i];
+
+    node.querySelector('.tl-artist').textContent = track.artist;
+    node.querySelector('.tl-title').textContent  = track.title;
+    node.querySelector('.tcp-pop-artist').textContent = track.artist;
+    node.querySelector('.tcp-pop-title').textContent  = track.title;
+
+    const rows = [
+      track.year   !== '—' ? track.year   : null,
+      track.label  !== '—' ? track.label  : null,
+      track.style,
+      track.bpm    !== '—' ? 'BPM ' + track.bpm : null,
+      track.key    !== '—' ? 'Key  ' + track.key : null,
+    ].filter(Boolean);
+    node.querySelector('.tcp-pop-details').innerHTML = rows.join('<br>');
+
+    const link = node.querySelector('.tcp-pop-link');
+    link.href = track.url;
+  });
+})();
 </script>
+
+<!-- ── PLAYER ── -->
+<div id="tc-player">
+  <div id="tcp-inner">
+    <div class="tcp-node" id="tcp-a">
+      <div class="tcp-popup">
+        <div class="tcp-pop-artist"></div>
+        <div class="tcp-pop-title"></div>
+        <div class="tcp-pop-details"></div>
+        <a class="tcp-pop-link" target="_blank" rel="noopener noreferrer">discogs ↗</a>
+      </div>
+      <div class="tcp-circle"><div class="tcp-cdot"></div></div>
+      <div class="tcp-stem"></div>
+      <div class="tcp-label">
+        <span class="tl-artist"></span>
+        <span class="tl-sep">·</span>
+        <span class="tl-title"></span>
+      </div>
+    </div>
+
+    <div class="tcp-node" id="tcp-b">
+      <div class="tcp-popup">
+        <div class="tcp-pop-artist"></div>
+        <div class="tcp-pop-title"></div>
+        <div class="tcp-pop-details"></div>
+        <a class="tcp-pop-link" target="_blank" rel="noopener noreferrer">discogs ↗</a>
+      </div>
+      <div class="tcp-circle"><div class="tcp-cdot"></div></div>
+      <div class="tcp-stem"></div>
+      <div class="tcp-label">
+        <span class="tl-artist"></span>
+        <span class="tl-sep">·</span>
+        <span class="tl-title"></span>
+      </div>
+    </div>
+
+    <div id="tcp-stick-line"></div>
+  </div>
+</div>
+
 </body>
 </html>
