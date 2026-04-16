@@ -32,17 +32,25 @@ async function fetchPage(page) {
   return res.json();
 }
 
+function extractCatnoNumber(catno) {
+  const match = catno?.match(/\d+/);
+  return match ? parseInt(match[0], 10) : null;
+}
+
 function extractRelease(item) {
-  const info = item.basic_information;
+  const info  = item.basic_information;
+  const catno = info.labels?.[0]?.catno ?? '';
   return {
-    id:          info.id,
-    title:       info.title,
-    artist:      info.artists?.map(a => a.name).join(', ') ?? '',
-    year:        info.year ?? null,
-    genre:       info.genres ?? [],
-    label:       info.labels?.[0]?.name ?? '',
-    catno:       info.labels?.[0]?.catno ?? '',
-    cover_image: info.cover_image ?? '',
+    id:           info.id,
+    title:        info.title,
+    artist:       info.artists?.map(a => a.name).join(', ') ?? '',
+    year:         info.year ?? null,
+    genre:        info.genres ?? [],
+    styles:       info.styles ?? [],
+    label:        info.labels?.[0]?.name ?? '',
+    catno,
+    catno_num:    extractCatnoNumber(catno),
+    cover_image:  info.cover_image ?? '',
   };
 }
 
