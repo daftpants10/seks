@@ -319,6 +319,106 @@
     }
     #hint.show { opacity: 1; }
 
+    /* ── Path strip ── */
+    #path-strip {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 88px;
+      background: #07070b;
+      border-top: 1px solid #111118;
+      display: none;
+      z-index: 80;
+    }
+    #path-strip.show { display: flex; }
+
+    #ps-controls {
+      flex-shrink: 0;
+      width: 130px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 16px;
+      border-right: 1px solid #111118;
+    }
+    .ps-ctrl-label {
+      font-size: 8px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    #ps-slider { width: 100%; accent-color: var(--white); cursor: pointer; }
+    #ps-stop-count { font-size: 9px; color: var(--white); letter-spacing: 0.05em; }
+
+    #ps-cards {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 14px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    #ps-cards::-webkit-scrollbar { display: none; }
+
+    .pc {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 3px;
+      transition: background 0.12s;
+    }
+    .pc:hover { background: rgba(240,237,232,0.04); }
+
+    .pc-cover {
+      width: 46px; height: 46px;
+      border-radius: 2px;
+      object-fit: cover;
+      background: #111118;
+      flex-shrink: 0;
+    }
+    .pc.origin .pc-cover { box-shadow: 0 0 0 1.5px #c8a96e; }
+    .pc.dest   .pc-cover { box-shadow: 0 0 0 1.5px rgba(240,237,232,0.6); }
+    .pc.waypoint .pc-cover { box-shadow: 0 0 0 1px rgba(240,237,232,0.25); }
+
+    .pc-info { min-width: 0; }
+    .pc-title {
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      font-size: 9px;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 88px;
+      line-height: 1.35;
+    }
+    .pc-year  { font-size: 8px; color: var(--dim); letter-spacing: 0.05em; }
+    .pc-style { font-size: 8px; letter-spacing: 0.04em; }
+
+    .pc-arrow {
+      color: #222230;
+      font-size: 12px;
+      margin: 0 6px;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    #ps-journey {
+      position: absolute;
+      top: 6px; left: 148px;
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      color: #2a2a38;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: calc(100% - 180px);
+    }
+
     /* ── Stats ── */
     #stats {
       position: fixed;
@@ -364,13 +464,6 @@
   <button id="path-btn">Path</button>
 </header>
 
-<div id="path-panel">
-  <span class="pp-label">Stops</span>
-  <input type="range" id="path-slider" min="1" max="5" value="1" />
-  <span id="path-count">1 stop</span>
-  <button id="path-clear">Clear</button>
-</div>
-
 <div id="main">
   <div id="side-panel">
     <div class="panel-inner">
@@ -398,6 +491,16 @@
   <div id="canvas-wrap">
     <canvas id="compass"></canvas>
   </div>
+</div>
+
+<div id="path-strip">
+  <div id="ps-controls">
+    <span class="ps-ctrl-label">Stops</span>
+    <input type="range" id="ps-slider" min="1" max="5" value="1" />
+    <span id="ps-stop-count">1 stop</span>
+  </div>
+  <div id="ps-cards"></div>
+  <div id="ps-journey"></div>
 </div>
 
 <div id="hint"></div>
@@ -1007,6 +1110,7 @@ canvas.addEventListener('click', e => {
         computePath();
         render();
         updatePathPanel();
+        renderPathStrip();
       }
     } else {
       S.pathOrigin    = S.hoveredDot.track;
@@ -1014,6 +1118,7 @@ canvas.addEventListener('click', e => {
       S.pathWaypoints = [];
       render();
       updatePathPanel();
+      renderPathStrip();
     }
   } else {
     if (S.hoveredDot) setAnchor(S.hoveredDot.track);
@@ -1056,26 +1161,67 @@ document.getElementById('dir-btn').addEventListener('click', () => {
   applySort();
 });
 
-// ── Path controls ─────────────────────────────────────────────────────────────
-const pathPanel  = document.getElementById('path-panel');
-const pathSlider = document.getElementById('path-slider');
-const pathCount  = document.getElementById('path-count');
+// ── Path strip ────────────────────────────────────────────────────────────────
+const pathStrip  = document.getElementById('path-strip');
+const psSlider   = document.getElementById('ps-slider');
+const psCount    = document.getElementById('ps-stop-count');
+const psCards    = document.getElementById('ps-cards');
+const psJourney  = document.getElementById('ps-journey');
+
+function renderPathStrip() {
+  const seq = pathSequence();
+  const active = S.pathMode && seq.length >= 2;
+  pathStrip.classList.toggle('show', active);
+
+  if (!active) return;
+
+  // Journey label
+  psJourney.textContent = seq
+    .map(t => `${t.styles?.[0] || '?'} ${t.year || '?'}`)
+    .join(' → ');
+
+  // Cards
+  psCards.innerHTML = seq.map((track, i) => {
+    const isOrigin = i === 0;
+    const isDest   = i === seq.length - 1;
+    const cls      = isOrigin ? 'origin' : isDest ? 'dest' : 'waypoint';
+    const hue      = styleHue(track.styles);
+    const arrow    = i < seq.length - 1
+      ? '<span class="pc-arrow">→</span>' : '';
+    return `<div class="pc ${cls}" data-id="${track.id}">
+      <img class="pc-cover" src="${track.cover_image || ''}" alt="" />
+      <div class="pc-info">
+        <div class="pc-title">${track.title}</div>
+        <div class="pc-year">${track.year || '—'}</div>
+        <div class="pc-style" style="color:hsl(${hue},68%,60%)">${track.styles?.[0] || '—'}</div>
+      </div>
+    </div>${arrow}`;
+  }).join('');
+
+  // Hover card → highlight dot on spiral
+  psCards.querySelectorAll('.pc').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      const id    = parseInt(el.dataset.id);
+      const found = S.dots.find(d => d.track.id === id);
+      if (found) { S.hoveredDot = found; render(); }
+    });
+    el.addEventListener('mouseleave', () => {
+      S.hoveredDot = null; render();
+    });
+  });
+}
 
 function updatePathPanel() {
-  const active = S.pathMode && S.pathOrigin && S.pathDest;
-  pathPanel.classList.toggle('show', active);
-  if (active) {
-    const n = S.pathStops;
-    pathCount.textContent = `${n} stop${n > 1 ? 's' : ''}`;
-  }
+  const n = S.pathStops;
+  psCount.textContent  = `${n} stop${n > 1 ? 's' : ''}`;
+  psSlider.value       = n;
+  renderPathStrip();
   // Hint
   if (S.pathMode) {
     if (!S.pathOrigin) {
-      hintEl.textContent = 'Click origin track';
-      hintEl.classList.add('show');
+      hintEl.textContent = 'Click origin track'; hintEl.classList.add('show');
     } else if (!S.pathDest) {
-      hintEl.textContent = 'Shift+click destination';
-      hintEl.classList.add('show');
+      hintEl.textContent = 'Shift+click destination'; hintEl.classList.add('show');
     } else {
       hintEl.classList.remove('show');
     }
@@ -1090,24 +1236,14 @@ document.getElementById('path-btn').addEventListener('click', () => {
   S.dragWpIdx     = null;
   S.snapDot       = null;
   document.getElementById('path-btn').classList.toggle('active', S.pathMode);
-  pathPanel.classList.remove('show');
-  if (!S.pathMode) hintEl.classList.remove('show');
+  if (!S.pathMode) { hintEl.classList.remove('show'); pathStrip.classList.remove('show'); }
   render();
   updatePathPanel();
 });
 
-pathSlider.addEventListener('input', () => {
-  S.pathStops = parseInt(pathSlider.value);
+psSlider.addEventListener('input', () => {
+  S.pathStops = parseInt(psSlider.value);
   computePath();
-  render();
-  updatePathPanel();
-});
-
-document.getElementById('path-clear').addEventListener('click', () => {
-  S.pathOrigin    = null;
-  S.pathDest      = null;
-  S.pathWaypoints = [];
-  pathPanel.classList.remove('show');
   render();
   updatePathPanel();
 });
