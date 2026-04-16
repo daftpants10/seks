@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Compass — Collection Map</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black:  #060608;
+      --white:  #f0ede8;
+      --dim:    #888078;
+      --accent: #c8a96e;
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Courier New', monospace;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 18px 26px 14px;
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #111118;
+    }
+
+    .hdr-title {
+      font-family: 'Georgia', serif;
+      font-size: 17px;
+      font-weight: 400;
+    }
+
+    .hdr-title em { font-style: italic; color: var(--accent); }
+
+    .hdr-sub {
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    /* ── Canvas ── */
+    #canvas-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #compass { cursor: crosshair; display: block; }
+
+    /* ── Tooltip ── */
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: #0d0d12;
+      border: 1px solid #22222c;
+      border-radius: 4px;
+      padding: 12px 14px;
+      width: 196px;
+      opacity: 0;
+      transition: opacity 0.12s;
+      z-index: 100;
+    }
+
+    #tooltip.show { opacity: 1; }
+
+    .tt-artist {
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .tt-title {
+      font-family: 'Georgia', serif;
+      font-size: 13px;
+      font-style: italic;
+      color: var(--white);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .tt-meta {
+      font-size: 10px;
+      color: var(--dim);
+      line-height: 1.9;
+    }
+
+    .gdot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    /* ── Legend ── */
+    #legend {
+      position: fixed;
+      bottom: 22px;
+      left: 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .lg-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .lg-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Stats ── */
+    #stats {
+      position: fixed;
+      bottom: 22px;
+      right: 26px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      text-align: right;
+      line-height: 2;
+    }
+
+    /* ── Upload overlay ── */
+    #upload-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--black);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 200;
+    }
+
+    .ov-label {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .upload-btn {
+      display: inline-block;
+      padding: 10px 28px;
+      border: 1px solid rgba(200,169,110,0.35);
+      color: var(--accent);
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .upload-btn:hover { border-color: var(--accent); }
+
+    #file-input { display: none; }
+
+    .ov-hint {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: rgba(136,128,120,0.45);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="hdr-title">Time <em>Compass</em></span>
+  <span class="hdr-sub">Collection Map</span>
+</header>
+
+<div id="canvas-wrap">
+  <canvas id="compass"></canvas>
+</div>
+
+<div id="tooltip">
+  <div class="tt-artist"></div>
+  <div class="tt-title"></div>
+  <div class="tt-meta"></div>
+</div>
+
+<div id="legend"></div>
+<div id="stats"></div>
+
+<div id="upload-overlay">
+  <p class="ov-label">No collection loaded</p>
+  <label class="upload-btn" for="file-input">Load collection.json</label>
+  <input type="file" id="file-input" accept=".json" />
+  <p class="ov-hint">or run: npm run fetch → data/collection.json</p>
+</div>
+
+<script>
+// ── Genre → hue ──────────────────────────────────────────────────────────────
+const GENRE_HUE = {
+  'Electronic':             220,
+  'House':                  195,
+  'Techno':                 240,
+  'Trance':                 255,
+  'Ambient':                165,
+  'Jazz':                    42,
+  'Funk / Soul':             28,
+  'Funk':                    28,
+  'Soul':                    32,
+  'Rock':                     5,
+  'Hip Hop':                280,
+  'Classical':              285,
+  'Reggae':                 130,
+  'Pop':                    340,
+  'Latin':                   15,
+  'Folk, World, & Country':  85,
+  'Folk':                    85,
+  'Blues':                  215,
+  'Disco':                  320,
+  'Experimental':           160,
+  'Breaks':                 205,
+  'Drum n Bass':            192,
+  'Jungle':                 186,
+  'Garage':                 210,
+  'Dubstep':                250,
+  'Industrial':               0,
+  'New Wave':               310,
+  'Punk':                     5,
+  'Metal':                    5,
+  'R&B':                     28,
+};
+
+function genreHue(genres) {
+  if (!genres?.length) return 45;
+  const g = genres[0];
+  if (GENRE_HUE[g] !== undefined) return GENRE_HUE[g];
+  for (const [k, h] of Object.entries(GENRE_HUE)) {
+    if (g.includes(k) || k.includes(g)) return h;
+  }
+  return 45;
+}
+
+// ── Deterministic jitter ─────────────────────────────────────────────────────
+function rng(n) {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+let collection = [];
+let dots       = [];   // [{ x, y, track }]
+let ringMeta   = [];   // [{ decade, r }]
+let hoveredDot = null;
+let cx = 0, cy = 0;
+
+// ── DOM ──────────────────────────────────────────────────────────────────────
+const canvas   = document.getElementById('compass');
+const ctx      = canvas.getContext('2d');
+const tooltip  = document.getElementById('tooltip');
+const overlay  = document.getElementById('upload-overlay');
+const legendEl = document.getElementById('legend');
+const statsEl  = document.getElementById('stats');
+
+// ── Layout ───────────────────────────────────────────────────────────────────
+function sizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const s = Math.min(wrap.clientWidth, wrap.clientHeight) - 20;
+  canvas.width  = s;
+  canvas.height = s;
+  cx = s / 2;
+  cy = s / 2;
+}
+
+function buildLayout() {
+  // Group by decade — skip tracks without a plausible year
+  const map = {};
+  collection.forEach(t => {
+    const y = t.year;
+    if (!y || y < 1920 || y > 2030) return;
+    const d = Math.floor(y / 10) * 10;
+    (map[d] = map[d] || []).push(t);
+  });
+
+  const decades = Object.keys(map).map(Number).sort((a, b) => a - b);
+  const n = decades.length;
+  if (!n) return;
+
+  const edgePad  = 54;
+  const maxR     = canvas.width / 2 - edgePad;
+  const minR     = Math.max(72, maxR / (n + 1));
+  const step     = n > 1 ? (maxR - minR) / (n - 1) : 0;
+  const bandHalf = Math.max(8, step * 0.28);
+
+  ringMeta = decades.map((decade, i) => ({
+    decade,
+    r: minR + i * step,
+  }));
+
+  dots = [];
+  decades.forEach((decade, i) => {
+    const r = minR + i * step;
+    map[decade].forEach(track => {
+      // Angle: 12 o'clock = start of decade, clockwise through the 10 years
+      const yearFrac  = Math.max(0, Math.min(0.999, (track.year - decade) / 10));
+      const baseAngle = -Math.PI / 2 + yearFrac * Math.PI * 2;
+
+      const seed   = track.id || (decade * 1000 + i);
+      const angle  = baseAngle + (rng(seed)        - 0.5) * 0.055;
+      const radius = r         + (rng(seed + 0.31) - 0.5) * bandHalf * 2;
+
+      dots.push({
+        x: cx + Math.cos(angle) * radius,
+        y: cy + Math.sin(angle) * radius,
+        track,
+      });
+    });
+  });
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  const S = canvas.width;
+  ctx.clearRect(0, 0, S, S);
+  if (!dots.length) return;
+
+  // Rings
+  ringMeta.forEach(({ decade, r }) => {
+    // Circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(200,169,110,0.13)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Year ticks (10 per ring)
+    for (let y = 0; y < 10; y++) {
+      const a = -Math.PI / 2 + (y / 10) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * (r - 5), cy + Math.sin(a) * (r - 5));
+      ctx.lineTo(cx + Math.cos(a) * (r + 5), cy + Math.sin(a) * (r + 5));
+      ctx.strokeStyle = 'rgba(200,169,110,0.07)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Decade label — just inside ring, left of 12 o'clock
+    const la = -Math.PI / 2 - 0.2;
+    ctx.font = '8px Courier New';
+    ctx.fillStyle = 'rgba(200,169,110,0.45)';
+    ctx.textAlign = 'right';
+    ctx.fillText(
+      `${decade}s`,
+      cx + Math.cos(la) * (r - 2),
+      cy + Math.sin(la) * (r - 2) + 3
+    );
+  });
+
+  // Centre point
+  ctx.beginPath();
+  ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(240,237,232,0.22)';
+  ctx.fill();
+
+  // Track dots — non-hovered first, hovered on top
+  dots.forEach(dot => {
+    if (dot === hoveredDot) return;
+    const hue = genreHue(dot.track.genre);
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${hue},70%,62%,0.68)`;
+    ctx.fill();
+  });
+
+  if (hoveredDot) {
+    const hue = genreHue(hoveredDot.track.genre);
+    const grd = ctx.createRadialGradient(hoveredDot.x, hoveredDot.y, 0, hoveredDot.x, hoveredDot.y, 20);
+    grd.addColorStop(0, `hsla(${hue},75%,65%,0.4)`);
+    grd.addColorStop(1, `hsla(${hue},75%,65%,0)`);
+    ctx.beginPath();
+    ctx.arc(hoveredDot.x, hoveredDot.y, 20, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(hoveredDot.x, hoveredDot.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = `hsl(${hue},72%,68%)`;
+    ctx.fill();
+  }
+}
+
+// ── Hover ────────────────────────────────────────────────────────────────────
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  let best = null, bestD = Infinity;
+  dots.forEach(d => {
+    const dx = d.x - mx, dy = d.y - my;
+    const dist = dx * dx + dy * dy;
+    if (dist < bestD) { bestD = dist; best = d; }
+  });
+
+  const hit = bestD < 400 ? best : null; // 20px radius
+
+  if (hit !== hoveredDot) {
+    hoveredDot = hit;
+    render();
+  }
+
+  if (hoveredDot) {
+    const t   = hoveredDot.track;
+    const hue = genreHue(t.genre);
+
+    tooltip.querySelector('.tt-artist').textContent = t.artist || '—';
+    tooltip.querySelector('.tt-title').textContent  = t.title  || '—';
+    tooltip.querySelector('.tt-meta').innerHTML = [
+      t.year  ? String(t.year) : null,
+      t.genre?.length
+        ? `<span class="gdot" style="background:hsl(${hue},70%,62%)"></span>${t.genre[0]}`
+        : null,
+      t.label || null,
+      t.catno ? `<span style="opacity:.55">${t.catno}</span>` : null,
+    ].filter(Boolean).join('<br>');
+
+    let tx = e.clientX + 16;
+    let ty = e.clientY - 10;
+    if (tx + 212 > window.innerWidth)  tx = e.clientX - 212;
+    if (ty + 160 > window.innerHeight) ty = e.clientY - 150;
+
+    tooltip.style.left = `${tx}px`;
+    tooltip.style.top  = `${ty}px`;
+    tooltip.classList.add('show');
+  } else {
+    tooltip.classList.remove('show');
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  hoveredDot = null;
+  tooltip.classList.remove('show');
+  render();
+});
+
+// ── Legend ───────────────────────────────────────────────────────────────────
+function buildLegend() {
+  const counts = {};
+  collection.forEach(t => {
+    const g = t.genre?.[0];
+    if (g) counts[g] = (counts[g] || 0) + 1;
+  });
+
+  legendEl.innerHTML = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 7)
+    .map(([g]) => {
+      const hue = genreHue([g]);
+      return `<div class="lg-item">
+        <div class="lg-dot" style="background:hsl(${hue},70%,62%)"></div>
+        <span>${g}</span>
+      </div>`;
+    }).join('');
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function buildStats() {
+  const years = collection
+    .map(t => t.year)
+    .filter(y => y && y > 1920 && y < 2031);
+  const min = Math.min(...years);
+  const max = Math.max(...years);
+  statsEl.innerHTML = `${collection.length} releases<br>${min}–${max}`;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init(data) {
+  collection = data;
+  sizeCanvas();
+  buildLayout();
+  buildLegend();
+  buildStats();
+  render();
+}
+
+window.addEventListener('resize', () => {
+  if (!collection.length) return;
+  sizeCanvas();
+  buildLayout();
+  render();
+});
+
+// ── Load data ─────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    const res = await fetch('data/collection.json');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    overlay.style.display = 'none';
+    init(data);
+  } catch {
+    overlay.style.display = 'flex';
+  }
+})();
+
+document.getElementById('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      overlay.style.display = 'none';
+      init(data);
+    } catch {
+      alert('Could not parse JSON.');
+    }
+  };
+  reader.readAsText(file);
+});
+</script>
+
+</body>
+</html>
