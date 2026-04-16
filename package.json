@@ -1,0 +1,12 @@
+{
+  "name": "time-compass",
+  "version": "1.0.0",
+  "description": "Time Compass — Discogs collection fetcher for Apple Watch app",
+  "type": "module",
+  "scripts": {
+    "fetch": "node discogs/fetch-collection.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
