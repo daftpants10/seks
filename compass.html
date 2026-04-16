@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Time Compass — Collection Map</title>
+  <title>Time Compass</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --black:  #060608;
-      --white:  #f0ede8;
-      --dim:    #888078;
-      --accent: #c8a96e;
+      --black:    #060608;
+      --white:    #f0ede8;
+      --dim:      #888078;
+      --accent:   #c8a96e;
+      --panel-w:  272px;
+      --header-h: 50px;
     }
 
     body {
@@ -26,27 +28,203 @@
 
     /* ── Header ── */
     header {
-      padding: 18px 26px 14px;
-      display: flex;
-      align-items: baseline;
-      gap: 14px;
+      height: var(--header-h);
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 18px;
       border-bottom: 1px solid #111118;
+      z-index: 50;
     }
+
+    #menu-btn {
+      background: none;
+      border: none;
+      color: var(--dim);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 5px;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+    #menu-btn:hover, #menu-btn.open { color: var(--white); }
 
     .hdr-title {
       font-family: 'Georgia', serif;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 400;
+      flex-shrink: 0;
     }
-
     .hdr-title em { font-style: italic; color: var(--accent); }
 
-    .hdr-sub {
-      font-size: 10px;
-      letter-spacing: 0.22em;
+    #preset-bar {
+      display: flex;
+      gap: 5px;
+      margin-left: auto;
+    }
+
+    .preset-btn {
+      background: none;
+      border: 1px solid #1e1e26;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 5px 11px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.18s;
+    }
+    .preset-btn:hover { border-color: #3a3a48; color: var(--white); }
+    .preset-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(200,169,110,0.06);
+    }
+
+    /* ── Main area ── */
+    #main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Side panel ── */
+    #side-panel {
+      width: 0;
+      flex-shrink: 0;
+      background: #07070b;
+      border-right: 1px solid #111118;
+      overflow: hidden;
+      transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    #side-panel.open { width: var(--panel-w); }
+
+    .panel-inner { width: var(--panel-w); display: flex; flex-direction: column; height: 100%; }
+
+    .panel-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid #111118;
+      flex-shrink: 0;
+    }
+
+    .panel-label {
+      font-size: 8px;
+      letter-spacing: 0.3em;
       text-transform: uppercase;
       color: var(--dim);
+      margin-bottom: 10px;
+    }
+
+    /* Sort */
+    #sort-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+    .sort-btn {
+      background: none;
+      border: 1px solid #1a1a22;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 9px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    .sort-btn:hover { border-color: #2e2e3a; color: var(--white); }
+    .sort-btn.active { border-color: rgba(200,169,110,0.5); color: var(--accent); }
+
+    #dir-btn {
+      background: none;
+      border: none;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      cursor: pointer;
+      margin-left: auto;
+      padding: 4px 0;
+      transition: color 0.15s;
+    }
+    #dir-btn:hover { color: var(--white); }
+
+    /* Style chips */
+    #style-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .chip {
+      background: none;
+      border: 1px solid #1a1a22;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .chip:hover { border-color: #2e2e3a; color: var(--white); }
+    .chip.on { border-color: rgba(200,169,110,0.45); color: var(--accent); }
+
+    /* Track list */
+    #track-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+    #track-list::-webkit-scrollbar { width: 2px; }
+    #track-list::-webkit-scrollbar-thumb { background: #1e1e26; }
+
+    .ti {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 16px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .ti:hover { background: rgba(240,237,232,0.03); }
+    .ti.anchor { background: rgba(200,169,110,0.07); }
+
+    .ti-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    .ti-body { flex: 1; min-width: 0; }
+    .ti-title {
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      font-size: 10px;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.35;
+    }
+    .ti-meta {
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ti-year {
+      font-size: 9px;
+      color: #333342;
+      flex-shrink: 0;
+      letter-spacing: 0.05em;
     }
 
     /* ── Canvas ── */
@@ -57,7 +235,6 @@
       justify-content: center;
       overflow: hidden;
     }
-
     #compass { cursor: crosshair; display: block; }
 
     /* ── Tooltip ── */
@@ -68,79 +245,42 @@
       border: 1px solid #22222c;
       border-radius: 4px;
       padding: 12px 14px;
-      width: 196px;
+      width: 194px;
       opacity: 0;
       transition: opacity 0.12s;
       z-index: 100;
     }
-
     #tooltip.show { opacity: 1; }
+    .tt-artist { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+    .tt-title { font-family: 'Georgia', serif; font-size: 13px; font-style: italic; color: var(--white); line-height: 1.4; margin-bottom: 8px; }
+    .tt-meta { font-size: 10px; color: var(--dim); line-height: 1.9; }
+    .gdot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
 
-    .tt-artist {
-      font-size: 9px;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 4px;
-    }
-
-    .tt-title {
-      font-family: 'Georgia', serif;
-      font-size: 13px;
-      font-style: italic;
-      color: var(--white);
-      line-height: 1.4;
-      margin-bottom: 8px;
-    }
-
-    .tt-meta {
-      font-size: 10px;
-      color: var(--dim);
-      line-height: 1.9;
-    }
-
-    .gdot {
-      display: inline-block;
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      margin-right: 5px;
-      vertical-align: middle;
-    }
-
-    /* ── Legend ── */
-    #legend {
+    /* ── Hint bar ── */
+    #hint {
       position: fixed;
-      bottom: 22px;
-      left: 26px;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-
-    .lg-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       font-size: 9px;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--dim);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
     }
-
-    .lg-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+    #hint.show { opacity: 1; }
 
     /* ── Stats ── */
     #stats {
       position: fixed;
-      bottom: 22px;
-      right: 26px;
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      color: var(--dim);
+      bottom: 20px;
+      right: 22px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: #2a2a36;
       text-align: right;
       line-height: 2;
     }
@@ -157,298 +297,458 @@
       gap: 20px;
       z-index: 200;
     }
-
-    .ov-label {
-      font-size: 11px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--dim);
-    }
-
-    .upload-btn {
-      display: inline-block;
-      padding: 10px 28px;
-      border: 1px solid rgba(200,169,110,0.35);
-      color: var(--accent);
-      font-family: 'Courier New', monospace;
-      font-size: 10px;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-
-    .upload-btn:hover { border-color: var(--accent); }
-
+    .ov-p { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+    .ov-btn { display: inline-block; padding: 10px 28px; border: 1px solid rgba(200,169,110,0.35); color: var(--accent); font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; cursor: pointer; transition: border-color 0.2s; }
+    .ov-btn:hover { border-color: var(--accent); }
+    .ov-hint { font-size: 9px; letter-spacing: 0.1em; color: rgba(136,128,120,0.4); }
     #file-input { display: none; }
-
-    .ov-hint {
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      color: rgba(136,128,120,0.45);
-    }
   </style>
 </head>
 <body>
 
 <header>
+  <button id="menu-btn">≡</button>
   <span class="hdr-title">Time <em>Compass</em></span>
-  <span class="hdr-sub">Collection Map</span>
+  <div id="preset-bar">
+    <button class="preset-btn" data-preset="synchronicity">Sync ±7</button>
+    <button class="preset-btn" data-preset="space">Space</button>
+    <button class="preset-btn" data-preset="year">Year</button>
+    <button class="preset-btn" data-preset="style">Style</button>
+  </div>
 </header>
 
-<div id="canvas-wrap">
-  <canvas id="compass"></canvas>
+<div id="main">
+  <div id="side-panel">
+    <div class="panel-inner">
+
+      <div class="panel-section">
+        <div class="panel-label">Sort</div>
+        <div id="sort-row">
+          <button class="sort-btn active" data-key="year">Year</button>
+          <button class="sort-btn" data-key="style">Style</button>
+          <button class="sort-btn" data-key="label">Label</button>
+          <button class="sort-btn" data-key="title">Title</button>
+          <button id="dir-btn">↑</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Filter Style</div>
+        <div id="style-chips"></div>
+      </div>
+
+      <div id="track-list"></div>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="compass"></canvas>
+  </div>
 </div>
 
+<div id="hint"></div>
 <div id="tooltip">
   <div class="tt-artist"></div>
   <div class="tt-title"></div>
   <div class="tt-meta"></div>
 </div>
-
-<div id="legend"></div>
 <div id="stats"></div>
 
 <div id="upload-overlay">
-  <p class="ov-label">No collection loaded</p>
-  <label class="upload-btn" for="file-input">Load collection.json</label>
+  <p class="ov-p">No collection loaded</p>
+  <label class="ov-btn" for="file-input">Load collection.json</label>
   <input type="file" id="file-input" accept=".json" />
-  <p class="ov-hint">or run: npm run fetch → data/collection.json</p>
+  <p class="ov-hint">run: npm run fetch → data/collection.json</p>
 </div>
 
 <script>
-// ── Genre → hue ──────────────────────────────────────────────────────────────
-const GENRE_HUE = {
-  'Electronic':             220,
-  'House':                  195,
-  'Techno':                 240,
-  'Trance':                 255,
-  'Ambient':                165,
-  'Jazz':                    42,
-  'Funk / Soul':             28,
-  'Funk':                    28,
-  'Soul':                    32,
-  'Rock':                     5,
-  'Hip Hop':                280,
-  'Classical':              285,
-  'Reggae':                 130,
-  'Pop':                    340,
-  'Latin':                   15,
-  'Folk, World, & Country':  85,
-  'Folk':                    85,
-  'Blues':                  215,
-  'Disco':                  320,
-  'Experimental':           160,
-  'Breaks':                 205,
-  'Drum n Bass':            192,
-  'Jungle':                 186,
-  'Garage':                 210,
-  'Dubstep':                250,
-  'Industrial':               0,
-  'New Wave':               310,
-  'Punk':                     5,
-  'Metal':                    5,
-  'R&B':                     28,
+// ── Style → hue ──────────────────────────────────────────────────────────────
+const STYLE_HUE = {
+  'Techno':             240,
+  'Dub Techno':         250,
+  'Deep Techno':        245,
+  'Acid Techno':        232,
+  'Minimal':            210,
+  'House':              195,
+  'Deep House':         185,
+  'Tech House':         200,
+  'Progressive House':  175,
+  'Ambient':            165,
+  'Drone':              155,
+  'Experimental':       160,
+  'Italo-Disco':        320,
+  'Disco':              315,
+  'Pop Rock':           350,
+  'Rock':                 5,
+  'Funk':                28,
+  'Soul':                32,
+  'Jazz':                42,
+  'Hip Hop':            280,
+  'Breaks':             205,
+  'Drum n Bass':        192,
+  'Industrial':           0,
+  'EBM':                 10,
+  'New Wave':           305,
+  'Synth-pop':          290,
+  'Electro':            220,
 };
 
-function genreHue(genres) {
-  if (!genres?.length) return 45;
-  const g = genres[0];
-  if (GENRE_HUE[g] !== undefined) return GENRE_HUE[g];
-  for (const [k, h] of Object.entries(GENRE_HUE)) {
-    if (g.includes(k) || k.includes(g)) return h;
+const SPACE_WORDS = [
+  'orbital','galactic','nebula','lune','atlas','capsule','hyperion',
+  'cosmos','stellar','cosmic','astro','lunar','solar','void','nova',
+  'eclipse','zenith','meteor','pulsar','space',
+];
+
+function styleHue(styles) {
+  if (!styles?.length) return 45;
+  const s = styles[0];
+  if (STYLE_HUE[s] !== undefined) return STYLE_HUE[s];
+  for (const [k, h] of Object.entries(STYLE_HUE)) {
+    if (s.toLowerCase().includes(k.toLowerCase())) return h;
   }
   return 45;
 }
 
-// ── Deterministic jitter ─────────────────────────────────────────────────────
 function rng(n) {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
 }
 
 // ── State ────────────────────────────────────────────────────────────────────
-let collection = [];
-let dots       = [];   // [{ x, y, track }]
-let ringMeta   = [];   // [{ decade, r }]
-let hoveredDot = null;
-let cx = 0, cy = 0;
+const S = {
+  collection:     [],
+  spiralTracks:   [],   // year-sorted + style-filtered → drives canvas
+  listTracks:     [],   // same filter, user-sorted → drives side panel
+  dots:           [],   // { x, y, track }
+  activePreset:   null,
+  anchorTrack:    null,
+  selectedStyles: new Set(),
+  sortKey:        'year',
+  sortDir:        'asc',
+  hoveredDot:     null,
+};
 
 // ── DOM ──────────────────────────────────────────────────────────────────────
-const canvas   = document.getElementById('compass');
-const ctx      = canvas.getContext('2d');
-const tooltip  = document.getElementById('tooltip');
-const overlay  = document.getElementById('upload-overlay');
-const legendEl = document.getElementById('legend');
-const statsEl  = document.getElementById('stats');
+const canvas     = document.getElementById('compass');
+const ctx        = canvas.getContext('2d');
+const tooltip    = document.getElementById('tooltip');
+const overlay    = document.getElementById('upload-overlay');
+const sidePanel  = document.getElementById('side-panel');
+const canvasWrap = document.getElementById('canvas-wrap');
+const trackList  = document.getElementById('track-list');
+const styleChips = document.getElementById('style-chips');
+const hintEl     = document.getElementById('hint');
+const statsEl    = document.getElementById('stats');
 
-// ── Layout ───────────────────────────────────────────────────────────────────
+// ── Spiral layout ─────────────────────────────────────────────────────────────
+const LOOPS  = 3;
+const MIN_R  = 58;
+
 function sizeCanvas() {
-  const wrap = document.getElementById('canvas-wrap');
-  const s = Math.min(wrap.clientWidth, wrap.clientHeight) - 20;
+  const r = canvasWrap.getBoundingClientRect();
+  const s = Math.min(r.width, r.height) - 16;
   canvas.width  = s;
   canvas.height = s;
-  cx = s / 2;
-  cy = s / 2;
 }
 
-function buildLayout() {
-  // Group by decade — skip tracks without a plausible year
-  const map = {};
-  collection.forEach(t => {
-    const y = t.year;
-    if (!y || y < 1920 || y > 2030) return;
-    const d = Math.floor(y / 10) * 10;
-    (map[d] = map[d] || []).push(t);
+function maxR() { return canvas.width / 2 - 48; }
+
+function buildSpiral() {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const n  = S.spiralTracks.length;
+  if (!n) { S.dots = []; return; }
+
+  S.dots = S.spiralTracks.map((track, i) => {
+    const frac  = i / Math.max(n - 1, 1);
+    const theta = frac * LOOPS * Math.PI * 2 - Math.PI / 2;
+    const r     = MIN_R + frac * (maxR() - MIN_R);
+    const seed  = track.id || i;
+    const j     = (rng(seed) - 0.5) * 5;
+
+    return {
+      x: cx + Math.cos(theta) * (r + j),
+      y: cy + Math.sin(theta) * (r + j),
+      track,
+    };
+  });
+}
+
+// ── Preset logic ──────────────────────────────────────────────────────────────
+function matchesPreset(track, anchor) {
+  switch (S.activePreset) {
+    case 'synchronicity': {
+      if (!anchor || track === anchor) return false;
+      const d = Math.abs(track.year - anchor.year);
+      return d >= 6 && d <= 8;
+    }
+    case 'space': {
+      const t = (track.title || '').toLowerCase();
+      return SPACE_WORDS.some(w => t.includes(w));
+    }
+    case 'year': {
+      if (!anchor || track === anchor) return false;
+      return Math.abs(track.year - anchor.year) <= 2;
+    }
+    case 'style': {
+      if (!anchor || track === anchor) return false;
+      const aSet = new Set(anchor.styles || []);
+      return (track.styles || []).some(s => aSet.has(s));
+    }
+    default: return true;
+  }
+}
+
+function isHighlighted(track) {
+  if (!S.activePreset) return true;
+  if (track === S.anchorTrack) return true;
+  if (S.activePreset === 'space') return matchesPreset(track, null);
+  if (!S.anchorTrack) return true; // no anchor yet → show all
+  return matchesPreset(track, S.anchorTrack);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  ctx.clearRect(0, 0, W, H);
+  if (!S.dots.length) return;
+
+  const MR = maxR();
+  const n  = S.spiralTracks.length;
+
+  // Spiral guide
+  ctx.beginPath();
+  for (let i = 0; i <= 500; i++) {
+    const frac  = i / 500;
+    const theta = frac * LOOPS * Math.PI * 2 - Math.PI / 2;
+    const r     = MIN_R + frac * (MR - MIN_R);
+    const x = cx + Math.cos(theta) * r;
+    const y = cy + Math.sin(theta) * r;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = 'rgba(200,169,110,0.05)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Year labels at each decade
+  const years = S.spiralTracks.map(t => t.year).filter(y => y > 0);
+  if (years.length) {
+    const minY = Math.min(...years), maxY = Math.max(...years);
+    ctx.font = '8px Courier New';
+    ctx.fillStyle = 'rgba(200,169,110,0.3)';
+    ctx.textAlign = 'center';
+
+    for (let yr = Math.ceil(minY / 10) * 10; yr <= maxY; yr += 10) {
+      const idx = S.spiralTracks.findIndex(t => t.year >= yr);
+      if (idx < 0) continue;
+      const frac  = idx / Math.max(n - 1, 1);
+      const theta = frac * LOOPS * Math.PI * 2 - Math.PI / 2;
+      const r     = MIN_R + frac * (MR - MIN_R);
+      ctx.fillText(yr,
+        cx + Math.cos(theta) * (r + 11),
+        cy + Math.sin(theta) * (r + 11) + 3
+      );
+    }
+  }
+
+  // Dots — dim first, lit on top
+  S.dots.forEach(dot => {
+    if (dot === S.hoveredDot || dot.track === S.anchorTrack) return;
+    const hue = styleHue(dot.track.styles);
+    const lit = isHighlighted(dot.track);
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${hue},70%,62%,${lit ? 0.72 : 0.07})`;
+    ctx.fill();
   });
 
-  const decades = Object.keys(map).map(Number).sort((a, b) => a - b);
-  const n = decades.length;
-  if (!n) return;
+  // Hovered dot
+  if (S.hoveredDot && S.hoveredDot.track !== S.anchorTrack) {
+    const { x, y } = S.hoveredDot;
+    const hue = styleHue(S.hoveredDot.track.styles);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 18);
+    g.addColorStop(0, `hsla(${hue},75%,65%,0.38)`);
+    g.addColorStop(1, `hsla(${hue},75%,65%,0)`);
+    ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = `hsl(${hue},72%,68%)`; ctx.fill();
+  }
 
-  const edgePad  = 54;
-  const maxR     = canvas.width / 2 - edgePad;
-  const minR     = Math.max(72, maxR / (n + 1));
-  const step     = n > 1 ? (maxR - minR) / (n - 1) : 0;
-  const bandHalf = Math.max(8, step * 0.28);
+  // Anchor dot — gold, on top
+  if (S.anchorTrack) {
+    const dot = S.dots.find(d => d.track === S.anchorTrack);
+    if (dot) {
+      const g = ctx.createRadialGradient(dot.x, dot.y, 0, dot.x, dot.y, 22);
+      g.addColorStop(0, 'rgba(200,169,110,0.5)');
+      g.addColorStop(1, 'rgba(200,169,110,0)');
+      ctx.beginPath(); ctx.arc(dot.x, dot.y, 22, 0, Math.PI * 2);
+      ctx.fillStyle = g; ctx.fill();
+      ctx.beginPath(); ctx.arc(dot.x, dot.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#c8a96e'; ctx.fill();
+    }
+  }
+}
 
-  ringMeta = decades.map((decade, i) => ({
-    decade,
-    r: minR + i * step,
-  }));
+// ── Filter + sort ─────────────────────────────────────────────────────────────
+function applyFilter() {
+  let base = [...S.collection];
 
-  dots = [];
-  decades.forEach((decade, i) => {
-    const r = minR + i * step;
-    map[decade].forEach(track => {
-      // Angle: 12 o'clock = start of decade, clockwise through the 10 years
-      const yearFrac  = Math.max(0, Math.min(0.999, (track.year - decade) / 10));
-      const baseAngle = -Math.PI / 2 + yearFrac * Math.PI * 2;
+  if (S.selectedStyles.size) {
+    base = base.filter(t =>
+      (t.styles || []).some(s => S.selectedStyles.has(s))
+    );
+  }
 
-      const seed   = track.id || (decade * 1000 + i);
-      const angle  = baseAngle + (rng(seed)        - 0.5) * 0.055;
-      const radius = r         + (rng(seed + 0.31) - 0.5) * bandHalf * 2;
+  // Spiral: always chronological
+  S.spiralTracks = [...base].sort((a, b) => (a.year || 0) - (b.year || 0));
 
-      dots.push({
-        x: cx + Math.cos(angle) * radius,
-        y: cy + Math.sin(angle) * radius,
-        track,
-      });
+  applySort(false); // rebuild list without re-filtering
+  buildSpiral();
+  render();
+}
+
+function applySort(rebuildSpiral = true) {
+  S.listTracks = [...S.spiralTracks].sort((a, b) => {
+    let av, bv;
+    switch (S.sortKey) {
+      case 'year':  av = a.year  || 0;        bv = b.year  || 0;        break;
+      case 'style': av = a.styles?.[0] || ''; bv = b.styles?.[0] || ''; break;
+      case 'label': av = a.label || '';       bv = b.label || '';       break;
+      case 'title': av = a.title || '';       bv = b.title || '';       break;
+      default:      av = 0; bv = 0;
+    }
+    const cmp = typeof av === 'number' ? av - bv : av.localeCompare(bv);
+    return S.sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  if (rebuildSpiral) { buildSpiral(); render(); }
+  renderList();
+}
+
+// ── Side panel list ───────────────────────────────────────────────────────────
+function renderList() {
+  // When preset + anchor active, show only matching tracks in list
+  const tracks = (S.activePreset && S.anchorTrack)
+    ? S.listTracks.filter(t => t === S.anchorTrack || matchesPreset(t, S.anchorTrack))
+    : S.listTracks;
+
+  trackList.innerHTML = tracks.map(track => {
+    const hue     = styleHue(track.styles);
+    const isAnch  = track === S.anchorTrack;
+    return `<div class="ti${isAnch ? ' anchor' : ''}" data-id="${track.id}">
+      <div class="ti-dot" style="background:hsl(${hue},70%,62%)"></div>
+      <div class="ti-body">
+        <div class="ti-title">${track.title}</div>
+        <div class="ti-meta">${track.artist}${track.styles?.[0] ? ' · ' + track.styles[0] : ''}</div>
+      </div>
+      <div class="ti-year">${track.year || '—'}</div>
+    </div>`;
+  }).join('');
+
+  trackList.querySelectorAll('.ti').forEach(el => {
+    el.addEventListener('click', () => {
+      const track = S.collection.find(t => t.id === parseInt(el.dataset.id));
+      if (track) setAnchor(track);
     });
   });
 }
 
-// ── Render ───────────────────────────────────────────────────────────────────
-function render() {
-  const S = canvas.width;
-  ctx.clearRect(0, 0, S, S);
-  if (!dots.length) return;
+// ── Style chips ───────────────────────────────────────────────────────────────
+function buildStyleChips() {
+  const counts = {};
+  S.collection.forEach(t => (t.styles || []).forEach(s => {
+    counts[s] = (counts[s] || 0) + 1;
+  }));
 
-  // Rings
-  ringMeta.forEach(({ decade, r }) => {
-    // Circle
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(200,169,110,0.13)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+  styleChips.innerHTML = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 18)
+    .map(([s]) => `<button class="chip" data-s="${s}">${s}</button>`)
+    .join('');
 
-    // Year ticks (10 per ring)
-    for (let y = 0; y < 10; y++) {
-      const a = -Math.PI / 2 + (y / 10) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(a) * (r - 5), cy + Math.sin(a) * (r - 5));
-      ctx.lineTo(cx + Math.cos(a) * (r + 5), cy + Math.sin(a) * (r + 5));
-      ctx.strokeStyle = 'rgba(200,169,110,0.07)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-
-    // Decade label — just inside ring, left of 12 o'clock
-    const la = -Math.PI / 2 - 0.2;
-    ctx.font = '8px Courier New';
-    ctx.fillStyle = 'rgba(200,169,110,0.45)';
-    ctx.textAlign = 'right';
-    ctx.fillText(
-      `${decade}s`,
-      cx + Math.cos(la) * (r - 2),
-      cy + Math.sin(la) * (r - 2) + 3
-    );
+  styleChips.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const s = btn.dataset.s;
+      if (S.selectedStyles.has(s)) { S.selectedStyles.delete(s); btn.classList.remove('on'); }
+      else                          { S.selectedStyles.add(s);    btn.classList.add('on');    }
+      S.anchorTrack = null;
+      applyFilter();
+    });
   });
-
-  // Centre point
-  ctx.beginPath();
-  ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(240,237,232,0.22)';
-  ctx.fill();
-
-  // Track dots — non-hovered first, hovered on top
-  dots.forEach(dot => {
-    if (dot === hoveredDot) return;
-    const hue = genreHue(dot.track.genre);
-    ctx.beginPath();
-    ctx.arc(dot.x, dot.y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${hue},70%,62%,0.68)`;
-    ctx.fill();
-  });
-
-  if (hoveredDot) {
-    const hue = genreHue(hoveredDot.track.genre);
-    const grd = ctx.createRadialGradient(hoveredDot.x, hoveredDot.y, 0, hoveredDot.x, hoveredDot.y, 20);
-    grd.addColorStop(0, `hsla(${hue},75%,65%,0.4)`);
-    grd.addColorStop(1, `hsla(${hue},75%,65%,0)`);
-    ctx.beginPath();
-    ctx.arc(hoveredDot.x, hoveredDot.y, 20, 0, Math.PI * 2);
-    ctx.fillStyle = grd;
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(hoveredDot.x, hoveredDot.y, 5, 0, Math.PI * 2);
-    ctx.fillStyle = `hsl(${hue},72%,68%)`;
-    ctx.fill();
-  }
 }
 
-// ── Hover ────────────────────────────────────────────────────────────────────
+// ── Anchor ────────────────────────────────────────────────────────────────────
+function setAnchor(track) {
+  S.anchorTrack = S.anchorTrack === track ? null : track;
+  renderList();
+  render();
+  updateHint();
+}
+
+function updateHint() {
+  const needsAnchor = ['synchronicity', 'year', 'style'].includes(S.activePreset);
+  if (!S.activePreset) {
+    hintEl.classList.remove('show');
+    return;
+  }
+  if (S.activePreset === 'space') {
+    const n = S.spiralTracks.filter(t => matchesPreset(t, null)).length;
+    hintEl.textContent = `${n} space tracks`;
+    hintEl.classList.add('show');
+    return;
+  }
+  if (!S.anchorTrack) {
+    hintEl.textContent = 'Click a track to set anchor';
+    hintEl.classList.add('show');
+    return;
+  }
+  const matches = S.spiralTracks.filter(t =>
+    t !== S.anchorTrack && matchesPreset(t, S.anchorTrack)
+  );
+  const labels = {
+    synchronicity: `${matches.length} tracks ±7yr from ${S.anchorTrack.year}`,
+    year:          `${matches.length} tracks within ±2yr of ${S.anchorTrack.year}`,
+    style:         `${matches.length} tracks sharing ${S.anchorTrack.styles?.[0] || 'style'}`,
+  };
+  hintEl.textContent = labels[S.activePreset] || '';
+  hintEl.classList.add('show');
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function buildStats() {
+  const yrs = S.collection.map(t => t.year).filter(y => y > 1920);
+  statsEl.innerHTML = `${S.collection.length} releases · ${Math.min(...yrs)}–${Math.max(...yrs)}`;
+}
+
+// ── Hover + click ─────────────────────────────────────────────────────────────
 canvas.addEventListener('mousemove', e => {
   const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
 
   let best = null, bestD = Infinity;
-  dots.forEach(d => {
-    const dx = d.x - mx, dy = d.y - my;
-    const dist = dx * dx + dy * dy;
+  S.dots.forEach(d => {
+    const dist = (d.x - mx) ** 2 + (d.y - my) ** 2;
     if (dist < bestD) { bestD = dist; best = d; }
   });
 
-  const hit = bestD < 400 ? best : null; // 20px radius
+  const hit = bestD < 400 ? best : null;
+  if (hit !== S.hoveredDot) { S.hoveredDot = hit; render(); }
 
-  if (hit !== hoveredDot) {
-    hoveredDot = hit;
-    render();
-  }
-
-  if (hoveredDot) {
-    const t   = hoveredDot.track;
-    const hue = genreHue(t.genre);
-
+  if (S.hoveredDot) {
+    const t   = S.hoveredDot.track;
+    const hue = styleHue(t.styles);
     tooltip.querySelector('.tt-artist').textContent = t.artist || '—';
     tooltip.querySelector('.tt-title').textContent  = t.title  || '—';
     tooltip.querySelector('.tt-meta').innerHTML = [
-      t.year  ? String(t.year) : null,
-      t.genre?.length
-        ? `<span class="gdot" style="background:hsl(${hue},70%,62%)"></span>${t.genre[0]}`
-        : null,
+      t.year ? String(t.year) : null,
+      t.styles?.length ? `<span class="gdot" style="background:hsl(${hue},70%,62%)"></span>${t.styles[0]}` : null,
       t.label || null,
-      t.catno ? `<span style="opacity:.55">${t.catno}</span>` : null,
     ].filter(Boolean).join('<br>');
 
-    let tx = e.clientX + 16;
-    let ty = e.clientY - 10;
-    if (tx + 212 > window.innerWidth)  tx = e.clientX - 212;
-    if (ty + 160 > window.innerHeight) ty = e.clientY - 150;
-
+    let tx = e.clientX + 16, ty = e.clientY - 10;
+    if (tx + 210 > window.innerWidth)  tx = e.clientX - 210;
+    if (ty + 150 > window.innerHeight) ty = e.clientY - 150;
     tooltip.style.left = `${tx}px`;
     tooltip.style.top  = `${ty}px`;
     tooltip.classList.add('show');
@@ -458,59 +758,64 @@ canvas.addEventListener('mousemove', e => {
 });
 
 canvas.addEventListener('mouseleave', () => {
-  hoveredDot = null;
+  S.hoveredDot = null;
   tooltip.classList.remove('show');
   render();
 });
 
-// ── Legend ───────────────────────────────────────────────────────────────────
-function buildLegend() {
-  const counts = {};
-  collection.forEach(t => {
-    const g = t.genre?.[0];
-    if (g) counts[g] = (counts[g] || 0) + 1;
+canvas.addEventListener('click', () => {
+  if (S.hoveredDot) setAnchor(S.hoveredDot.track);
+});
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+document.getElementById('menu-btn').addEventListener('click', () => {
+  const open = sidePanel.classList.toggle('open');
+  document.getElementById('menu-btn').classList.toggle('open', open);
+  setTimeout(() => { sizeCanvas(); buildSpiral(); render(); }, 300);
+});
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = btn.dataset.preset;
+    const toggling = S.activePreset === p;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    S.activePreset = toggling ? null : p;
+    S.anchorTrack  = null;
+    if (!toggling) btn.classList.add('active');
+    renderList();
+    render();
+    updateHint();
   });
+});
 
-  legendEl.innerHTML = Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 7)
-    .map(([g]) => {
-      const hue = genreHue([g]);
-      return `<div class="lg-item">
-        <div class="lg-dot" style="background:hsl(${hue},70%,62%)"></div>
-        <span>${g}</span>
-      </div>`;
-    }).join('');
-}
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    S.sortKey = btn.dataset.key;
+    applySort();
+  });
+});
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
-function buildStats() {
-  const years = collection
-    .map(t => t.year)
-    .filter(y => y && y > 1920 && y < 2031);
-  const min = Math.min(...years);
-  const max = Math.max(...years);
-  statsEl.innerHTML = `${collection.length} releases<br>${min}–${max}`;
-}
+document.getElementById('dir-btn').addEventListener('click', () => {
+  S.sortDir = S.sortDir === 'asc' ? 'desc' : 'asc';
+  document.getElementById('dir-btn').textContent = S.sortDir === 'asc' ? '↑' : '↓';
+  applySort();
+});
+
+window.addEventListener('resize', () => {
+  if (!S.collection.length) return;
+  sizeCanvas(); buildSpiral(); render();
+});
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 function init(data) {
-  collection = data;
-  sizeCanvas();
-  buildLayout();
-  buildLegend();
+  S.collection = data;
+  applyFilter();
+  buildStyleChips();
   buildStats();
-  render();
 }
 
-window.addEventListener('resize', () => {
-  if (!collection.length) return;
-  sizeCanvas();
-  buildLayout();
-  render();
-});
-
-// ── Load data ─────────────────────────────────────────────────────────────────
 (async () => {
   try {
     const res = await fetch('data/collection.json');
@@ -529,12 +834,9 @@ document.getElementById('file-input').addEventListener('change', e => {
   const reader = new FileReader();
   reader.onload = ev => {
     try {
-      const data = JSON.parse(ev.target.result);
       overlay.style.display = 'none';
-      init(data);
-    } catch {
-      alert('Could not parse JSON.');
-    }
+      init(JSON.parse(ev.target.result));
+    } catch { alert('Could not parse JSON.'); }
   };
   reader.readAsText(file);
 });
