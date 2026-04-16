@@ -65,6 +65,51 @@
       margin-left: auto;
     }
 
+    #path-btn {
+      background: none;
+      border: 1px solid #2a2a36;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 5px 13px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.18s;
+      margin-left: 8px;
+    }
+    #path-btn:hover { border-color: #f0ede8; color: var(--white); }
+    #path-btn.active { border-color: var(--white); color: var(--white); background: rgba(240,237,232,0.07); }
+
+    /* ── Path slider panel ── */
+    #path-panel {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      align-items: center;
+      gap: 14px;
+      background: #0d0d12;
+      border: 1px solid #22222c;
+      border-radius: 4px;
+      padding: 10px 18px;
+      z-index: 90;
+      white-space: nowrap;
+    }
+    #path-panel.show { display: flex; }
+    .pp-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); }
+    #path-slider { width: 90px; accent-color: var(--white); cursor: pointer; }
+    #path-count { font-size: 10px; color: var(--white); min-width: 40px; letter-spacing: 0.05em; }
+    #path-clear {
+      background: none; border: none;
+      color: #333342; font-family: 'Courier New', monospace;
+      font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+      cursor: pointer; padding: 0; transition: color 0.15s;
+    }
+    #path-clear:hover { color: var(--dim); }
+
     .preset-btn {
       background: none;
       border: 1px solid #1e1e26;
@@ -316,7 +361,15 @@
     <button class="preset-btn" data-preset="year">Year</button>
     <button class="preset-btn" data-preset="style">Style</button>
   </div>
+  <button id="path-btn">Path</button>
 </header>
+
+<div id="path-panel">
+  <span class="pp-label">Stops</span>
+  <input type="range" id="path-slider" min="1" max="5" value="1" />
+  <span id="path-count">1 stop</span>
+  <button id="path-clear">Clear</button>
+</div>
 
 <div id="main">
   <div id="side-panel">
@@ -416,11 +469,38 @@ function rng(n) {
   return x - Math.floor(x);
 }
 
+// ── Style position spectrum (Y axis in sound space) ──────────────────────────
+const STYLE_POS = {
+  'Ambient': 0, 'Drone': 0.05, 'Experimental': 0.1,
+  'Minimal': 0.2, 'Dub Techno': 0.25, 'Techno': 0.3,
+  'Deep Techno': 0.32, 'Acid Techno': 0.35, 'Electro': 0.4,
+  'Tech House': 0.42, 'House': 0.45, 'Deep House': 0.5,
+  'Progressive House': 0.55, 'Breaks': 0.6, 'Drum n Bass': 0.65,
+  'Disco': 0.7, 'Italo-Disco': 0.72, 'Funk': 0.78,
+  'Soul': 0.8, 'Hip Hop': 0.82, 'Jazz': 0.86,
+  'New Wave': 0.88, 'Rock': 0.9, 'Pop Rock': 0.92,
+  'Industrial': 0.95, 'EBM': 0.97,
+};
+
+function trackPos(track) {
+  const years = S.spiralTracks.map(t => t.year).filter(y => y > 0);
+  const minY = Math.min(...years), maxY = Math.max(...years);
+  const x = ((track.year || minY) - minY) / (maxY - minY || 1);
+  const s = track.styles?.[0];
+  let y = STYLE_POS[s] ?? 0.5;
+  if (y === undefined) {
+    for (const [k, v] of Object.entries(STYLE_POS)) {
+      if (s?.toLowerCase().includes(k.toLowerCase())) { y = v; break; }
+    }
+  }
+  return { x, y: y ?? 0.5 };
+}
+
 // ── State ────────────────────────────────────────────────────────────────────
 const S = {
   collection:     [],
-  spiralTracks:   [],   // year-sorted + style-filtered → drives canvas
-  listTracks:     [],   // same filter, user-sorted → drives side panel
+  spiralTracks:   [],
+  listTracks:     [],
   dots:           [],   // { x, y, track }
   activePreset:   null,
   anchorTrack:    null,
@@ -428,6 +508,14 @@ const S = {
   sortKey:        'year',
   sortDir:        'asc',
   hoveredDot:     null,
+  // path
+  pathMode:       false,
+  pathOrigin:     null,
+  pathDest:       null,
+  pathStops:      1,
+  pathWaypoints:  [],   // intermediate tracks (auto or manually dragged)
+  dragWpIdx:      null, // index into pathWaypoints being dragged
+  snapDot:        null, // candidate dot during drag
 };
 
 // ── DOM ──────────────────────────────────────────────────────────────────────
@@ -508,6 +596,36 @@ function isHighlighted(track) {
   return matchesPreset(track, S.anchorTrack);
 }
 
+// ── Path computation ──────────────────────────────────────────────────────────
+function computePath() {
+  if (!S.pathOrigin || !S.pathDest) { S.pathWaypoints = []; return; }
+  const aPos = trackPos(S.pathOrigin);
+  const dPos = trackPos(S.pathDest);
+  const used = new Set([S.pathOrigin.id, S.pathDest.id]);
+  S.pathWaypoints = [];
+
+  for (let i = 1; i <= S.pathStops; i++) {
+    const t  = i / (S.pathStops + 1);
+    const tx = aPos.x + t * (dPos.x - aPos.x);
+    const ty = aPos.y + t * (dPos.y - aPos.y);
+    let best = null, bestD = Infinity;
+    S.spiralTracks.forEach(track => {
+      if (used.has(track.id)) return;
+      const p = trackPos(track);
+      const d = (p.x - tx) ** 2 + (p.y - ty) ** 2;
+      if (d < bestD) { bestD = d; best = track; }
+    });
+    if (best) { S.pathWaypoints.push(best); used.add(best.id); }
+  }
+}
+
+function pathSequence() {
+  if (!S.pathOrigin) return [];
+  const seq = [S.pathOrigin, ...S.pathWaypoints];
+  if (S.pathDest) seq.push(S.pathDest);
+  return seq;
+}
+
 // ── Render ────────────────────────────────────────────────────────────────────
 function render() {
   const W = canvas.width, H = canvas.height;
@@ -578,7 +696,7 @@ function render() {
   }
 
   // Anchor dot — gold, on top
-  if (S.anchorTrack) {
+  if (S.anchorTrack && !S.pathMode) {
     const dot = S.dots.find(d => d.track === S.anchorTrack);
     if (dot) {
       const g = ctx.createRadialGradient(dot.x, dot.y, 0, dot.x, dot.y, 22);
@@ -589,6 +707,74 @@ function render() {
       ctx.beginPath(); ctx.arc(dot.x, dot.y, 5, 0, Math.PI * 2);
       ctx.fillStyle = '#c8a96e'; ctx.fill();
     }
+  }
+
+  // ── Path ──
+  if (S.pathMode) {
+    const seq = pathSequence();
+    const seqDots = seq.map(t => S.dots.find(d => d.track === t)).filter(Boolean);
+
+    // Snap candidate glow
+    if (S.snapDot) {
+      const g = ctx.createRadialGradient(S.snapDot.x, S.snapDot.y, 0, S.snapDot.x, S.snapDot.y, 16);
+      g.addColorStop(0, 'rgba(240,237,232,0.35)'); g.addColorStop(1, 'rgba(240,237,232,0)');
+      ctx.beginPath(); ctx.arc(S.snapDot.x, S.snapDot.y, 16, 0, Math.PI * 2);
+      ctx.fillStyle = g; ctx.fill();
+    }
+
+    // Catmull-Rom spline through path dots
+    if (seqDots.length >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(seqDots[0].x, seqDots[0].y);
+      for (let i = 0; i < seqDots.length - 1; i++) {
+        const p0 = seqDots[Math.max(i - 1, 0)];
+        const p1 = seqDots[i];
+        const p2 = seqDots[i + 1];
+        const p3 = seqDots[Math.min(i + 2, seqDots.length - 1)];
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+      }
+      ctx.strokeStyle = 'rgba(240,237,232,0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Origin dot — gold
+    if (S.pathOrigin) {
+      const d = S.dots.find(x => x.track === S.pathOrigin);
+      if (d) {
+        ctx.beginPath(); ctx.arc(d.x, d.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#c8a96e'; ctx.fill();
+      }
+    }
+
+    // Destination dot — white
+    if (S.pathDest) {
+      const d = S.dots.find(x => x.track === S.pathDest);
+      if (d) {
+        ctx.beginPath(); ctx.arc(d.x, d.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#f0ede8'; ctx.fill();
+      }
+    }
+
+    // Waypoint dots — draggable, outlined
+    S.pathWaypoints.forEach((track, i) => {
+      const d = S.dots.find(x => x.track === track);
+      if (!d) return;
+      const isDragging = S.dragWpIdx === i;
+      ctx.beginPath(); ctx.arc(d.x, d.y, isDragging ? 7 : 5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(240,237,232,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.beginPath(); ctx.arc(d.x, d.y, isDragging ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(240,237,232,0.15)';
+      ctx.fill();
+    });
   }
 }
 
@@ -735,6 +921,24 @@ canvas.addEventListener('mousemove', e => {
   });
 
   const hit = bestD < 400 ? best : null;
+
+  // During waypoint drag, find snap candidate (exclude origin/dest/existing waypoints)
+  if (S.dragWpIdx !== null) {
+    const excluded = new Set([
+      S.pathOrigin?.id, S.pathDest?.id,
+      ...S.pathWaypoints.map(t => t.id),
+    ]);
+    let snapBest = null, snapD = Infinity;
+    S.dots.forEach(d => {
+      if (excluded.has(d.track.id)) return;
+      const dist = (d.x - mx) ** 2 + (d.y - my) ** 2;
+      if (dist < snapD) { snapD = dist; snapBest = d; }
+    });
+    S.snapDot = snapBest;
+    render();
+    return;
+  }
+
   if (hit !== S.hoveredDot) { S.hoveredDot = hit; render(); }
 
   if (S.hoveredDot) {
@@ -764,12 +968,56 @@ canvas.addEventListener('mousemove', e => {
 
 canvas.addEventListener('mouseleave', () => {
   S.hoveredDot = null;
+  S.snapDot    = null;
+  S.dragWpIdx  = null;
   tooltip.classList.remove('show');
   render();
 });
 
-canvas.addEventListener('click', () => {
-  if (S.hoveredDot) setAnchor(S.hoveredDot.track);
+canvas.addEventListener('mousedown', e => {
+  if (!S.pathMode || !S.pathWaypoints.length) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  S.pathWaypoints.forEach((track, i) => {
+    const d = S.dots.find(x => x.track === track);
+    if (!d) return;
+    if ((d.x - mx) ** 2 + (d.y - my) ** 2 < 144) S.dragWpIdx = i; // 12px
+  });
+});
+
+canvas.addEventListener('mouseup', () => {
+  if (S.dragWpIdx !== null && S.snapDot) {
+    S.pathWaypoints[S.dragWpIdx] = S.snapDot.track;
+    S.snapDot   = null;
+    S.dragWpIdx = null;
+    render();
+    updatePathPanel();
+  } else {
+    S.dragWpIdx = null;
+    S.snapDot   = null;
+  }
+});
+
+canvas.addEventListener('click', e => {
+  if (S.pathMode) {
+    if (!S.hoveredDot) return;
+    if (e.shiftKey) {
+      if (S.hoveredDot.track !== S.pathOrigin) {
+        S.pathDest = S.hoveredDot.track;
+        computePath();
+        render();
+        updatePathPanel();
+      }
+    } else {
+      S.pathOrigin    = S.hoveredDot.track;
+      S.pathDest      = null;
+      S.pathWaypoints = [];
+      render();
+      updatePathPanel();
+    }
+  } else {
+    if (S.hoveredDot) setAnchor(S.hoveredDot.track);
+  }
 });
 
 // ── Controls ──────────────────────────────────────────────────────────────────
@@ -806,6 +1054,62 @@ document.getElementById('dir-btn').addEventListener('click', () => {
   S.sortDir = S.sortDir === 'asc' ? 'desc' : 'asc';
   document.getElementById('dir-btn').textContent = S.sortDir === 'asc' ? '↑' : '↓';
   applySort();
+});
+
+// ── Path controls ─────────────────────────────────────────────────────────────
+const pathPanel  = document.getElementById('path-panel');
+const pathSlider = document.getElementById('path-slider');
+const pathCount  = document.getElementById('path-count');
+
+function updatePathPanel() {
+  const active = S.pathMode && S.pathOrigin && S.pathDest;
+  pathPanel.classList.toggle('show', active);
+  if (active) {
+    const n = S.pathStops;
+    pathCount.textContent = `${n} stop${n > 1 ? 's' : ''}`;
+  }
+  // Hint
+  if (S.pathMode) {
+    if (!S.pathOrigin) {
+      hintEl.textContent = 'Click origin track';
+      hintEl.classList.add('show');
+    } else if (!S.pathDest) {
+      hintEl.textContent = 'Shift+click destination';
+      hintEl.classList.add('show');
+    } else {
+      hintEl.classList.remove('show');
+    }
+  }
+}
+
+document.getElementById('path-btn').addEventListener('click', () => {
+  S.pathMode      = !S.pathMode;
+  S.pathOrigin    = null;
+  S.pathDest      = null;
+  S.pathWaypoints = [];
+  S.dragWpIdx     = null;
+  S.snapDot       = null;
+  document.getElementById('path-btn').classList.toggle('active', S.pathMode);
+  pathPanel.classList.remove('show');
+  if (!S.pathMode) hintEl.classList.remove('show');
+  render();
+  updatePathPanel();
+});
+
+pathSlider.addEventListener('input', () => {
+  S.pathStops = parseInt(pathSlider.value);
+  computePath();
+  render();
+  updatePathPanel();
+});
+
+document.getElementById('path-clear').addEventListener('click', () => {
+  S.pathOrigin    = null;
+  S.pathDest      = null;
+  S.pathWaypoints = [];
+  pathPanel.classList.remove('show');
+  render();
+  updatePathPanel();
 });
 
 window.addEventListener('resize', () => {
