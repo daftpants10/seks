@@ -222,6 +222,23 @@
     .chip:hover { border-color: #2e2e3a; color: var(--white); }
     .chip.on { border-color: rgba(200,169,110,0.45); color: var(--accent); }
 
+    /* ── Palette wheel ── */
+    #palette-section { text-align: center; }
+    #color-wheel { cursor: crosshair; display: block; margin: 4px auto 0; }
+    #palette-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 0 2px;
+    }
+    .pal-chip { display: flex; align-items: center; gap: 8px; }
+    .pal-swatch {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .pal-name { font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); flex: 1; }
+    .pal-count { font-size: 8px; color: #333342; flex-shrink: 0; }
+
     /* Track list */
     #track-list {
       flex: 1;
@@ -493,6 +510,12 @@
         <div id="style-chips"></div>
       </div>
 
+      <div class="panel-section" id="palette-section" style="display:none">
+        <div class="panel-label">Palette — drag to repaint</div>
+        <canvas id="color-wheel" width="220" height="220"></canvas>
+        <div id="palette-chips"></div>
+      </div>
+
       <div id="track-list"></div>
     </div>
   </div>
@@ -570,14 +593,18 @@ const SPACE_WORDS = [
   'eclipse','zenith','meteor','pulsar','space',
 ];
 
-function styleHue(styles) {
-  if (!styles?.length) return 45;
-  const s = styles[0];
+function rawStyleHue(s) {
   if (STYLE_HUE[s] !== undefined) return STYLE_HUE[s];
   for (const [k, h] of Object.entries(STYLE_HUE)) {
     if (s.toLowerCase().includes(k.toLowerCase())) return h;
   }
   return 45;
+}
+
+function styleHue(styles) {
+  if (!styles?.length) return 45;
+  const s = styles[0];
+  return customHues[s] ?? rawStyleHue(s);
 }
 
 function rng(n) {
@@ -611,6 +638,17 @@ function trackPos(track) {
   }
   return { x, y: y ?? 0.5 };
 }
+
+// ── Color palette ─────────────────────────────────────────────────────────────
+const customHues   = {};   // style → hue override (0–360)
+let paletteStyles  = [];   // top-4 styles
+let paletteCounts  = {};   // style → count
+let dragPaletteStyle = null;
+
+const WHEEL_SIZE = 220;
+const OUTER_R    = WHEEL_SIZE / 2 - 8;
+const INNER_R    = OUTER_R - 28;
+const MID_R      = (OUTER_R + INNER_R) / 2;
 
 // ── State ────────────────────────────────────────────────────────────────────
 const S = {
@@ -982,6 +1020,142 @@ function buildStyleChips() {
   });
 }
 
+// ── Palette wheel ─────────────────────────────────────────────────────────────
+function buildPalette() {
+  const counts = {};
+  S.collection.forEach(t => (t.styles || []).forEach(s => {
+    counts[s] = (counts[s] || 0) + 1;
+  }));
+
+  paletteStyles = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([s]) => s);
+  paletteCounts = counts;
+
+  const section = document.getElementById('palette-section');
+  if (!paletteStyles.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  paletteStyles.forEach(s => {
+    if (customHues[s] === undefined) customHues[s] = rawStyleHue(s);
+  });
+
+  drawWheel();
+  renderPaletteChips();
+}
+
+function drawWheel() {
+  const wc = document.getElementById('color-wheel');
+  if (!wc) return;
+  const wctx = wc.getContext('2d');
+  const cx = WHEEL_SIZE / 2, cy = WHEEL_SIZE / 2;
+  wctx.clearRect(0, 0, WHEEL_SIZE, WHEEL_SIZE);
+
+  // Color ring — drawn as thin radial spokes
+  for (let a = 0; a < 360; a++) {
+    const rad = (a - 90) * Math.PI / 180;
+    wctx.beginPath();
+    wctx.moveTo(cx + Math.cos(rad) * INNER_R, cy + Math.sin(rad) * INNER_R);
+    wctx.lineTo(cx + Math.cos(rad) * OUTER_R, cy + Math.sin(rad) * OUTER_R);
+    wctx.strokeStyle = `hsl(${a},68%,60%)`;
+    wctx.lineWidth = 2.2;
+    wctx.stroke();
+  }
+
+  // Dark centre fill
+  wctx.beginPath();
+  wctx.arc(cx, cy, INNER_R - 1, 0, Math.PI * 2);
+  wctx.fillStyle = '#07070b';
+  wctx.fill();
+
+  // Style count label in centre
+  wctx.textAlign = 'center';
+  paletteStyles.forEach((style, i) => {
+    const hue = customHues[style];
+    const cnt = paletteCounts[style] || 0;
+    const y   = cy - 20 + i * 14;
+    wctx.font = '7px Courier New';
+    wctx.fillStyle = `hsl(${hue},68%,60%)`;
+    wctx.fillText(`${style.slice(0, 14)} · ${cnt}`, cx, y);
+  });
+
+  // Style dots on the ring
+  paletteStyles.forEach(style => {
+    const hue = customHues[style];
+    const rad = (hue - 90) * Math.PI / 180;
+    const x   = cx + Math.cos(rad) * MID_R;
+    const y   = cy + Math.sin(rad) * MID_R;
+
+    // Soft glow
+    const g = wctx.createRadialGradient(x, y, 0, x, y, 12);
+    g.addColorStop(0, `hsla(${hue},72%,62%,0.55)`);
+    g.addColorStop(1, `hsla(${hue},72%,62%,0)`);
+    wctx.beginPath(); wctx.arc(x, y, 12, 0, Math.PI * 2);
+    wctx.fillStyle = g; wctx.fill();
+
+    // Dot
+    wctx.beginPath(); wctx.arc(x, y, 7, 0, Math.PI * 2);
+    wctx.fillStyle = `hsl(${hue},68%,60%)`;
+    wctx.fill();
+    wctx.strokeStyle = '#f0ede8';
+    wctx.lineWidth = 1.5;
+    wctx.stroke();
+  });
+}
+
+function renderPaletteChips() {
+  const el = document.getElementById('palette-chips');
+  if (!el) return;
+  el.innerHTML = paletteStyles.map(s => {
+    const hue = customHues[s];
+    const cnt = paletteCounts[s] || 0;
+    return `<div class="pal-chip">
+      <span class="pal-swatch" style="background:hsl(${hue},68%,60%)"></span>
+      <span class="pal-name">${s}</span>
+      <span class="pal-count">${cnt}</span>
+    </div>`;
+  }).join('');
+}
+
+function hitPaletteStyle(mx, my) {
+  const cx = WHEEL_SIZE / 2, cy = WHEEL_SIZE / 2;
+  for (const style of paletteStyles) {
+    const hue = customHues[style];
+    const rad = (hue - 90) * Math.PI / 180;
+    const x   = cx + Math.cos(rad) * MID_R;
+    const y   = cy + Math.sin(rad) * MID_R;
+    if ((mx - x) ** 2 + (my - y) ** 2 < 144) return style;
+  }
+  return null;
+}
+
+// Wheel canvas interactions
+(function () {
+  const wc = document.getElementById('color-wheel');
+  if (!wc) return;
+
+  wc.addEventListener('mousedown', e => {
+    const r  = wc.getBoundingClientRect();
+    dragPaletteStyle = hitPaletteStyle(e.clientX - r.left, e.clientY - r.top);
+  });
+
+  wc.addEventListener('mousemove', e => {
+    if (!dragPaletteStyle) return;
+    const r   = wc.getBoundingClientRect();
+    const mx  = e.clientX - r.left - WHEEL_SIZE / 2;
+    const my  = e.clientY - r.top  - WHEEL_SIZE / 2;
+    const deg = Math.atan2(my, mx) * 180 / Math.PI + 90;
+    customHues[dragPaletteStyle] = ((deg % 360) + 360) % 360;
+    drawWheel();
+    renderPaletteChips();
+    render();
+  });
+
+  wc.addEventListener('mouseup',    () => { dragPaletteStyle = null; });
+  wc.addEventListener('mouseleave', () => { dragPaletteStyle = null; });
+})();
+
 // ── Anchor ────────────────────────────────────────────────────────────────────
 function setAnchor(track) {
   S.anchorTrack = S.anchorTrack === track ? null : track;
@@ -1271,6 +1445,7 @@ function init(data) {
   S.collection = data;
   applyFilter();
   buildStyleChips();
+  buildPalette();
   buildStats();
 }
 
