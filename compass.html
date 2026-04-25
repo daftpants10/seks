@@ -448,6 +448,15 @@
     .ov-btn:hover { border-color: var(--accent); }
     .ov-hint { font-size: 9px; letter-spacing: 0.1em; color: rgba(136,128,120,0.4); }
     #file-input { display: none; }
+    .ov-steps {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: rgba(136,128,120,0.5);
+      line-height: 2.2;
+      text-align: center;
+    }
+    .ov-steps a { color: rgba(200,169,110,0.6); text-decoration: none; }
+    .ov-steps a:hover { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -513,10 +522,14 @@
 <div id="stats"></div>
 
 <div id="upload-overlay">
-  <p class="ov-p">No collection loaded</p>
-  <label class="ov-btn" for="file-input">Load collection.json</label>
-  <input type="file" id="file-input" accept=".json" />
-  <p class="ov-hint">run: npm run fetch → data/collection.json</p>
+  <p class="ov-p">Time Compass</p>
+  <label class="ov-btn" for="file-input">Upload Collection</label>
+  <input type="file" id="file-input" accept=".json,.csv" />
+  <div class="ov-steps">
+    Accepts <strong style="color:rgba(240,237,232,0.4)">Discogs CSV</strong> or <strong style="color:rgba(240,237,232,0.4)">collection.json</strong><br>
+    CSV: <a href="https://www.discogs.com/settings/export" target="_blank" rel="noopener">discogs.com/settings/export</a> → Export Collection<br>
+    JSON: clone repo, add token to .env, run <code style="color:rgba(240,237,232,0.3)">npm run fetch</code>
+  </div>
 </div>
 
 <script>
@@ -1279,12 +1292,65 @@ document.getElementById('file-input').addEventListener('change', e => {
   const reader = new FileReader();
   reader.onload = ev => {
     try {
+      const text = ev.target.result;
+      const data = file.name.endsWith('.csv') ? parseDiscogsCSV(text) : JSON.parse(text);
+      if (!data.length) throw new Error('empty');
       overlay.style.display = 'none';
-      init(JSON.parse(ev.target.result));
-    } catch { alert('Could not parse JSON.'); }
+      init(data);
+    } catch { alert('Could not parse file. Try a Discogs CSV export or collection.json.'); }
   };
   reader.readAsText(file);
 });
+
+// ── CSV parser (Discogs collection export) ────────────────────────────────────
+function parseCSVLine(line) {
+  const out = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (c === ',' && !inQ) { out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+
+function parseDiscogsCSV(text) {
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/^﻿/, ''));
+
+  const col = key => headers.findIndex(h => h.toLowerCase() === key.toLowerCase());
+  const iCatalog  = col('Catalog#');
+  const iArtist   = col('Artist');
+  const iTitle    = col('Title');
+  const iLabel    = col('Label');
+  const iReleased = col('Released') >= 0 ? col('Released') : col('release_year');
+  const iId       = col('release_id');
+
+  return lines.slice(1).map((line, i) => {
+    const v     = parseCSVLine(line).map(s => s.trim());
+    const get   = idx => (idx >= 0 ? v[idx] || '' : '');
+    const catno = get(iCatalog);
+    const year  = parseInt(get(iReleased)) || null;
+    const m     = catno.match(/\d+/);
+    return {
+      id:          parseInt(get(iId)) || (i + 1),
+      title:       get(iTitle),
+      artist:      get(iArtist),
+      year,
+      genre:       [],
+      styles:      [],
+      label:       get(iLabel),
+      catno,
+      catno_num:   m ? parseInt(m[0]) : null,
+      cover_image: '',
+    };
+  }).filter(t => t.title);
+}
 </script>
 
 </body>
