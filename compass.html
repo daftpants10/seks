@@ -601,7 +601,15 @@ function rawStyleHue(s) {
   return 45;
 }
 
-function styleHue(styles) {
+function styleHue(styles, label) {
+  if (S._colorByLabel) {
+    if (!label) return 45;
+    if (customHues[label] !== undefined) return customHues[label];
+    // Deterministic hue from label string
+    let h = 0;
+    for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) % 360;
+    return h;
+  }
   if (!styles?.length) return 45;
   const s = styles[0];
   return customHues[s] ?? rawStyleHue(s);
@@ -828,7 +836,7 @@ function render() {
   // Dots — dim first, lit on top
   S.dots.forEach(dot => {
     if (dot === S.hoveredDot || dot.track === S.anchorTrack) return;
-    const hue = styleHue(dot.track.styles);
+    const hue = styleHue(dot.track.styles, dot.track.label);
     const lit = isHighlighted(dot.track);
     ctx.beginPath();
     ctx.arc(dot.x, dot.y, 3, 0, Math.PI * 2);
@@ -839,7 +847,7 @@ function render() {
   // Hovered dot
   if (S.hoveredDot && S.hoveredDot.track !== S.anchorTrack) {
     const { x, y } = S.hoveredDot;
-    const hue = styleHue(S.hoveredDot.track.styles);
+    const hue = styleHue(S.hoveredDot.track.styles, S.hoveredDot.track.label);
     const g = ctx.createRadialGradient(x, y, 0, x, y, 18);
     g.addColorStop(0, `hsla(${hue},75%,65%,0.38)`);
     g.addColorStop(1, `hsla(${hue},75%,65%,0)`);
@@ -976,7 +984,7 @@ function renderList() {
     : S.listTracks;
 
   trackList.innerHTML = tracks.map(track => {
-    const hue     = styleHue(track.styles);
+    const hue     = styleHue(track.styles, track.label);
     const isAnch  = track === S.anchorTrack;
     return `<div class="ti${isAnch ? ' anchor' : ''}" data-id="${track.id}">
       <div class="ti-dot" style="background:hsl(${hue},70%,62%)"></div>
@@ -1027,6 +1035,18 @@ function buildPalette() {
     counts[s] = (counts[s] || 0) + 1;
   }));
 
+  const hasStyles = Object.keys(counts).length > 0;
+
+  if (!hasStyles) {
+    // CSV upload: no styles — use Label as color axis
+    S.collection.forEach(t => {
+      if (t.label) counts[t.label] = (counts[t.label] || 0) + 1;
+    });
+    S._colorByLabel = true;
+  } else {
+    S._colorByLabel = false;
+  }
+
   paletteStyles = Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4)
@@ -1036,6 +1056,9 @@ function buildPalette() {
   const section = document.getElementById('palette-section');
   if (!paletteStyles.length) { section.style.display = 'none'; return; }
   section.style.display = '';
+
+  document.querySelector('#palette-section .panel-label').textContent =
+    (hasStyles ? 'Palette — drag to repaint' : 'Labels — drag to repaint');
 
   paletteStyles.forEach(s => {
     if (customHues[s] === undefined) customHues[s] = rawStyleHue(s);
@@ -1233,7 +1256,7 @@ canvas.addEventListener('mousemove', e => {
 
   if (S.hoveredDot) {
     const t   = S.hoveredDot.track;
-    const hue = styleHue(t.styles);
+    const hue = styleHue(t.styles, t.label);
     const cover = tooltip.querySelector('.tt-cover');
     cover.src = t.cover_image || '';
     cover.style.display = t.cover_image ? 'block' : 'none';
@@ -1372,7 +1395,7 @@ function renderPathStrip() {
     const isOrigin = i === 0;
     const isDest   = i === seq.length - 1;
     const cls      = isOrigin ? 'origin' : isDest ? 'dest' : 'waypoint';
-    const hue      = styleHue(track.styles);
+    const hue      = styleHue(track.styles, track.label);
     const arrow    = i < seq.length - 1
       ? '<span class="pc-arrow">→</span>' : '';
     return `<div class="pc ${cls}" data-id="${track.id}">
@@ -1477,41 +1500,59 @@ document.getElementById('file-input').addEventListener('change', e => {
   reader.readAsText(file);
 });
 
-// ── CSV parser (Discogs collection export) ────────────────────────────────────
-function parseCSVLine(line) {
-  const out = [];
-  let cur = '', inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') {
-      if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
-      else inQ = !inQ;
-    } else if (c === ',' && !inQ) { out.push(cur); cur = ''; }
-    else cur += c;
-  }
-  out.push(cur);
-  return out;
-}
-
+// ── CSV parser (Discogs collection export — tab-separated) ───────────────────
 function parseDiscogsCSV(text) {
-  const lines = text.trim().split('\n').filter(l => l.trim());
+  // Strip BOM, normalize line endings
+  const clean = text.replace(/^﻿/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = clean.split('\n').filter(l => l.trim());
   if (lines.length < 2) return [];
-  const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/^﻿/, ''));
 
+  // Detect separator: tab-separated (Discogs default) or comma-separated
+  const sep = lines[0].includes('\t') ? '\t' : ',';
+
+  function splitLine(line) {
+    if (sep === '\t') return line.split('\t').map(s => s.trim());
+    // Comma: handle quoted fields
+    const out = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (c === ',' && !inQ) { out.push(cur); cur = ''; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out.map(s => s.trim());
+  }
+
+  const headers = splitLine(lines[0]).map(h => h.replace(/^﻿/, ''));
   const col = key => headers.findIndex(h => h.toLowerCase() === key.toLowerCase());
-  const iCatalog  = col('Catalog#');
-  const iArtist   = col('Artist');
-  const iTitle    = col('Title');
-  const iLabel    = col('Label');
-  const iReleased = col('Released') >= 0 ? col('Released') : col('release_year');
-  const iId       = col('release_id');
+
+  const iCatalog    = col('Catalog#');
+  const iArtist     = col('Artist');
+  const iTitle      = col('Title');
+  const iLabel      = col('Label');
+  const iFormat     = col('Format');
+  const iRating     = col('Rating');
+  const iReleased   = col('Released') >= 0 ? col('Released') : col('release_year');
+  const iId         = col('release_id');
+  const iDateAdded  = col('Date Added');
 
   return lines.slice(1).map((line, i) => {
-    const v     = parseCSVLine(line).map(s => s.trim());
-    const get   = idx => (idx >= 0 ? v[idx] || '' : '');
-    const catno = get(iCatalog);
-    const year  = parseInt(get(iReleased)) || null;
-    const m     = catno.match(/\d+/);
+    const v   = splitLine(line);
+    const get = idx => (idx >= 0 ? v[idx] || '' : '');
+
+    const catno  = get(iCatalog);
+    const year   = parseInt(get(iReleased)) || null;
+    const m      = catno.match(/\d+/);
+    const rating = parseFloat(get(iRating)) || 0;
+
+    // Parse date_added to a timestamp for spree detection
+    const dateRaw   = get(iDateAdded);
+    const dateAdded = dateRaw ? new Date(dateRaw).getTime() : null;
+
     return {
       id:          parseInt(get(iId)) || (i + 1),
       title:       get(iTitle),
@@ -1520,8 +1561,11 @@ function parseDiscogsCSV(text) {
       genre:       [],
       styles:      [],
       label:       get(iLabel),
+      format:      get(iFormat),
+      rating,
       catno,
       catno_num:   m ? parseInt(m[0]) : null,
+      date_added:  dateAdded,
       cover_image: '',
     };
   }).filter(t => t.title);
