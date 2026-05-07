@@ -1,0 +1,12 @@
+{
+  "name": "the-8-relay",
+  "version": "1.0.0",
+  "description": "WebSocket relay for The 8 biometric movement experience",
+  "main": "relay.js",
+  "scripts": {
+    "start": "node relay.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

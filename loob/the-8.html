@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>the 8 ⦿-⦿</title>
+  <style>
+    :root {
+      --zone-color: #444;
+      --zone-dim:   rgba(68,68,68,0.15);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: ui-monospace, 'Menlo', 'Consolas', monospace;
+      overflow: hidden;
+      height: 100vh; width: 100vw;
+      user-select: none;
+    }
+
+    /* ── Camera ── */
+    #cam {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* mirror */
+      opacity: 0.75;
+    }
+
+    /* ── Zone glow border ── */
+    #glow {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      border: 3px solid var(--zone-color);
+      box-shadow:
+        0 0 40px var(--zone-color) inset,
+        0 0 80px var(--zone-dim)   inset;
+      transition: border-color 1.5s ease, box-shadow 1.5s ease;
+      z-index: 10;
+    }
+
+    /* ── Start overlay ── */
+    #start {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 24px;
+      z-index: 100;
+      cursor: pointer;
+    }
+    #start h1 { font-size: clamp(28px, 5vw, 52px); font-weight: 700; letter-spacing: -0.02em; }
+    #start p  { color: #888; font-size: 14px; letter-spacing: 0.1em; }
+    #start .tap { font-size: 13px; color: #555; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 12px; }
+
+    /* ── Top bar ── */
+    #top {
+      position: fixed; top: 0; left: 0; right: 0;
+      padding: 20px 28px 60px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+      z-index: 20;
+      display: flex; align-items: flex-start; justify-content: space-between;
+    }
+    #alpha-num {
+      font-size: clamp(52px, 9vw, 96px);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--zone-color);
+      transition: color 1.5s ease;
+      letter-spacing: -0.04em;
+    }
+    #alpha-sub { margin-top: 4px; }
+    #zone-label {
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      color: var(--zone-color);
+      transition: color 1.5s ease;
+    }
+    #playback-status {
+      font-size: 12px;
+      color: #666;
+      margin-top: 6px;
+      letter-spacing: 0.1em;
+    }
+    #ws-status {
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 0.08em;
+      text-align: right;
+      padding-top: 4px;
+    }
+    #mock-badge {
+      font-size: 10px;
+      background: #333;
+      color: #888;
+      border-radius: 3px;
+      padding: 2px 6px;
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    /* ── Out-of-zone warning ── */
+    #warning {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(14px, 2.5vw, 22px);
+      letter-spacing: 0.2em;
+      color: #ff8800;
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 25;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    /* ── Bottom panel ── */
+    #bottom {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.78);
+      backdrop-filter: blur(10px);
+      padding: 14px 20px 20px;
+      z-index: 20;
+    }
+    #waveform {
+      width: 100%; height: 70px;
+      display: block;
+    }
+    #progress-track {
+      margin-top: 10px;
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    #progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--zone-color);
+      transition: width 0.8s linear, background 1.5s ease;
+      border-radius: 2px;
+    }
+    #phase-bar {
+      margin-top: 8px;
+      height: 3px;
+      display: flex;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    #labels-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 7px;
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 0.08em;
+    }
+    #song-pct {
+      font-size: 11px;
+      color: #666;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Completion overlay ── */
+    #complete {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92);
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 18px;
+      z-index: 200;
+    }
+    #complete h2 { font-size: clamp(32px, 6vw, 64px); font-weight: 700; color: #00ff88; letter-spacing: -0.02em; }
+    #complete p  { color: #666; font-size: 13px; letter-spacing: 0.12em; }
+  </style>
+</head>
+<body>
+
+<video id="cam" autoplay playsinline muted></video>
+<div id="glow"></div>
+
+<!-- Start -->
+<div id="start">
+  <h1>⦿-⦿</h1>
+  <p>stay fractal · mine the track</p>
+  <div class="tap">tap anywhere to begin</div>
+</div>
+
+<!-- Top bar -->
+<div id="top">
+  <div>
+    <div id="alpha-num">—</div>
+    <div id="alpha-sub">
+      <div id="zone-label">CONNECTING</div>
+      <div id="playback-status">○ waiting</div>
+    </div>
+  </div>
+  <div>
+    <div id="ws-status">○ no signal</div>
+    <div id="mock-badge" style="display:none">MOCK MODE</div>
+  </div>
+</div>
+
+<!-- Warning -->
+<div id="warning">LEAVING ADAPTIVE ZONE</div>
+
+<!-- Bottom panel -->
+<div id="bottom">
+  <canvas id="waveform"></canvas>
+  <div id="progress-track">
+    <div id="progress-fill"></div>
+  </div>
+  <div id="phase-bar"></div>
+  <div id="labels-row">
+    <span id="phase-labels"></span>
+    <span id="song-pct">0%</span>
+  </div>
+</div>
+
+<!-- Completion -->
+<div id="complete">
+  <h2>mined ⦿</h2>
+  <p>track fully unlocked</p>
+  <p id="session-stats" style="margin-top:12px; font-size:11px;"></p>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// Config
+// ═══════════════════════════════════════════════════════════════
+const SONG_DURATION    = 240  // seconds (4 minutes)
+const SLOWDOWN_AFTER   = 15   // seconds out of zone before vinyl starts
+const FULLY_STOPPED    = 20   // seconds more to reach rate = 0
+const DFA_LOW          = 0.75
+const DFA_HIGH         = 1.0
+const HISTORY_SECONDS  = 60
+const SAMPLES_PER_SEC  = 4
+
+const ZONES = [
+  { name: 'CHAOS',    min: 0,    max: 0.5,  color: '#ff2200' },
+  { name: 'TENSION',  min: 0.5,  max: 0.75, color: '#ff8800' },
+  { name: 'ADAPTIVE', min: 0.75, max: 1.0,  color: '#00ff88' },
+  { name: 'STABLE',   min: 1.0,  max: 1.25, color: '#0088ff' },
+  { name: 'RIGID',    min: 1.25, max: 2.0,  color: '#aa44ff' },
+]
+
+function getZone(alpha) {
+  return ZONES.find(z => alpha >= z.min && alpha < z.max) ?? ZONES[0]
+}
+
+// ═══════════════════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════════════════
+let started        = false
+let dfaAlpha       = null
+let currentZone    = ZONES[2]   // start assuming adaptive
+let outOfZoneSec   = 0
+let songProgress   = 0          // effective seconds played
+let lastTick       = null
+let mockMode       = false
+let mockT          = 0
+
+const dfaHistory   = []         // { t, v } pairs
+const phaseTime    = {}
+ZONES.forEach(z => phaseTime[z.name] = 0)
+
+// ═══════════════════════════════════════════════════════════════
+// Camera
+// ═══════════════════════════════════════════════════════════════
+const camEl = document.getElementById('cam')
+
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    })
+    camEl.srcObject = stream
+  } catch(e) {
+    console.warn('Camera unavailable:', e.message)
+    camEl.style.display = 'none'
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Audio — 120 BPM looping metronome with vinyl slowdown
+// ═══════════════════════════════════════════════════════════════
+let audioCtx, metroSource, lowpass, masterGain
+let currentPlaybackRate = 1.0
+
+function buildMetronomeBuffer(ctx) {
+  const bpm      = 120
+  const beats    = 8              // 2 bars
+  const beatSecs = 60 / bpm       // 0.5s
+  const loopSecs = beatSecs * beats
+  const sr       = ctx.sampleRate
+  const nSamples = Math.floor(loopSecs * sr)
+  const buf      = ctx.createBuffer(2, nSamples, sr)
+  const L        = buf.getChannelData(0)
+  const R        = buf.getChannelData(1)
+
+  for (let b = 0; b < beats; b++) {
+    const onset    = Math.floor(b * beatSecs * sr)
+    const isDown   = b % 4 === 0
+    const freq     = isDown ? 880 : 440
+    const amp      = isDown ? 0.65 : 0.35
+    const clickLen = Math.floor(0.022 * sr)
+
+    for (let i = 0; i < clickLen && (onset + i) < nSamples; i++) {
+      const t   = i / sr
+      const env = Math.exp(-t * 90)
+      const s   = Math.sin(2 * Math.PI * freq * t) * env * amp
+      L[onset + i] += s
+      R[onset + i] += s
+    }
+  }
+  return buf
+}
+
+function initAudio() {
+  audioCtx  = new (window.AudioContext || window.webkitAudioContext)()
+  lowpass   = audioCtx.createBiquadFilter()
+  masterGain = audioCtx.createGain()
+
+  lowpass.type            = 'lowpass'
+  lowpass.frequency.value = 20000
+  masterGain.gain.value   = 0.85
+
+  lowpass.connect(masterGain)
+  masterGain.connect(audioCtx.destination)
+
+  const buf  = buildMetronomeBuffer(audioCtx)
+  metroSource = audioCtx.createBufferSource()
+  metroSource.buffer = buf
+  metroSource.loop   = true
+  metroSource.connect(lowpass)
+  metroSource.start()
+}
+
+function setRate(rate, rampSecs) {
+  rate = Math.max(0.005, Math.min(1.0, rate))
+  const now = audioCtx.currentTime
+
+  metroSource.playbackRate.cancelScheduledValues(now)
+  metroSource.playbackRate.setValueAtTime(metroSource.playbackRate.value, now)
+  metroSource.playbackRate.linearRampToValueAtTime(rate, now + rampSecs)
+
+  // Low-pass closes as rate drops — authentic vinyl sound
+  const filterHz = 300 + rate * 19700
+  lowpass.frequency.cancelScheduledValues(now)
+  lowpass.frequency.setValueAtTime(lowpass.frequency.value, now)
+  lowpass.frequency.linearRampToValueAtTime(filterHz, now + rampSecs)
+
+  currentPlaybackRate = rate
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WebSocket — SomaSync relay
+// ═══════════════════════════════════════════════════════════════
+let ws = null
+let wsConnected = false
+let wsFallbackTimer = null
+
+function parseSoma(raw) {
+  try {
+    const d = JSON.parse(raw)
+    // Try common field names — log once to console so we see the real format
+    const val = d.alpha ?? d.dfaAlpha ?? d.dfa_alpha ?? d.fractalIndex
+                ?? d.fractal_index ?? d.value ?? d.dfa
+    if (val != null) return parseFloat(val)
+    // If no known field found, log the keys
+    console.log('SomaSync keys:', Object.keys(d), '— adjust parseSoma() if needed')
+  } catch {
+    console.log('SomaSync raw:', raw)
+  }
+  return null
+}
+
+function connectWS() {
+  const host = window.location.hostname || 'localhost'
+  const url  = `ws://${host}:${window.location.port || 3000}`
+  ws = new WebSocket(url)
+
+  ws.onopen = () => {
+    wsConnected = true
+    mockMode = false
+    clearTimeout(wsFallbackTimer)
+    document.getElementById('ws-status').textContent  = '● live'
+    document.getElementById('ws-status').style.color  = '#00ff88'
+    document.getElementById('mock-badge').style.display = 'none'
+    console.log('WS connected')
+  }
+
+  ws.onmessage = e => {
+    const val = parseSoma(e.data)
+    if (val !== null && val > 0.2 && val < 2.0) {
+      dfaAlpha = val
+    }
+  }
+
+  ws.onclose = () => {
+    wsConnected = false
+    document.getElementById('ws-status').textContent = '○ no signal'
+    document.getElementById('ws-status').style.color = '#555'
+    enableMock()
+    setTimeout(connectWS, 4000) // retry
+  }
+
+  ws.onerror = () => ws.close()
+}
+
+function enableMock() {
+  if (mockMode) return
+  mockMode = true
+  document.getElementById('mock-badge').style.display = 'inline-block'
+  console.log('Mock mode — generating synthetic DFA alpha')
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Mock DFA alpha — realistic HRV-like signal
+// ═══════════════════════════════════════════════════════════════
+function mockDFA(dt) {
+  mockT += dt
+  // Slow oscillation that dips in and out of adaptive zone
+  const base  = 0.875 + Math.sin(mockT * 0.18) * 0.18 + Math.sin(mockT * 0.07) * 0.08
+  const noise = (Math.random() - 0.5) * 0.04
+  return Math.max(0.35, Math.min(1.5, base + noise))
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Waveform renderer
+// ═══════════════════════════════════════════════════════════════
+const wfCanvas = document.getElementById('waveform')
+const wfCtx    = wfCanvas.getContext('2d')
+
+function resizeWaveform() {
+  wfCanvas.width  = wfCanvas.offsetWidth * devicePixelRatio
+  wfCanvas.height = wfCanvas.offsetHeight * devicePixelRatio
+}
+
+function drawWaveform() {
+  const w = wfCanvas.width, h = wfCanvas.height
+  wfCtx.clearRect(0, 0, w, h)
+
+  const toY = a => h - (Math.min(Math.max(a, 0), 1.5) / 1.5) * h
+
+  // Zone bands
+  ZONES.forEach(z => {
+    wfCtx.fillStyle = z.color + '28'
+    const y1 = toY(Math.min(z.max, 1.5))
+    const y2 = toY(z.min)
+    wfCtx.fillRect(0, y1, w, y2 - y1)
+  })
+
+  // Zone separator lines
+  ;[0.5, 0.75, 1.0, 1.25].forEach(a => {
+    wfCtx.strokeStyle = 'rgba(255,255,255,0.07)'
+    wfCtx.lineWidth   = 1
+    wfCtx.beginPath()
+    wfCtx.moveTo(0, toY(a)); wfCtx.lineTo(w, toY(a))
+    wfCtx.stroke()
+  })
+
+  if (dfaHistory.length < 2) return
+
+  // History line
+  wfCtx.strokeStyle = 'rgba(255,255,255,0.9)'
+  wfCtx.lineWidth   = 2 * devicePixelRatio
+  wfCtx.lineJoin    = 'round'
+  wfCtx.lineCap     = 'round'
+  wfCtx.beginPath()
+  dfaHistory.forEach((v, i) => {
+    const x = (i / (dfaHistory.length - 1)) * w
+    const y = toY(v)
+    i === 0 ? wfCtx.moveTo(x, y) : wfCtx.lineTo(x, y)
+  })
+  wfCtx.stroke()
+
+  // Current marker (▶ triangle on right edge)
+  if (dfaAlpha != null) {
+    const cy = toY(dfaAlpha)
+    const s  = 8 * devicePixelRatio
+    wfCtx.fillStyle = '#fff'
+    wfCtx.beginPath()
+    wfCtx.moveTo(w - s * 1.8, cy - s)
+    wfCtx.lineTo(w,            cy)
+    wfCtx.lineTo(w - s * 1.8, cy + s)
+    wfCtx.closePath()
+    wfCtx.fill()
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Phase accumulation bar
+// ═══════════════════════════════════════════════════════════════
+function drawPhaseBar() {
+  const total = Object.values(phaseTime).reduce((a, b) => a + b, 0)
+  if (total === 0) return
+
+  const bar    = document.getElementById('phase-bar')
+  const labels = document.getElementById('phase-labels')
+  bar.innerHTML = ''
+
+  ZONES.forEach(z => {
+    const pct = (phaseTime[z.name] / total) * 100
+    if (pct < 0.5) return
+    const seg = document.createElement('div')
+    seg.style.cssText = `width:${pct}%; background:${z.color}; opacity:0.6;`
+    bar.appendChild(seg)
+  })
+
+  // Labels: show top 2 zones by time
+  const sorted = [...ZONES].sort((a, b) => phaseTime[b.name] - phaseTime[a.name])
+  labels.textContent = sorted
+    .filter(z => phaseTime[z.name] > 2)
+    .slice(0, 3)
+    .map(z => `${z.name} ${Math.round(phaseTime[z.name])}s`)
+    .join('  ·  ')
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Main loop
+// ═══════════════════════════════════════════════════════════════
+let lastHistorySample = 0
+
+function tick(ts) {
+  if (!started) { requestAnimationFrame(tick); return }
+
+  const now = Date.now()
+  const dt  = lastTick ? Math.min((now - lastTick) / 1000, 0.1) : 0.016
+  lastTick  = now
+
+  // DFA alpha source
+  if (mockMode) dfaAlpha = mockDFA(dt)
+
+  if (dfaAlpha == null) { requestAnimationFrame(tick); return }
+
+  // History sample (throttled)
+  if (now - lastHistorySample > 1000 / SAMPLES_PER_SEC) {
+    dfaHistory.push(dfaAlpha)
+    if (dfaHistory.length > HISTORY_SECONDS * SAMPLES_PER_SEC) dfaHistory.shift()
+    lastHistorySample = now
+  }
+
+  // Zone
+  currentZone = getZone(dfaAlpha)
+  const inZone = dfaAlpha >= DFA_LOW && dfaAlpha < DFA_HIGH
+
+  // Phase time accumulation
+  phaseTime[currentZone.name] += dt
+
+  // Zone gate logic
+  if (inZone) {
+    outOfZoneSec = Math.max(0, outOfZoneSec - dt * 1.5)
+    if (currentPlaybackRate < 0.99) setRate(1.0, 3.0)
+  } else {
+    outOfZoneSec += dt
+    if (outOfZoneSec > SLOWDOWN_AFTER) {
+      const excess  = outOfZoneSec - SLOWDOWN_AFTER
+      const target  = 1.0 - Math.min(1, excess / FULLY_STOPPED)
+      setRate(target, 0.4)
+    }
+  }
+
+  // Song progress (advances proportional to current rate)
+  if (!document.getElementById('complete').style.display || document.getElementById('complete').style.display === 'none') {
+    songProgress += dt * Math.max(0, currentPlaybackRate)
+  }
+
+  // ── UI updates ──────────────────────────────────────────────
+
+  // DFA alpha number
+  const alphaEl = document.getElementById('alpha-num')
+  alphaEl.textContent = dfaAlpha.toFixed(3)
+
+  // Zone label + colors
+  document.getElementById('zone-label').textContent = currentZone.name
+  document.documentElement.style.setProperty('--zone-color', currentZone.color)
+  document.documentElement.style.setProperty('--zone-dim', currentZone.color + '26')
+
+  // Playback status
+  const statusEl = document.getElementById('playback-status')
+  if (currentPlaybackRate > 0.95) {
+    statusEl.textContent = '▶ playing'
+    statusEl.style.color = '#888'
+  } else if (currentPlaybackRate > 0.1) {
+    statusEl.textContent = '◌ slowing...'
+    statusEl.style.color = '#ff8800'
+  } else {
+    statusEl.textContent = '■ stopped'
+    statusEl.style.color = '#ff2200'
+  }
+
+  // Out-of-zone warning
+  const warnEl  = document.getElementById('warning')
+  const warnPct = Math.max(0, Math.min(1, (outOfZoneSec - 8) / 7))
+  warnEl.style.opacity = warnPct > 0 ? warnPct.toFixed(2) : 0
+  if (outOfZoneSec > SLOWDOWN_AFTER) {
+    warnEl.textContent = 'LEAVING ADAPTIVE ZONE — music slowing'
+  } else if (outOfZoneSec > 8) {
+    warnEl.textContent = 'LEAVING ADAPTIVE ZONE'
+  }
+
+  // Progress bar
+  const pct = Math.min(1, songProgress / SONG_DURATION)
+  document.getElementById('progress-fill').style.width = (pct * 100).toFixed(1) + '%'
+  document.getElementById('song-pct').textContent = Math.floor(pct * 100) + '%'
+
+  // Waveform
+  drawWaveform()
+  drawPhaseBar()
+
+  // Completion
+  if (songProgress >= SONG_DURATION) {
+    const el = document.getElementById('complete')
+    el.style.display = 'flex'
+    const adaptive = Math.round(phaseTime['ADAPTIVE'])
+    const total    = Math.round(Object.values(phaseTime).reduce((a,b) => a+b, 0))
+    document.getElementById('session-stats').textContent =
+      `adaptive zone: ${adaptive}s of ${total}s total`
+  }
+
+  requestAnimationFrame(tick)
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Start
+// ═══════════════════════════════════════════════════════════════
+window.addEventListener('resize', resizeWaveform)
+resizeWaveform()
+startCamera()
+
+// Auto-enable mock after 6s if WS never connects
+wsFallbackTimer = setTimeout(() => {
+  if (!wsConnected) enableMock()
+}, 6000)
+
+connectWS()
+requestAnimationFrame(tick)
+
+document.getElementById('start').addEventListener('click', () => {
+  if (started) return
+  initAudio()
+  started = true
+  document.getElementById('start').style.display = 'none'
+})
+
+// Complete overlay — tap to reset for next participant
+document.getElementById('complete').addEventListener('click', () => {
+  songProgress = 0
+  outOfZoneSec = 0
+  ZONES.forEach(z => phaseTime[z.name] = 0)
+  dfaHistory.length = 0
+  document.getElementById('complete').style.display = 'none'
+  setRate(1.0, 1)
+})
+</script>
+</body>
+</html>
