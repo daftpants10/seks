@@ -367,12 +367,14 @@ let wsFallbackTimer = null
 function parseSoma(raw) {
   try {
     const d = JSON.parse(raw)
-    // Try common field names — log once to console so we see the real format
-    const val = d.alpha ?? d.dfaAlpha ?? d.dfa_alpha ?? d.fractalIndex
-                ?? d.fractal_index ?? d.value ?? d.dfa
+    // SomaSync OSC bundle format: {bundle: [{address:"/dfa", value:0.95}, ...]}
+    if (Array.isArray(d.bundle)) {
+      const dfa = d.bundle.find(b => b.address === '/dfa')
+      if (dfa != null) return parseFloat(dfa.value)
+    }
+    // Fallback: flat fields
+    const val = d.alpha ?? d.dfaAlpha ?? d.dfa_alpha ?? d.fractalIndex ?? d.value ?? d.dfa
     if (val != null) return parseFloat(val)
-    // If no known field found, log the keys
-    console.log('SomaSync keys:', Object.keys(d), '— adjust parseSoma() if needed')
   } catch {
     console.log('SomaSync raw:', raw)
   }
