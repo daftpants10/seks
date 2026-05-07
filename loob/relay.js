@@ -19,9 +19,18 @@ const HTTP_PORT = 3000
 const SOMA_PORT = 8765
 const HTML_FILE = path.join(__dirname, 'the-8.html')
 
+const AUDIO_EXTS = ['.mp3', '.wav', '.ogg', '.m4a', '.flac']
+function findTrack() {
+  try {
+    return fs.readdirSync(__dirname).find(f => AUDIO_EXTS.includes(path.extname(f).toLowerCase()))
+  } catch { return null }
+}
+
 // ── HTTP + browser WebSocket ──────────────────────────────────────────────────
 const httpServer = http.createServer((req, res) => {
-  if (req.url === '/' || req.url === '/the-8' || req.url === '/the-8.html') {
+  const urlPath = req.url.split('?')[0]
+
+  if (urlPath === '/' || urlPath === '/the-8' || urlPath === '/the-8.html') {
     try {
       const html = fs.readFileSync(HTML_FILE, 'utf8')
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
@@ -29,6 +38,25 @@ const httpServer = http.createServer((req, res) => {
     } catch {
       res.writeHead(500); res.end('Could not read the-8.html')
     }
+  } else if (urlPath === '/track') {
+    const track = findTrack()
+    if (!track) { res.writeHead(404); res.end('no audio file in loob/'); return }
+    const filePath = path.join(__dirname, track)
+    const stat     = fs.statSync(filePath)
+    const mime     = { '.mp3':'audio/mpeg', '.wav':'audio/wav', '.ogg':'audio/ogg', '.m4a':'audio/mp4', '.flac':'audio/flac' }
+    const ct       = mime[path.extname(track).toLowerCase()] || 'audio/mpeg'
+    const range    = req.headers.range
+    if (range) {
+      const [startStr, endStr] = range.replace(/bytes=/, '').split('-')
+      const start = parseInt(startStr, 10)
+      const end   = endStr ? parseInt(endStr, 10) : stat.size - 1
+      res.writeHead(206, { 'Content-Range': `bytes ${start}-${end}/${stat.size}`, 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1, 'Content-Type': ct })
+      fs.createReadStream(filePath, { start, end }).pipe(res)
+    } else {
+      res.writeHead(200, { 'Content-Length': stat.size, 'Content-Type': ct, 'Accept-Ranges': 'bytes' })
+      fs.createReadStream(filePath).pipe(res)
+    }
+    console.log(`🎵 serving: ${track}`)
   } else {
     res.writeHead(404); res.end('not found')
   }

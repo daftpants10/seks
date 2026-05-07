@@ -5,176 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>the 8 ⦿-⦿</title>
   <style>
-    :root {
-      --zone-color: #444;
-      --zone-dim:   rgba(68,68,68,0.15);
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --zone: #00ff88; --zone-dim: rgba(0,255,136,0.12); }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#000; color:#fff; font-family:ui-monospace,'Menlo',monospace; overflow:hidden; height:100vh; width:100vw; user-select:none; }
 
-    body {
-      background: #000;
-      color: #fff;
-      font-family: ui-monospace, 'Menlo', 'Consolas', monospace;
-      overflow: hidden;
-      height: 100vh; width: 100vw;
-      user-select: none;
-    }
+    #cam { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); opacity:0.7; }
 
-    /* ── Camera ── */
-    #cam {
-      position: fixed; inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1); /* mirror */
-      opacity: 0.75;
-    }
+    #glow { position:fixed; inset:0; pointer-events:none; border:3px solid var(--zone); box-shadow:0 0 50px var(--zone) inset, 0 0 100px var(--zone-dim) inset; transition:border-color 2s ease, box-shadow 2s ease; z-index:10; }
 
-    /* ── Zone glow border ── */
-    #glow {
-      position: fixed; inset: 0;
-      pointer-events: none;
-      border: 3px solid var(--zone-color);
-      box-shadow:
-        0 0 40px var(--zone-color) inset,
-        0 0 80px var(--zone-dim)   inset;
-      transition: border-color 1.5s ease, box-shadow 1.5s ease;
-      z-index: 10;
-    }
+    /* Three.js canvas injected at z-index 15 by JS */
 
-    /* ── Start overlay ── */
-    #start {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.88);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 24px;
-      z-index: 100;
-      cursor: pointer;
-    }
-    #start h1 { font-size: clamp(28px, 5vw, 52px); font-weight: 700; letter-spacing: -0.02em; }
-    #start p  { color: #888; font-size: 14px; letter-spacing: 0.1em; }
-    #start .tap { font-size: 13px; color: #555; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 12px; }
+    #start { position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; z-index:100; cursor:pointer; }
+    #start h1 { font-size:clamp(32px,6vw,64px); font-weight:700; letter-spacing:-0.02em; }
+    #start .sub { color:#555; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; }
+    #loading { color:#444; font-size:11px; letter-spacing:0.15em; margin-top:8px; }
 
-    /* ── Top bar ── */
-    #top {
-      position: fixed; top: 0; left: 0; right: 0;
-      padding: 20px 28px 60px;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
-      z-index: 20;
-      display: flex; align-items: flex-start; justify-content: space-between;
-    }
-    #alpha-num {
-      font-size: clamp(52px, 9vw, 96px);
-      font-weight: 700;
-      line-height: 1;
-      color: var(--zone-color);
-      transition: color 1.5s ease;
-      letter-spacing: -0.04em;
-    }
-    #alpha-sub { margin-top: 4px; }
-    #zone-label {
-      font-size: 13px;
-      letter-spacing: 0.18em;
-      color: var(--zone-color);
-      transition: color 1.5s ease;
-    }
-    #playback-status {
-      font-size: 12px;
-      color: #666;
-      margin-top: 6px;
-      letter-spacing: 0.1em;
-    }
-    #ws-status {
-      font-size: 11px;
-      color: #555;
-      letter-spacing: 0.08em;
-      text-align: right;
-      padding-top: 4px;
-    }
-    #mock-badge {
-      font-size: 10px;
-      background: #333;
-      color: #888;
-      border-radius: 3px;
-      padding: 2px 6px;
-      margin-top: 4px;
-      display: inline-block;
-    }
+    #top { position:fixed; top:0; left:0; right:0; padding:22px 28px 80px; background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent); z-index:20; display:flex; align-items:flex-start; justify-content:space-between; }
 
-    /* ── Out-of-zone warning ── */
-    #warning {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: clamp(14px, 2.5vw, 22px);
-      letter-spacing: 0.2em;
-      color: #ff8800;
-      opacity: 0;
-      transition: opacity 0.5s;
-      z-index: 25;
-      text-align: center;
-      pointer-events: none;
-    }
+    #alpha-num { font-size:clamp(56px,10vw,104px); font-weight:700; line-height:1; color:var(--zone); transition:color 2s ease; letter-spacing:-0.04em; }
+    #zone-word { font-size:clamp(13px,2vw,18px); letter-spacing:0.22em; color:var(--zone); transition:color 2s ease; margin-top:2px; text-transform:lowercase; }
+    #play-state { font-size:11px; color:#555; margin-top:6px; letter-spacing:0.1em; }
+    #ws-dot { font-size:11px; color:#444; text-align:right; }
+    #mock-tag { font-size:10px; background:#222; color:#666; border-radius:3px; padding:2px 6px; margin-top:3px; display:none; }
 
-    /* ── Bottom panel ── */
-    #bottom {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(0,0,0,0.78);
-      backdrop-filter: blur(10px);
-      padding: 14px 20px 20px;
-      z-index: 20;
-    }
-    #waveform {
-      width: 100%; height: 70px;
-      display: block;
-    }
-    #progress-track {
-      margin-top: 10px;
-      height: 4px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    #progress-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--zone-color);
-      transition: width 0.8s linear, background 1.5s ease;
-      border-radius: 2px;
-    }
-    #phase-bar {
-      margin-top: 8px;
-      height: 3px;
-      display: flex;
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    #labels-row {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 7px;
-      font-size: 10px;
-      color: #555;
-      letter-spacing: 0.08em;
-    }
-    #song-pct {
-      font-size: 11px;
-      color: #666;
-      letter-spacing: 0.1em;
-    }
+    #bottom { position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.76); backdrop-filter:blur(12px); padding:14px 20px 22px; z-index:20; }
+    #waveform { width:100%; height:68px; display:block; }
+    #prog-track { margin-top:10px; height:4px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; }
+    #prog-fill { height:100%; width:0%; background:var(--zone); transition:width 0.8s linear, background 2s ease; border-radius:2px; }
+    #bottom-row { display:flex; justify-content:space-between; margin-top:7px; font-size:10px; color:#555; letter-spacing:0.08em; }
+    #phase-bar { margin-top:6px; height:3px; display:flex; border-radius:2px; overflow:hidden; }
 
-    /* ── Completion overlay ── */
-    #complete {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.92);
-      display: none;
-      flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 18px;
-      z-index: 200;
-    }
-    #complete h2 { font-size: clamp(32px, 6vw, 64px); font-weight: 700; color: #00ff88; letter-spacing: -0.02em; }
-    #complete p  { color: #666; font-size: 13px; letter-spacing: 0.12em; }
+    #complete { position:fixed; inset:0; background:rgba(0,0,0,0.93); display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:200; cursor:pointer; }
+    #complete h2 { font-size:clamp(36px,7vw,72px); font-weight:700; color:#00ff88; letter-spacing:-0.02em; }
+    #complete p { color:#555; font-size:12px; letter-spacing:0.12em; }
   </style>
 </head>
 <body>
@@ -182,478 +45,421 @@
 <video id="cam" autoplay playsinline muted></video>
 <div id="glow"></div>
 
-<!-- Start -->
 <div id="start">
   <h1>⦿-⦿</h1>
-  <p>stay fractal · mine the track</p>
-  <div class="tap">tap anywhere to begin</div>
+  <div class="sub">stay fractal · mine the track</div>
+  <div id="loading">loading track…</div>
 </div>
 
-<!-- Top bar -->
 <div id="top">
   <div>
     <div id="alpha-num">—</div>
-    <div id="alpha-sub">
-      <div id="zone-label">CONNECTING</div>
-      <div id="playback-status">○ waiting</div>
-    </div>
+    <div id="zone-word">—</div>
+    <div id="play-state">○ waiting</div>
   </div>
   <div>
-    <div id="ws-status">○ no signal</div>
-    <div id="mock-badge" style="display:none">MOCK MODE</div>
+    <div id="ws-dot">○ no signal</div>
+    <div id="mock-tag">MOCK</div>
   </div>
 </div>
 
-<!-- Warning -->
-<div id="warning">LEAVING ADAPTIVE ZONE</div>
-
-<!-- Bottom panel -->
 <div id="bottom">
   <canvas id="waveform"></canvas>
-  <div id="progress-track">
-    <div id="progress-fill"></div>
-  </div>
+  <div id="prog-track"><div id="prog-fill"></div></div>
   <div id="phase-bar"></div>
-  <div id="labels-row">
+  <div id="bottom-row">
     <span id="phase-labels"></span>
     <span id="song-pct">0%</span>
   </div>
 </div>
 
-<!-- Completion -->
 <div id="complete">
   <h2>mined ⦿</h2>
-  <p>track fully unlocked</p>
-  <p id="session-stats" style="margin-top:12px; font-size:11px;"></p>
+  <p>track complete</p>
+  <p id="complete-stats" style="font-size:11px;margin-top:10px;color:#444;"></p>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
 <script>
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // Config
-// ═══════════════════════════════════════════════════════════════
-const SONG_DURATION    = 240  // seconds (4 minutes)
-const SLOWDOWN_AFTER   = 15   // seconds out of zone before vinyl starts
-const FULLY_STOPPED    = 20   // seconds more to reach rate = 0
-const DFA_LOW          = 0.75
-const DFA_HIGH         = 1.0
-const HISTORY_SECONDS  = 60
-const SAMPLES_PER_SEC  = 4
+// ═══════════════════════════════════════════════════════
+const DFA_LOW  = 0.75
+const DFA_HIGH = 1.0
+const SLOWDOWN_AFTER  = 15   // s out of zone before vinyl starts
+const FULLY_STOPPED   = 20   // s more to reach silence
+const HISTORY_SECS    = 60
+const HISTORY_RATE    = 4    // samples/s
+
+let SONG_DURATION = 240      // overwritten once track loads
 
 const ZONES = [
-  { name: 'CHAOS',    min: 0,    max: 0.5,  color: '#ff2200' },
-  { name: 'TENSION',  min: 0.5,  max: 0.75, color: '#ff8800' },
-  { name: 'ADAPTIVE', min: 0.75, max: 1.0,  color: '#00ff88' },
-  { name: 'STABLE',   min: 1.0,  max: 1.25, color: '#0088ff' },
-  { name: 'RIGID',    min: 1.25, max: 2.0,  color: '#aa44ff' },
+  { name:'CHAOS',    min:0,    max:0.5,  color:'#ff2200' },
+  { name:'TENSION',  min:0.5,  max:0.75, color:'#ff8800' },
+  { name:'ADAPTIVE', min:0.75, max:1.0,  color:'#00ff88' },
+  { name:'STABLE',   min:1.0,  max:1.25, color:'#0088ff' },
+  { name:'RIGID',    min:1.25, max:2.0,  color:'#aa44ff' },
 ]
+function getZone(a) { return ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0] }
 
-function getZone(alpha) {
-  return ZONES.find(z => alpha >= z.min && alpha < z.max) ?? ZONES[0]
-}
-
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // State
-// ═══════════════════════════════════════════════════════════════
-let started        = false
-let dfaAlpha       = null
-let currentZone    = ZONES[2]   // start assuming adaptive
-let outOfZoneSec   = 0
-let songProgress   = 0          // effective seconds played
-let lastTick       = null
-let mockMode       = false
-let mockT          = 0
-
-const dfaHistory   = []         // { t, v } pairs
-const phaseTime    = {}
-ZONES.forEach(z => phaseTime[z.name] = 0)
-
-// ═══════════════════════════════════════════════════════════════
-// Camera
-// ═══════════════════════════════════════════════════════════════
-const camEl = document.getElementById('cam')
-
-async function startCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false
-    })
-    camEl.srcObject = stream
-  } catch(e) {
-    console.warn('Camera unavailable:', e.message)
-    camEl.style.display = 'none'
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Audio — 120 BPM looping metronome with vinyl slowdown
-// ═══════════════════════════════════════════════════════════════
-let audioCtx, metroSource, lowpass, masterGain
+// ═══════════════════════════════════════════════════════
+let started = false, dfaAlpha = null, currentZone = ZONES[2]
+let outOfZoneSec = 0, songProgress = 0, lastTick = null
+let mockMode = false, mockT = 0, wsConnected = false
+const dfaHistory = []
+const phaseTime  = {}; ZONES.forEach(z => phaseTime[z.name] = 0)
+let lastHistorySample = 0
 let currentPlaybackRate = 1.0
 
-function buildMetronomeBuffer(ctx) {
-  const bpm      = 120
-  const beats    = 8              // 2 bars
-  const beatSecs = 60 / bpm       // 0.5s
-  const loopSecs = beatSecs * beats
-  const sr       = ctx.sampleRate
-  const nSamples = Math.floor(loopSecs * sr)
-  const buf      = ctx.createBuffer(2, nSamples, sr)
-  const L        = buf.getChannelData(0)
-  const R        = buf.getChannelData(1)
+// ═══════════════════════════════════════════════════════
+// Camera
+// ═══════════════════════════════════════════════════════
+navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280} }, audio:false })
+  .then(s => document.getElementById('cam').srcObject = s)
+  .catch(() => document.getElementById('cam').style.display = 'none')
 
-  for (let b = 0; b < beats; b++) {
-    const onset    = Math.floor(b * beatSecs * sr)
-    const isDown   = b % 4 === 0
-    const freq     = isDown ? 880 : 440
-    const amp      = isDown ? 0.65 : 0.35
-    const clickLen = Math.floor(0.022 * sr)
+// ═══════════════════════════════════════════════════════
+// Audio
+// ═══════════════════════════════════════════════════════
+let audioCtx, lowpass, masterGain, trackSource, metroSource, metroBuffer
+let trackArrayBuffer = null, trackLoaded = false
 
-    for (let i = 0; i < clickLen && (onset + i) < nSamples; i++) {
-      const t   = i / sr
-      const env = Math.exp(-t * 90)
-      const s   = Math.sin(2 * Math.PI * freq * t) * env * amp
-      L[onset + i] += s
-      R[onset + i] += s
+// Pre-fetch track in background (before user gesture)
+fetch('/track').then(r => {
+  if (!r.ok) throw new Error('no track')
+  return r.arrayBuffer()
+}).then(buf => {
+  trackArrayBuffer = buf
+  document.getElementById('loading').textContent = 'tap to begin'
+}).catch(() => {
+  document.getElementById('loading').textContent = 'tap to begin'
+})
+
+function buildMetronome(ctx) {
+  const sr = ctx.sampleRate, beats = 8, bSecs = 60/120
+  const buf = ctx.createBuffer(2, Math.floor(bSecs*beats*sr), sr)
+  const L = buf.getChannelData(0), R = buf.getChannelData(1)
+  for (let b=0; b<beats; b++) {
+    const onset = Math.floor(b*bSecs*sr)
+    const freq = b%4===0 ? 880 : 440, amp = b%4===0 ? 0.6 : 0.3
+    const len = Math.floor(0.022*sr)
+    for (let i=0; i<len && onset+i<buf.length; i++) {
+      const s = Math.sin(2*Math.PI*freq*(i/sr)) * Math.exp(-i/sr*90) * amp
+      L[onset+i] += s; R[onset+i] += s
     }
   }
   return buf
 }
 
-function initAudio() {
+async function initAudio() {
   audioCtx  = new (window.AudioContext || window.webkitAudioContext)()
   lowpass   = audioCtx.createBiquadFilter()
   masterGain = audioCtx.createGain()
+  lowpass.type = 'lowpass'; lowpass.frequency.value = 20000
+  masterGain.gain.value = 0.9
+  lowpass.connect(masterGain); masterGain.connect(audioCtx.destination)
 
-  lowpass.type            = 'lowpass'
-  lowpass.frequency.value = 20000
-  masterGain.gain.value   = 0.85
-
-  lowpass.connect(masterGain)
-  masterGain.connect(audioCtx.destination)
-
-  const buf  = buildMetronomeBuffer(audioCtx)
+  if (trackArrayBuffer) {
+    try {
+      const decoded = await audioCtx.decodeAudioData(trackArrayBuffer)
+      SONG_DURATION = decoded.duration
+      trackSource = audioCtx.createBufferSource()
+      trackSource.buffer = decoded; trackSource.loop = false
+      trackSource.connect(lowpass); trackSource.start()
+      trackSource.onended = () => { songProgress = SONG_DURATION }
+      trackLoaded = true
+      console.log(`Track: ${decoded.duration.toFixed(1)}s`)
+      return
+    } catch(e) { console.warn('Decode failed:', e) }
+  }
+  // Fallback: metronome
+  metroBuffer = buildMetronome(audioCtx)
   metroSource = audioCtx.createBufferSource()
-  metroSource.buffer = buf
-  metroSource.loop   = true
-  metroSource.connect(lowpass)
-  metroSource.start()
+  metroSource.buffer = metroBuffer; metroSource.loop = true
+  metroSource.connect(lowpass); metroSource.start()
 }
 
 function setRate(rate, rampSecs) {
   rate = Math.max(0.005, Math.min(1.0, rate))
   const now = audioCtx.currentTime
-
-  metroSource.playbackRate.cancelScheduledValues(now)
-  metroSource.playbackRate.setValueAtTime(metroSource.playbackRate.value, now)
-  metroSource.playbackRate.linearRampToValueAtTime(rate, now + rampSecs)
-
-  // Low-pass closes as rate drops — authentic vinyl sound
-  const filterHz = 300 + rate * 19700
+  const src = trackLoaded ? trackSource : metroSource
+  if (!src) return
+  src.playbackRate.cancelScheduledValues(now)
+  src.playbackRate.setValueAtTime(src.playbackRate.value, now)
+  src.playbackRate.linearRampToValueAtTime(rate, now + rampSecs)
+  const fHz = 400 + rate * 19600
   lowpass.frequency.cancelScheduledValues(now)
   lowpass.frequency.setValueAtTime(lowpass.frequency.value, now)
-  lowpass.frequency.linearRampToValueAtTime(filterHz, now + rampSecs)
-
+  lowpass.frequency.linearRampToValueAtTime(fHz, now + rampSecs)
   currentPlaybackRate = rate
 }
 
-// ═══════════════════════════════════════════════════════════════
-// WebSocket — SomaSync relay
-// ═══════════════════════════════════════════════════════════════
-let ws = null
-let wsConnected = false
-let wsFallbackTimer = null
+// ═══════════════════════════════════════════════════════
+// Three.js Pyramid
+// ═══════════════════════════════════════════════════════
+let pyScene, pyCamera, pyRenderer, pyWire, pySolid, pyWireMat, pySolidMat, pyClip
+let pyAngle = 0
+
+function initPyramid() {
+  const W = window.innerWidth, H = window.innerHeight
+  pyScene  = new THREE.Scene()
+  pyCamera = new THREE.PerspectiveCamera(42, W/H, 0.1, 100)
+  pyCamera.position.set(0, 0.4, 6)
+
+  pyRenderer = new THREE.WebGLRenderer({ alpha:true, antialias:true })
+  pyRenderer.setSize(W, H)
+  pyRenderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+  pyRenderer.localClippingEnabled = true
+  pyRenderer.domElement.style.cssText = 'position:fixed;inset:0;z-index:15;pointer-events:none;'
+  document.body.appendChild(pyRenderer.domElement)
+
+  const geom = new THREE.ConeGeometry(1.0, 2.0, 4)
+
+  // Wireframe
+  pyWireMat = new THREE.LineBasicMaterial({ color:0x00ff88, transparent:true, opacity:0.55 })
+  pyWire    = new THREE.LineSegments(new THREE.EdgesGeometry(geom), pyWireMat)
+  pyScene.add(pyWire)
+
+  // Solid fill, clipped to show fill level rising
+  pyClip    = new THREE.Plane(new THREE.Vector3(0, -1, 0), -1.0) // starts empty
+  pySolidMat = new THREE.MeshBasicMaterial({ color:0x00ff88, transparent:true, opacity:0.15, side:THREE.DoubleSide, clippingPlanes:[pyClip] })
+  pySolid   = new THREE.Mesh(geom, pySolidMat)
+  pyScene.add(pySolid)
+
+  window.addEventListener('resize', () => {
+    const W = window.innerWidth, H = window.innerHeight
+    pyCamera.aspect = W/H; pyCamera.updateProjectionMatrix()
+    pyRenderer.setSize(W, H)
+  })
+}
+
+function renderPyramid(progress, isGlow, hexColor) {
+  const color = parseInt(hexColor.replace('#',''), 16)
+
+  // Rotation: slow meditative in glow, restless in flow
+  pyAngle += isGlow ? 0.003 : 0.008
+  pyWire.rotation.y = pyAngle
+  pySolid.rotation.y = pyAngle
+
+  // Wobble when not in glow
+  const wobble = isGlow ? 0 : Math.sin(Date.now()*0.0025)*0.06
+  pyWire.rotation.x = wobble * 0.7
+  pySolid.rotation.x = wobble * 0.7
+
+  // Fill rises from base (-1.0) to apex (+1.0)
+  pyClip.constant = -1.0 + progress * 2.0
+
+  // Pulse opacity in glow
+  pyWireMat.opacity  = isGlow ? 0.4 + Math.sin(Date.now()*0.0025)*0.2 : 0.3
+  pySolidMat.opacity = 0.12 + progress * 0.18
+
+  pyWireMat.color.setHex(color)
+  pySolidMat.color.setHex(color)
+  pyRenderer.render(pyScene, pyCamera)
+}
+
+// ═══════════════════════════════════════════════════════
+// WebSocket
+// ═══════════════════════════════════════════════════════
+let ws, wsFallback
 
 function parseSoma(raw) {
   try {
     const d = JSON.parse(raw)
-    // SomaSync OSC bundle format: {bundle: [{address:"/dfa", value:0.95}, ...]}
     if (Array.isArray(d.bundle)) {
-      const dfa = d.bundle.find(b => b.address === '/dfa')
-      if (dfa != null) return parseFloat(dfa.value)
+      const item = d.bundle.find(b => b.address === '/dfa')
+      if (item != null) return parseFloat(item.value)
     }
-    // Fallback: flat fields
-    const val = d.alpha ?? d.dfaAlpha ?? d.dfa_alpha ?? d.fractalIndex ?? d.value ?? d.dfa
-    if (val != null) return parseFloat(val)
-  } catch {
-    console.log('SomaSync raw:', raw)
-  }
+    const v = d.alpha ?? d.dfaAlpha ?? d.dfa_alpha ?? d.fractalIndex ?? d.value ?? d.dfa
+    if (v != null) return parseFloat(v)
+  } catch { }
   return null
 }
 
 function connectWS() {
   const host = window.location.hostname || 'localhost'
-  const url  = `ws://${host}:${window.location.port || 3000}`
-  ws = new WebSocket(url)
-
+  ws = new WebSocket(`ws://${host}:${window.location.port || 3000}`)
   ws.onopen = () => {
-    wsConnected = true
-    mockMode = false
-    clearTimeout(wsFallbackTimer)
-    document.getElementById('ws-status').textContent  = '● live'
-    document.getElementById('ws-status').style.color  = '#00ff88'
-    document.getElementById('mock-badge').style.display = 'none'
-    console.log('WS connected')
+    wsConnected = true; mockMode = false; clearTimeout(wsFallback)
+    const el = document.getElementById('ws-dot')
+    el.textContent = '● live'; el.style.color = '#00ff88'
+    document.getElementById('mock-tag').style.display = 'none'
   }
-
   ws.onmessage = e => {
-    const val = parseSoma(e.data)
-    if (val !== null && val > 0.2 && val < 2.0) {
-      dfaAlpha = val
-    }
+    const v = parseSoma(e.data)
+    if (v !== null && v > 0.2 && v < 2.0) dfaAlpha = v
   }
-
   ws.onclose = () => {
     wsConnected = false
-    document.getElementById('ws-status').textContent = '○ no signal'
-    document.getElementById('ws-status').style.color = '#555'
-    enableMock()
-    setTimeout(connectWS, 4000) // retry
+    const el = document.getElementById('ws-dot')
+    el.textContent = '○ no signal'; el.style.color = '#444'
+    enableMock(); setTimeout(connectWS, 4000)
   }
-
   ws.onerror = () => ws.close()
 }
 
 function enableMock() {
   if (mockMode) return
   mockMode = true
-  document.getElementById('mock-badge').style.display = 'inline-block'
-  console.log('Mock mode — generating synthetic DFA alpha')
+  document.getElementById('mock-tag').style.display = 'inline-block'
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Mock DFA alpha — realistic HRV-like signal
-// ═══════════════════════════════════════════════════════════════
 function mockDFA(dt) {
   mockT += dt
-  // Slow oscillation that dips in and out of adaptive zone
-  const base  = 0.875 + Math.sin(mockT * 0.18) * 0.18 + Math.sin(mockT * 0.07) * 0.08
-  const noise = (Math.random() - 0.5) * 0.04
-  return Math.max(0.35, Math.min(1.5, base + noise))
+  return Math.max(0.35, Math.min(1.5, 0.875 + Math.sin(mockT*0.18)*0.18 + Math.sin(mockT*0.07)*0.08 + (Math.random()-0.5)*0.04))
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Waveform renderer
-// ═══════════════════════════════════════════════════════════════
-const wfCanvas = document.getElementById('waveform')
-const wfCtx    = wfCanvas.getContext('2d')
+// ═══════════════════════════════════════════════════════
+// Waveform
+// ═══════════════════════════════════════════════════════
+const wfEl  = document.getElementById('waveform')
+const wfCtx = wfEl.getContext('2d')
 
-function resizeWaveform() {
-  wfCanvas.width  = wfCanvas.offsetWidth * devicePixelRatio
-  wfCanvas.height = wfCanvas.offsetHeight * devicePixelRatio
-}
+function resizeWF() { wfEl.width = wfEl.offsetWidth*devicePixelRatio; wfEl.height = wfEl.offsetHeight*devicePixelRatio }
 
-function drawWaveform() {
-  const w = wfCanvas.width, h = wfCanvas.height
-  wfCtx.clearRect(0, 0, w, h)
+function drawWF() {
+  const W=wfEl.width, H=wfEl.height
+  wfCtx.clearRect(0,0,W,H)
+  const toY = a => H - (Math.min(Math.max(a,0),1.5)/1.5)*H
 
-  const toY = a => h - (Math.min(Math.max(a, 0), 1.5) / 1.5) * h
-
-  // Zone bands
   ZONES.forEach(z => {
-    wfCtx.fillStyle = z.color + '28'
-    const y1 = toY(Math.min(z.max, 1.5))
-    const y2 = toY(z.min)
-    wfCtx.fillRect(0, y1, w, y2 - y1)
+    wfCtx.fillStyle = z.color+'28'
+    wfCtx.fillRect(0, toY(Math.min(z.max,1.5)), W, toY(z.min)-toY(Math.min(z.max,1.5)))
   })
-
-  // Zone separator lines
-  ;[0.5, 0.75, 1.0, 1.25].forEach(a => {
-    wfCtx.strokeStyle = 'rgba(255,255,255,0.07)'
-    wfCtx.lineWidth   = 1
-    wfCtx.beginPath()
-    wfCtx.moveTo(0, toY(a)); wfCtx.lineTo(w, toY(a))
-    wfCtx.stroke()
+  ;[0.5,0.75,1.0,1.25].forEach(a => {
+    wfCtx.strokeStyle='rgba(255,255,255,0.06)'; wfCtx.lineWidth=1
+    wfCtx.beginPath(); wfCtx.moveTo(0,toY(a)); wfCtx.lineTo(W,toY(a)); wfCtx.stroke()
   })
-
   if (dfaHistory.length < 2) return
-
-  // History line
-  wfCtx.strokeStyle = 'rgba(255,255,255,0.9)'
-  wfCtx.lineWidth   = 2 * devicePixelRatio
-  wfCtx.lineJoin    = 'round'
-  wfCtx.lineCap     = 'round'
+  wfCtx.strokeStyle='rgba(255,255,255,0.88)'; wfCtx.lineWidth=2*devicePixelRatio; wfCtx.lineJoin='round'
   wfCtx.beginPath()
-  dfaHistory.forEach((v, i) => {
-    const x = (i / (dfaHistory.length - 1)) * w
-    const y = toY(v)
-    i === 0 ? wfCtx.moveTo(x, y) : wfCtx.lineTo(x, y)
+  dfaHistory.forEach((v,i) => {
+    const x=(i/(dfaHistory.length-1))*W, y=toY(v)
+    i===0 ? wfCtx.moveTo(x,y) : wfCtx.lineTo(x,y)
   })
   wfCtx.stroke()
-
-  // Current marker (▶ triangle on right edge)
   if (dfaAlpha != null) {
-    const cy = toY(dfaAlpha)
-    const s  = 8 * devicePixelRatio
-    wfCtx.fillStyle = '#fff'
-    wfCtx.beginPath()
-    wfCtx.moveTo(w - s * 1.8, cy - s)
-    wfCtx.lineTo(w,            cy)
-    wfCtx.lineTo(w - s * 1.8, cy + s)
-    wfCtx.closePath()
-    wfCtx.fill()
+    const cy=toY(dfaAlpha), s=8*devicePixelRatio
+    wfCtx.fillStyle='#fff'
+    wfCtx.beginPath(); wfCtx.moveTo(W-s*1.8,cy-s); wfCtx.lineTo(W,cy); wfCtx.lineTo(W-s*1.8,cy+s)
+    wfCtx.closePath(); wfCtx.fill()
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Phase accumulation bar
-// ═══════════════════════════════════════════════════════════════
 function drawPhaseBar() {
-  const total = Object.values(phaseTime).reduce((a, b) => a + b, 0)
-  if (total === 0) return
-
-  const bar    = document.getElementById('phase-bar')
-  const labels = document.getElementById('phase-labels')
+  const total = Object.values(phaseTime).reduce((a,b)=>a+b,0)
+  if (!total) return
+  const bar = document.getElementById('phase-bar')
   bar.innerHTML = ''
-
   ZONES.forEach(z => {
-    const pct = (phaseTime[z.name] / total) * 100
+    const pct = (phaseTime[z.name]/total)*100
     if (pct < 0.5) return
-    const seg = document.createElement('div')
-    seg.style.cssText = `width:${pct}%; background:${z.color}; opacity:0.6;`
-    bar.appendChild(seg)
+    const d = document.createElement('div')
+    d.style.cssText = `width:${pct}%;background:${z.color};opacity:0.55;`
+    bar.appendChild(d)
   })
-
-  // Labels: show top 2 zones by time
-  const sorted = [...ZONES].sort((a, b) => phaseTime[b.name] - phaseTime[a.name])
-  labels.textContent = sorted
-    .filter(z => phaseTime[z.name] > 2)
-    .slice(0, 3)
-    .map(z => `${z.name} ${Math.round(phaseTime[z.name])}s`)
-    .join('  ·  ')
+  const sorted = [...ZONES].sort((a,b)=>phaseTime[b.name]-phaseTime[a.name])
+  document.getElementById('phase-labels').textContent = sorted
+    .filter(z=>phaseTime[z.name]>2).slice(0,3)
+    .map(z=>`${z.name.toLowerCase()} ${Math.round(phaseTime[z.name])}s`).join('  ·  ')
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // Main loop
-// ═══════════════════════════════════════════════════════════════
-let lastHistorySample = 0
-
-function tick(ts) {
-  if (!started) { requestAnimationFrame(tick); return }
+// ═══════════════════════════════════════════════════════
+function tick() {
+  requestAnimationFrame(tick)
+  if (!started) return
 
   const now = Date.now()
-  const dt  = lastTick ? Math.min((now - lastTick) / 1000, 0.1) : 0.016
+  const dt  = lastTick ? Math.min((now-lastTick)/1000, 0.1) : 0.016
   lastTick  = now
 
-  // DFA alpha source
   if (mockMode) dfaAlpha = mockDFA(dt)
+  if (dfaAlpha == null) return
 
-  if (dfaAlpha == null) { requestAnimationFrame(tick); return }
-
-  // History sample (throttled)
-  if (now - lastHistorySample > 1000 / SAMPLES_PER_SEC) {
+  // History
+  if (now - lastHistorySample > 1000/HISTORY_RATE) {
     dfaHistory.push(dfaAlpha)
-    if (dfaHistory.length > HISTORY_SECONDS * SAMPLES_PER_SEC) dfaHistory.shift()
+    if (dfaHistory.length > HISTORY_SECS*HISTORY_RATE) dfaHistory.shift()
     lastHistorySample = now
   }
 
-  // Zone
   currentZone = getZone(dfaAlpha)
-  const inZone = dfaAlpha >= DFA_LOW && dfaAlpha < DFA_HIGH
-
-  // Phase time accumulation
+  const isGlow = dfaAlpha >= DFA_LOW && dfaAlpha < DFA_HIGH
   phaseTime[currentZone.name] += dt
 
-  // Zone gate logic
-  if (inZone) {
-    outOfZoneSec = Math.max(0, outOfZoneSec - dt * 1.5)
+  // Zone gate → vinyl effect
+  if (isGlow) {
+    outOfZoneSec = Math.max(0, outOfZoneSec - dt*1.5)
     if (currentPlaybackRate < 0.99) setRate(1.0, 3.0)
   } else {
     outOfZoneSec += dt
     if (outOfZoneSec > SLOWDOWN_AFTER) {
       const excess  = outOfZoneSec - SLOWDOWN_AFTER
-      const target  = 1.0 - Math.min(1, excess / FULLY_STOPPED)
+      const target  = 1.0 - Math.min(1, excess/FULLY_STOPPED)
       setRate(target, 0.4)
     }
   }
 
-  // Song progress (advances proportional to current rate)
-  if (!document.getElementById('complete').style.display || document.getElementById('complete').style.display === 'none') {
+  // Song progress (accumulates at current rate)
+  const complete = document.getElementById('complete')
+  if (!complete.style.display || complete.style.display === 'none') {
     songProgress += dt * Math.max(0, currentPlaybackRate)
   }
 
-  // ── UI updates ──────────────────────────────────────────────
+  // ── UI ──────────────────────────────────────────────
+  const col = currentZone.color
+  document.documentElement.style.setProperty('--zone', col)
+  document.documentElement.style.setProperty('--zone-dim', col+'20')
 
-  // DFA alpha number
-  const alphaEl = document.getElementById('alpha-num')
-  alphaEl.textContent = dfaAlpha.toFixed(3)
+  document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(3)
+  document.getElementById('zone-word').textContent  = isGlow ? 'glow' : 'flow'
 
-  // Zone label + colors
-  document.getElementById('zone-label').textContent = currentZone.name
-  document.documentElement.style.setProperty('--zone-color', currentZone.color)
-  document.documentElement.style.setProperty('--zone-dim', currentZone.color + '26')
+  const stEl = document.getElementById('play-state')
+  if (currentPlaybackRate > 0.95)     { stEl.textContent='▶ playing'; stEl.style.color='#666' }
+  else if (currentPlaybackRate > 0.1) { stEl.textContent='◌ slowing'; stEl.style.color='#ff8800' }
+  else                                { stEl.textContent='■ stopped'; stEl.style.color='#ff2200' }
 
-  // Playback status
-  const statusEl = document.getElementById('playback-status')
-  if (currentPlaybackRate > 0.95) {
-    statusEl.textContent = '▶ playing'
-    statusEl.style.color = '#888'
-  } else if (currentPlaybackRate > 0.1) {
-    statusEl.textContent = '◌ slowing...'
-    statusEl.style.color = '#ff8800'
-  } else {
-    statusEl.textContent = '■ stopped'
-    statusEl.style.color = '#ff2200'
-  }
+  const pct = Math.min(1, songProgress/SONG_DURATION)
+  document.getElementById('prog-fill').style.width = (pct*100).toFixed(1)+'%'
+  document.getElementById('song-pct').textContent  = Math.floor(pct*100)+'%'
 
-  // Out-of-zone warning
-  const warnEl  = document.getElementById('warning')
-  const warnPct = Math.max(0, Math.min(1, (outOfZoneSec - 8) / 7))
-  warnEl.style.opacity = warnPct > 0 ? warnPct.toFixed(2) : 0
-  if (outOfZoneSec > SLOWDOWN_AFTER) {
-    warnEl.textContent = 'LEAVING ADAPTIVE ZONE — music slowing'
-  } else if (outOfZoneSec > 8) {
-    warnEl.textContent = 'LEAVING ADAPTIVE ZONE'
-  }
-
-  // Progress bar
-  const pct = Math.min(1, songProgress / SONG_DURATION)
-  document.getElementById('progress-fill').style.width = (pct * 100).toFixed(1) + '%'
-  document.getElementById('song-pct').textContent = Math.floor(pct * 100) + '%'
-
-  // Waveform
-  drawWaveform()
-  drawPhaseBar()
+  drawWF(); drawPhaseBar()
+  renderPyramid(pct, isGlow, col)
 
   // Completion
   if (songProgress >= SONG_DURATION) {
-    const el = document.getElementById('complete')
-    el.style.display = 'flex'
-    const adaptive = Math.round(phaseTime['ADAPTIVE'])
-    const total    = Math.round(Object.values(phaseTime).reduce((a,b) => a+b, 0))
-    document.getElementById('session-stats').textContent =
-      `adaptive zone: ${adaptive}s of ${total}s total`
+    complete.style.display = 'flex'
+    const ad = Math.round(phaseTime['ADAPTIVE'])
+    const tot = Math.round(Object.values(phaseTime).reduce((a,b)=>a+b,0))
+    document.getElementById('complete-stats').textContent = `glow: ${ad}s of ${tot}s`
   }
-
-  requestAnimationFrame(tick)
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Start
-// ═══════════════════════════════════════════════════════════════
-window.addEventListener('resize', resizeWaveform)
-resizeWaveform()
-startCamera()
+// ═══════════════════════════════════════════════════════
+// Boot
+// ═══════════════════════════════════════════════════════
+window.addEventListener('resize', resizeWF)
+resizeWF()
+initPyramid()
 
-// Auto-enable mock after 6s if WS never connects
-wsFallbackTimer = setTimeout(() => {
-  if (!wsConnected) enableMock()
-}, 6000)
-
+wsFallback = setTimeout(() => { if (!wsConnected) enableMock() }, 6000)
 connectWS()
 requestAnimationFrame(tick)
 
-document.getElementById('start').addEventListener('click', () => {
+document.getElementById('start').addEventListener('click', async () => {
   if (started) return
-  initAudio()
+  document.getElementById('loading').textContent = 'starting…'
+  await initAudio()
   started = true
   document.getElementById('start').style.display = 'none'
 })
 
-// Complete overlay — tap to reset for next participant
 document.getElementById('complete').addEventListener('click', () => {
-  songProgress = 0
-  outOfZoneSec = 0
+  songProgress = 0; outOfZoneSec = 0
   ZONES.forEach(z => phaseTime[z.name] = 0)
   dfaHistory.length = 0
   document.getElementById('complete').style.display = 'none'
