@@ -450,12 +450,11 @@ wsFallback = setTimeout(() => { if (!wsConnected) enableMock() }, 6000)
 connectWS()
 requestAnimationFrame(tick)
 
-document.getElementById('start').addEventListener('click', async () => {
+document.getElementById('start').addEventListener('click', () => {
   if (started) return
-  document.getElementById('loading').textContent = 'starting…'
-  await initAudio()
   started = true
   document.getElementById('start').style.display = 'none'
+  initAudio().catch(e => console.warn('Audio init failed:', e))
 })
 
 document.getElementById('complete').addEventListener('click', () => {
