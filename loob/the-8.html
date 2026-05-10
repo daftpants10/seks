@@ -10,39 +10,41 @@
     body { background:#000; color:#fff; font-family:ui-monospace,'Menlo',monospace; overflow:hidden; height:100vh; width:100vw; user-select:none; }
 
     #cam { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); opacity:0.7; }
-
-    #glow { position:fixed; inset:0; pointer-events:none; border:3px solid var(--zone); box-shadow:0 0 50px var(--zone) inset, 0 0 100px var(--zone-dim) inset; transition:border-color 2s ease, box-shadow 2s ease; z-index:10; }
-
-    /* Three.js canvas injected at z-index 15 by JS */
+    #py  { position:fixed; inset:0; z-index:15; pointer-events:none; }
+    #glow{ position:fixed; inset:0; pointer-events:none; border:3px solid var(--zone); box-shadow:0 0 50px var(--zone) inset, 0 0 100px var(--zone-dim) inset; transition:border-color 2s, box-shadow 2s; z-index:10; }
 
     #start { position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; z-index:100; cursor:pointer; }
     #start h1 { font-size:clamp(32px,6vw,64px); font-weight:700; letter-spacing:-0.02em; }
-    #start .sub { color:#555; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; }
-    #loading { color:#444; font-size:11px; letter-spacing:0.15em; margin-top:8px; }
+    #start .sub { color:#555; font-size:12px; letter-spacing:0.2em; }
+    #loading { color:#444; font-size:11px; letter-spacing:0.15em; }
 
     #top { position:fixed; top:0; left:0; right:0; padding:22px 28px 80px; background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent); z-index:20; display:flex; align-items:flex-start; justify-content:space-between; }
-
-    #alpha-num { font-size:clamp(56px,10vw,104px); font-weight:700; line-height:1; color:var(--zone); transition:color 2s ease; letter-spacing:-0.04em; }
-    #zone-word { font-size:clamp(13px,2vw,18px); letter-spacing:0.22em; color:var(--zone); transition:color 2s ease; margin-top:2px; text-transform:lowercase; }
+    #alpha-num { font-size:clamp(56px,10vw,104px); font-weight:700; line-height:1; color:var(--zone); transition:color 2s; letter-spacing:-0.04em; }
+    #zone-word  { font-size:clamp(13px,2vw,18px); letter-spacing:0.22em; color:var(--zone); transition:color 2s; margin-top:2px; }
     #play-state { font-size:11px; color:#555; margin-top:6px; letter-spacing:0.1em; }
-    #ws-dot { font-size:11px; color:#444; text-align:right; }
-    #mock-tag { font-size:10px; background:#222; color:#666; border-radius:3px; padding:2px 6px; margin-top:3px; display:none; }
+
+    #top-right { text-align:right; }
+    #ws-dot    { font-size:11px; color:#444; }
+    #mock-tag  { font-size:10px; background:#222; color:#666; border-radius:3px; padding:2px 6px; margin-top:3px; display:none; }
+    #h10-btn   { margin-top:8px; background:none; border:1px solid #333; color:#666; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; }
+    #h10-status{ font-size:10px; color:#444; margin-top:3px; letter-spacing:0.08em; }
 
     #bottom { position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.76); backdrop-filter:blur(12px); padding:14px 20px 22px; z-index:20; }
-    #waveform { width:100%; height:68px; display:block; }
-    #prog-track { margin-top:10px; height:4px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; }
-    #prog-fill { height:100%; width:0%; background:var(--zone); transition:width 0.8s linear, background 2s ease; border-radius:2px; }
-    #bottom-row { display:flex; justify-content:space-between; margin-top:7px; font-size:10px; color:#555; letter-spacing:0.08em; }
+    #waveform  { width:100%; height:68px; display:block; }
+    #prog-track{ margin-top:10px; height:4px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; }
+    #prog-fill { height:100%; width:0%; background:var(--zone); transition:width 0.8s linear, background 2s; border-radius:2px; }
     #phase-bar { margin-top:6px; height:3px; display:flex; border-radius:2px; overflow:hidden; }
+    #bottom-row{ display:flex; justify-content:space-between; margin-top:7px; font-size:10px; color:#555; letter-spacing:0.08em; }
 
     #complete { position:fixed; inset:0; background:rgba(0,0,0,0.93); display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:200; cursor:pointer; }
     #complete h2 { font-size:clamp(36px,7vw,72px); font-weight:700; color:#00ff88; letter-spacing:-0.02em; }
-    #complete p { color:#555; font-size:12px; letter-spacing:0.12em; }
+    #complete p  { color:#555; font-size:12px; letter-spacing:0.12em; }
   </style>
 </head>
 <body>
 
 <video id="cam" autoplay playsinline muted></video>
+<canvas id="py"></canvas>
 <div id="glow"></div>
 
 <div id="start">
@@ -57,11 +59,11 @@
     <div id="zone-word">—</div>
     <div id="play-state">○ waiting</div>
   </div>
-  <div style="text-align:right">
+  <div id="top-right">
     <div id="ws-dot">○ no signal</div>
     <div id="mock-tag">MOCK</div>
-    <button id="h10-btn" onclick="connectH10()" style="margin-top:8px;background:none;border:1px solid #333;color:#666;font-family:inherit;font-size:10px;letter-spacing:0.12em;padding:4px 10px;border-radius:3px;cursor:pointer;">⬡ CONNECT H10</button>
-    <div id="h10-status" style="font-size:10px;color:#444;margin-top:3px;letter-spacing:0.08em;"></div>
+    <button id="h10-btn" onclick="connectH10()">⬡ CONNECT H10</button>
+    <div id="h10-status"></div>
   </div>
 </div>
 
@@ -81,19 +83,14 @@
   <p id="complete-stats" style="font-size:11px;margin-top:10px;color:#444;"></p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
 <script>
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // Config
-// ═══════════════════════════════════════════════════════
-const DFA_LOW  = 0.75
-const DFA_HIGH = 1.0
-const SLOWDOWN_AFTER  = 15   // s out of zone before vinyl starts
-const FULLY_STOPPED   = 20   // s more to reach silence
-const HISTORY_SECS    = 60
-const HISTORY_RATE    = 4    // samples/s
-
-let SONG_DURATION = 240      // overwritten once track loads
+// ═══════════════════════════════════════════════
+const DFA_LOW  = 0.75, DFA_HIGH = 1.0
+const SLOWDOWN_AFTER = 15, FULLY_STOPPED = 20
+const HISTORY_SECS = 60, HISTORY_RATE = 4
+let SONG_DURATION = 240
 
 const ZONES = [
   { name:'CHAOS',    min:0,    max:0.5,  color:'#ff2200' },
@@ -102,361 +99,26 @@ const ZONES = [
   { name:'STABLE',   min:1.0,  max:1.25, color:'#0088ff' },
   { name:'RIGID',    min:1.25, max:2.0,  color:'#aa44ff' },
 ]
-function getZone(a) { return ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0] }
+const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0]
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // State
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 let started = false, dfaAlpha = null, currentZone = ZONES[2]
 let outOfZoneSec = 0, songProgress = 0, lastTick = null
 let mockMode = false, mockT = 0, wsConnected = false
-const dfaHistory = []
-const phaseTime  = {}; ZONES.forEach(z => phaseTime[z.name] = 0)
-let lastHistorySample = 0
-let currentPlaybackRate = 1.0
+let currentPlaybackRate = 1.0, lastHistorySample = 0
+const dfaHistory = [], phaseTime = {}
+ZONES.forEach(z => phaseTime[z.name] = 0)
 
-// ═══════════════════════════════════════════════════════
-// Camera
-// ═══════════════════════════════════════════════════════
-navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280} }, audio:false })
-  .then(s => document.getElementById('cam').srcObject = s)
-  .catch(() => document.getElementById('cam').style.display = 'none')
-
-// ═══════════════════════════════════════════════════════
-// Audio
-// ═══════════════════════════════════════════════════════
-let audioCtx, lowpass, masterGain, trackSource, metroSource, metroBuffer
-let trackArrayBuffer = null, trackLoaded = false
-
-// Pre-fetch track in background (before user gesture)
-fetch('/track').then(r => {
-  if (!r.ok) throw new Error('no track')
-  return r.arrayBuffer()
-}).then(buf => {
-  trackArrayBuffer = buf
-  document.getElementById('loading').textContent = 'tap to begin'
-}).catch(() => {
-  document.getElementById('loading').textContent = 'tap to begin'
-})
-
-function buildMetronome(ctx) {
-  const sr = ctx.sampleRate, beats = 8, bSecs = 60/120
-  const buf = ctx.createBuffer(2, Math.floor(bSecs*beats*sr), sr)
-  const L = buf.getChannelData(0), R = buf.getChannelData(1)
-  for (let b=0; b<beats; b++) {
-    const onset = Math.floor(b*bSecs*sr)
-    const freq = b%4===0 ? 880 : 440, amp = b%4===0 ? 0.6 : 0.3
-    const len = Math.floor(0.022*sr)
-    for (let i=0; i<len && onset+i<buf.length; i++) {
-      const s = Math.sin(2*Math.PI*freq*(i/sr)) * Math.exp(-i/sr*90) * amp
-      L[onset+i] += s; R[onset+i] += s
-    }
-  }
-  return buf
-}
-
-async function initAudio() {
-  audioCtx  = new (window.AudioContext || window.webkitAudioContext)()
-  lowpass   = audioCtx.createBiquadFilter()
-  masterGain = audioCtx.createGain()
-  lowpass.type = 'lowpass'; lowpass.frequency.value = 20000
-  masterGain.gain.value = 0.9
-  lowpass.connect(masterGain); masterGain.connect(audioCtx.destination)
-
-  if (trackArrayBuffer) {
-    try {
-      const decoded = await audioCtx.decodeAudioData(trackArrayBuffer)
-      SONG_DURATION = decoded.duration
-      trackSource = audioCtx.createBufferSource()
-      trackSource.buffer = decoded; trackSource.loop = false
-      trackSource.connect(lowpass); trackSource.start()
-      trackSource.onended = () => { songProgress = SONG_DURATION }
-      trackLoaded = true
-      console.log(`Track: ${decoded.duration.toFixed(1)}s`)
-      return
-    } catch(e) { console.warn('Decode failed:', e) }
-  }
-  // Fallback: metronome
-  metroBuffer = buildMetronome(audioCtx)
-  metroSource = audioCtx.createBufferSource()
-  metroSource.buffer = metroBuffer; metroSource.loop = true
-  metroSource.connect(lowpass); metroSource.start()
-}
-
-function setRate(rate, rampSecs) {
-  rate = Math.max(0.005, Math.min(1.0, rate))
-  const now = audioCtx.currentTime
-  const src = trackLoaded ? trackSource : metroSource
-  if (!src) return
-  src.playbackRate.cancelScheduledValues(now)
-  src.playbackRate.setValueAtTime(src.playbackRate.value, now)
-  src.playbackRate.linearRampToValueAtTime(rate, now + rampSecs)
-  const fHz = 400 + rate * 19600
-  lowpass.frequency.cancelScheduledValues(now)
-  lowpass.frequency.setValueAtTime(lowpass.frequency.value, now)
-  lowpass.frequency.linearRampToValueAtTime(fHz, now + rampSecs)
-  currentPlaybackRate = rate
-}
-
-// ═══════════════════════════════════════════════════════
-// Three.js Pyramid
-// ═══════════════════════════════════════════════════════
-let pyScene, pyCamera, pyRenderer, pyWire, pySolid, pyWireMat, pySolidMat, pyClip
-let pyAngle = 0
-
-function initPyramid() {
-  const W = window.innerWidth, H = window.innerHeight
-  pyScene  = new THREE.Scene()
-  pyCamera = new THREE.PerspectiveCamera(42, W/H, 0.1, 100)
-  pyCamera.position.set(0, 0.4, 6)
-
-  pyRenderer = new THREE.WebGLRenderer({ alpha:true, antialias:true })
-  pyRenderer.setSize(W, H)
-  pyRenderer.setPixelRatio(Math.min(devicePixelRatio, 2))
-  pyRenderer.localClippingEnabled = true
-  pyRenderer.domElement.style.cssText = 'position:fixed;inset:0;z-index:15;pointer-events:none;'
-  document.body.appendChild(pyRenderer.domElement)
-
-  const geom = new THREE.ConeGeometry(1.0, 2.0, 4)
-
-  // Wireframe
-  pyWireMat = new THREE.LineBasicMaterial({ color:0x00ff88, transparent:true, opacity:0.55 })
-  pyWire    = new THREE.LineSegments(new THREE.EdgesGeometry(geom), pyWireMat)
-  pyScene.add(pyWire)
-
-  // Solid fill, clipped to show fill level rising
-  pyClip    = new THREE.Plane(new THREE.Vector3(0, -1, 0), -1.0) // starts empty
-  pySolidMat = new THREE.MeshBasicMaterial({ color:0x00ff88, transparent:true, opacity:0.15, side:THREE.DoubleSide, clippingPlanes:[pyClip] })
-  pySolid   = new THREE.Mesh(geom, pySolidMat)
-  pyScene.add(pySolid)
-
-  window.addEventListener('resize', () => {
-    const W = window.innerWidth, H = window.innerHeight
-    pyCamera.aspect = W/H; pyCamera.updateProjectionMatrix()
-    pyRenderer.setSize(W, H)
-  })
-}
-
-function renderPyramid(progress, isGlow, hexColor) {
-  const color = parseInt(hexColor.replace('#',''), 16)
-
-  // Rotation: slow meditative in glow, restless in flow
-  pyAngle += isGlow ? 0.003 : 0.008
-  pyWire.rotation.y = pyAngle
-  pySolid.rotation.y = pyAngle
-
-  // Wobble when not in glow
-  const wobble = isGlow ? 0 : Math.sin(Date.now()*0.0025)*0.06
-  pyWire.rotation.x = wobble * 0.7
-  pySolid.rotation.x = wobble * 0.7
-
-  // Fill rises from base (-1.0) to apex (+1.0)
-  pyClip.constant = -1.0 + progress * 2.0
-
-  // Pulse opacity in glow
-  pyWireMat.opacity  = isGlow ? 0.4 + Math.sin(Date.now()*0.0025)*0.2 : 0.3
-  pySolidMat.opacity = 0.12 + progress * 0.18
-
-  pyWireMat.color.setHex(color)
-  pySolidMat.color.setHex(color)
-  pyRenderer.render(pyScene, pyCamera)
-}
-
-// ═══════════════════════════════════════════════════════
-// WebSocket
-// ═══════════════════════════════════════════════════════
-let ws, wsFallback
-
-function parseSoma(raw) {
-  try {
-    const d = JSON.parse(raw)
-    if (Array.isArray(d.bundle)) {
-      const item = d.bundle.find(b => b.address === '/dfa')
-      if (item != null) return parseFloat(item.value)
-    }
-    const v = d.alpha ?? d.dfaAlpha ?? d.dfa_alpha ?? d.fractalIndex ?? d.value ?? d.dfa
-    if (v != null) return parseFloat(v)
-  } catch { }
-  return null
-}
-
-function connectWS() {
-  const host = window.location.hostname || 'localhost'
-  ws = new WebSocket(`ws://${host}:${window.location.port || 3000}`)
-  ws.onopen = () => {
-    wsConnected = true; mockMode = false; clearTimeout(wsFallback)
-    const el = document.getElementById('ws-dot')
-    el.textContent = '● live'; el.style.color = '#00ff88'
-    document.getElementById('mock-tag').style.display = 'none'
-  }
-  ws.onmessage = e => {
-    const v = parseSoma(e.data)
-    if (v !== null && v > 0.2 && v < 2.0) dfaAlpha = v
-  }
-  ws.onclose = () => {
-    wsConnected = false
-    const el = document.getElementById('ws-dot')
-    el.textContent = '○ no signal'; el.style.color = '#444'
-    enableMock(); setTimeout(connectWS, 4000)
-  }
-  ws.onerror = () => ws.close()
-}
-
-function enableMock() {
-  if (mockMode) return
-  mockMode = true
-  document.getElementById('mock-tag').style.display = 'inline-block'
-}
-
-function mockDFA(dt) {
-  mockT += dt
-  return Math.max(0.35, Math.min(1.5, 0.875 + Math.sin(mockT*0.18)*0.18 + Math.sin(mockT*0.07)*0.08 + (Math.random()-0.5)*0.04))
-}
-
-// ═══════════════════════════════════════════════════════
-// Waveform
-// ═══════════════════════════════════════════════════════
-const wfEl  = document.getElementById('waveform')
-const wfCtx = wfEl.getContext('2d')
-
-function resizeWF() { wfEl.width = wfEl.offsetWidth*devicePixelRatio; wfEl.height = wfEl.offsetHeight*devicePixelRatio }
-
-function drawWF() {
-  const W=wfEl.width, H=wfEl.height
-  wfCtx.clearRect(0,0,W,H)
-  const toY = a => H - (Math.min(Math.max(a,0),1.5)/1.5)*H
-
-  ZONES.forEach(z => {
-    wfCtx.fillStyle = z.color+'28'
-    wfCtx.fillRect(0, toY(Math.min(z.max,1.5)), W, toY(z.min)-toY(Math.min(z.max,1.5)))
-  })
-  ;[0.5,0.75,1.0,1.25].forEach(a => {
-    wfCtx.strokeStyle='rgba(255,255,255,0.06)'; wfCtx.lineWidth=1
-    wfCtx.beginPath(); wfCtx.moveTo(0,toY(a)); wfCtx.lineTo(W,toY(a)); wfCtx.stroke()
-  })
-  if (dfaHistory.length < 2) return
-  wfCtx.strokeStyle='rgba(255,255,255,0.88)'; wfCtx.lineWidth=2*devicePixelRatio; wfCtx.lineJoin='round'
-  wfCtx.beginPath()
-  dfaHistory.forEach((v,i) => {
-    const x=(i/(dfaHistory.length-1))*W, y=toY(v)
-    i===0 ? wfCtx.moveTo(x,y) : wfCtx.lineTo(x,y)
-  })
-  wfCtx.stroke()
-  if (dfaAlpha != null) {
-    const cy=toY(dfaAlpha), s=8*devicePixelRatio
-    wfCtx.fillStyle='#fff'
-    wfCtx.beginPath(); wfCtx.moveTo(W-s*1.8,cy-s); wfCtx.lineTo(W,cy); wfCtx.lineTo(W-s*1.8,cy+s)
-    wfCtx.closePath(); wfCtx.fill()
-  }
-}
-
-function drawPhaseBar() {
-  const total = Object.values(phaseTime).reduce((a,b)=>a+b,0)
-  if (!total) return
-  const bar = document.getElementById('phase-bar')
-  bar.innerHTML = ''
-  ZONES.forEach(z => {
-    const pct = (phaseTime[z.name]/total)*100
-    if (pct < 0.5) return
-    const d = document.createElement('div')
-    d.style.cssText = `width:${pct}%;background:${z.color};opacity:0.55;`
-    bar.appendChild(d)
-  })
-  const sorted = [...ZONES].sort((a,b)=>phaseTime[b.name]-phaseTime[a.name])
-  document.getElementById('phase-labels').textContent = sorted
-    .filter(z=>phaseTime[z.name]>2).slice(0,3)
-    .map(z=>`${z.name.toLowerCase()} ${Math.round(phaseTime[z.name])}s`).join('  ·  ')
-}
-
-// ═══════════════════════════════════════════════════════
-// Main loop
-// ═══════════════════════════════════════════════════════
-function tick() {
-  requestAnimationFrame(tick)
-  if (!started) return
-
-  const now = Date.now()
-  const dt  = lastTick ? Math.min((now-lastTick)/1000, 0.1) : 0.016
-  lastTick  = now
-
-  if (mockMode) dfaAlpha = mockDFA(dt)
-  if (dfaAlpha == null) return
-
-  // History
-  if (now - lastHistorySample > 1000/HISTORY_RATE) {
-    dfaHistory.push(dfaAlpha)
-    if (dfaHistory.length > HISTORY_SECS*HISTORY_RATE) dfaHistory.shift()
-    lastHistorySample = now
-  }
-
-  currentZone = getZone(dfaAlpha)
-  const isGlow = dfaAlpha >= DFA_LOW && dfaAlpha < DFA_HIGH
-  phaseTime[currentZone.name] += dt
-
-  // Zone gate → vinyl effect
-  if (isGlow) {
-    outOfZoneSec = Math.max(0, outOfZoneSec - dt*1.5)
-    if (currentPlaybackRate < 0.99) setRate(1.0, 3.0)
-  } else {
-    outOfZoneSec += dt
-    if (outOfZoneSec > SLOWDOWN_AFTER) {
-      const excess  = outOfZoneSec - SLOWDOWN_AFTER
-      const target  = 1.0 - Math.min(1, excess/FULLY_STOPPED)
-      setRate(target, 0.4)
-    }
-  }
-
-  // Song progress (accumulates at current rate)
-  const complete = document.getElementById('complete')
-  if (!complete.style.display || complete.style.display === 'none') {
-    songProgress += dt * Math.max(0, currentPlaybackRate)
-  }
-
-  // ── UI ──────────────────────────────────────────────
-  const col = currentZone.color
-  document.documentElement.style.setProperty('--zone', col)
-  document.documentElement.style.setProperty('--zone-dim', col+'20')
-
-  document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(3)
-  document.getElementById('zone-word').textContent  = isGlow ? 'glow' : 'flow'
-
-  const stEl = document.getElementById('play-state')
-  if (currentPlaybackRate > 0.95)     { stEl.textContent='▶ playing'; stEl.style.color='#666' }
-  else if (currentPlaybackRate > 0.1) { stEl.textContent='◌ slowing'; stEl.style.color='#ff8800' }
-  else                                { stEl.textContent='■ stopped'; stEl.style.color='#ff2200' }
-
-  const pct = Math.min(1, songProgress/SONG_DURATION)
-  document.getElementById('prog-fill').style.width = (pct*100).toFixed(1)+'%'
-  document.getElementById('song-pct').textContent  = Math.floor(pct*100)+'%'
-
-  drawWF(); drawPhaseBar()
-  renderPyramid(pct, isGlow, col)
-
-  // Completion
-  if (songProgress >= SONG_DURATION) {
-    complete.style.display = 'flex'
-    const ad = Math.round(phaseTime['ADAPTIVE'])
-    const tot = Math.round(Object.values(phaseTime).reduce((a,b)=>a+b,0))
-    document.getElementById('complete-stats').textContent = `glow: ${ad}s of ${tot}s`
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// Boot
-// ═══════════════════════════════════════════════════════
-window.addEventListener('resize', resizeWF)
-resizeWF()
-initPyramid()
-
-wsFallback = setTimeout(() => { if (!wsConnected) enableMock() }, 6000)
-connectWS()
-requestAnimationFrame(tick)
-
+// ═══════════════════════════════════════════════
+// Register start handler FIRST (before anything can crash)
+// ═══════════════════════════════════════════════
 document.getElementById('start').addEventListener('click', () => {
   if (started) return
   started = true
   document.getElementById('start').style.display = 'none'
-  initAudio().catch(e => console.warn('Audio init failed:', e))
+  initAudio().catch(e => console.warn('Audio:', e))
 })
 
 document.getElementById('complete').addEventListener('click', () => {
@@ -467,131 +129,344 @@ document.getElementById('complete').addEventListener('click', () => {
   setRate(1.0, 1)
 })
 
-// ═══════════════════════════════════════════════════════
-// Polar H10 — Web Bluetooth + DFA alpha
-// ═══════════════════════════════════════════════════════
-const rrBuffer    = []        // raw RR intervals in ms
-const DFA_MIN_RR  = 128       // minimum samples before computing
-let   h10Active   = false
-let   rrSinceLastDFA = 0
+// ═══════════════════════════════════════════════
+// Camera
+// ═══════════════════════════════════════════════
+navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280} }, audio:false })
+  .then(s => document.getElementById('cam').srcObject = s)
+  .catch(() => document.getElementById('cam').style.display = 'none')
 
-// ── DFA alpha (linear detrending, short-term) ────────────────
-function linReg(xs, ys) {
-  const n = xs.length
-  const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n
-  let num=0, den=0
-  for (let i=0;i<n;i++) { num+=(xs[i]-mx)*(ys[i]-my); den+=(xs[i]-mx)**2 }
-  const s = den===0 ? 0 : num/den
-  return { slope:s, intercept:my - s*mx }
+// ═══════════════════════════════════════════════
+// Audio
+// ═══════════════════════════════════════════════
+let audioCtx, lowpass, masterGain, trackSource, metroSource
+let trackArrayBuffer = null, trackLoaded = false
+
+fetch('/track').then(r => { if(!r.ok) throw 0; return r.arrayBuffer() })
+  .then(b => { trackArrayBuffer = b; document.getElementById('loading').textContent = 'tap to begin' })
+  .catch(()  => { document.getElementById('loading').textContent = 'tap to begin' })
+
+function buildMetronome(ctx) {
+  const sr = ctx.sampleRate, beats = 8, bs = 0.5
+  const buf = ctx.createBuffer(2, Math.floor(bs*beats*sr), sr)
+  const L = buf.getChannelData(0), R = buf.getChannelData(1)
+  for (let b=0; b<beats; b++) {
+    const o = Math.floor(b*bs*sr), f = b%4===0?880:440, a = b%4===0?0.6:0.3
+    for (let i=0; i<Math.floor(0.022*sr)&&o+i<buf.length; i++) {
+      const s = Math.sin(2*Math.PI*f*(i/sr))*Math.exp(-i/sr*90)*a
+      L[o+i]+=s; R[o+i]+=s
+    }
+  }
+  return buf
+}
+
+async function initAudio() {
+  audioCtx   = new (window.AudioContext||window.webkitAudioContext)()
+  lowpass    = audioCtx.createBiquadFilter()
+  masterGain = audioCtx.createGain()
+  lowpass.type='lowpass'; lowpass.frequency.value=20000; masterGain.gain.value=0.9
+  lowpass.connect(masterGain); masterGain.connect(audioCtx.destination)
+  if (trackArrayBuffer) {
+    try {
+      const dec = await audioCtx.decodeAudioData(trackArrayBuffer)
+      SONG_DURATION = dec.duration
+      trackSource = audioCtx.createBufferSource()
+      trackSource.buffer = dec; trackSource.loop = false
+      trackSource.connect(lowpass); trackSource.start()
+      trackSource.onended = () => { songProgress = SONG_DURATION }
+      trackLoaded = true; return
+    } catch(e) { console.warn('Decode failed:', e) }
+  }
+  metroSource = audioCtx.createBufferSource()
+  metroSource.buffer = buildMetronome(audioCtx)
+  metroSource.loop = true; metroSource.connect(lowpass); metroSource.start()
+}
+
+function setRate(rate, ramp) {
+  rate = Math.max(0.005, Math.min(1.0, rate))
+  const now = audioCtx.currentTime, src = trackLoaded ? trackSource : metroSource
+  if (!src) return
+  src.playbackRate.cancelScheduledValues(now)
+  src.playbackRate.setValueAtTime(src.playbackRate.value, now)
+  src.playbackRate.linearRampToValueAtTime(rate, now+ramp)
+  const fHz = 400 + rate*19600
+  lowpass.frequency.cancelScheduledValues(now)
+  lowpass.frequency.setValueAtTime(lowpass.frequency.value, now)
+  lowpass.frequency.linearRampToValueAtTime(fHz, now+ramp)
+  currentPlaybackRate = rate
+}
+
+// ═══════════════════════════════════════════════
+// Pyramid — canvas 2D with perspective projection
+// ═══════════════════════════════════════════════
+const pyCanvas = document.getElementById('py')
+const pyCtx    = pyCanvas.getContext('2d')
+let pyAngle    = 0
+
+function resizePy() {
+  pyCanvas.width  = window.innerWidth  * devicePixelRatio
+  pyCanvas.height = window.innerHeight * devicePixelRatio
+  pyCanvas.style.width  = window.innerWidth  + 'px'
+  pyCanvas.style.height = window.innerHeight + 'px'
+}
+resizePy()
+window.addEventListener('resize', resizePy)
+
+// Pyramid: apex at (0,-1,0), base corners at (±1,1,±1)
+function rotY(v, a) {
+  const [x,y,z]=v; return [x*Math.cos(a)+z*Math.sin(a), y, -x*Math.sin(a)+z*Math.cos(a)]
+}
+function proj(v, fov, cx, cy, s) {
+  const [x,y,z]=v, d=z+fov; return [cx+(x/d)*fov*s, cy+(y/d)*fov*s]
+}
+function hex2rgba(hex, a) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16)
+  return `rgba(${r},${g},${b},${a})`
+}
+
+function renderPyramid(progress, isGlow, color) {
+  const W = pyCanvas.width, H = pyCanvas.height
+  pyCtx.clearRect(0,0,W,H)
+
+  pyAngle += isGlow ? 0.003 : 0.009
+  const wobble = isGlow ? 0 : Math.sin(Date.now()*0.0022)*0.06
+
+  const s   = Math.min(W,H) * 0.20
+  const cx  = W/2, cy = H*0.44
+  const fov = 4.5
+
+  const raw = [[0,-1,0],[-1,1,-1],[1,1,-1],[1,1,1],[-1,1,1]]
+  const rv  = raw.map(v => { const r=rotY(v,pyAngle); return [r[0],r[1]+wobble,r[2]] })
+  const pv  = rv.map(v => proj(v,fov,cx,cy,s))
+
+  // Draw filled lower section (rising with progress)
+  if (progress > 0.005) {
+    const yc = -1 + 2*progress   // cut Y in model space
+    const sc = progress           // cross-section scale
+    const cutRaw = [[-sc,yc,-sc],[sc,yc,-sc],[sc,yc,sc],[-sc,yc,sc]]
+    const crv = cutRaw.map(v => { const r=rotY(v,pyAngle); return [r[0],r[1]+wobble,r[2]] })
+    const cpv = crv.map(v => proj(v,fov,cx,cy,s))
+    const apex = pv[0]
+    const opacity = 0.08 + progress * 0.20
+
+    // 4 lower triangular faces (apex → cut edge)
+    const cutEdges = [[0,1],[1,2],[2,3],[3,0]]
+    cutEdges.forEach(([a,b]) => {
+      pyCtx.beginPath()
+      pyCtx.moveTo(apex[0],apex[1])
+      pyCtx.lineTo(cpv[a][0],cpv[a][1])
+      pyCtx.lineTo(cpv[b][0],cpv[b][1])
+      pyCtx.closePath()
+      pyCtx.fillStyle = hex2rgba(color, opacity)
+      pyCtx.fill()
+    })
+
+    // Horizontal cross-section at fill level
+    pyCtx.beginPath()
+    pyCtx.moveTo(cpv[0][0],cpv[0][1])
+    cpv.forEach(p => pyCtx.lineTo(p[0],p[1]))
+    pyCtx.closePath()
+    pyCtx.fillStyle   = hex2rgba(color, opacity * 1.8)
+    pyCtx.strokeStyle = hex2rgba(color, 0.7)
+    pyCtx.lineWidth   = 1.5 * devicePixelRatio
+    pyCtx.fill(); pyCtx.stroke()
+  }
+
+  // Wireframe edges
+  const wireOpacity = isGlow ? 0.4 + Math.sin(Date.now()*0.003)*0.15 : 0.28
+  pyCtx.strokeStyle = hex2rgba(color, wireOpacity)
+  pyCtx.lineWidth   = 1.5 * devicePixelRatio
+  const edges = [[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]]
+  edges.forEach(([a,b]) => {
+    pyCtx.beginPath(); pyCtx.moveTo(pv[a][0],pv[a][1]); pyCtx.lineTo(pv[b][0],pv[b][1]); pyCtx.stroke()
+  })
+}
+
+// ═══════════════════════════════════════════════
+// Waveform
+// ═══════════════════════════════════════════════
+const wfEl  = document.getElementById('waveform')
+const wfCtx = wfEl.getContext('2d')
+function resizeWF() { wfEl.width=wfEl.offsetWidth*devicePixelRatio; wfEl.height=wfEl.offsetHeight*devicePixelRatio }
+resizeWF(); window.addEventListener('resize', resizeWF)
+
+function drawWF() {
+  const W=wfEl.width, H=wfEl.height
+  wfCtx.clearRect(0,0,W,H)
+  const toY = a => H-(Math.min(Math.max(a,0),1.5)/1.5)*H
+  ZONES.forEach(z => { wfCtx.fillStyle=z.color+'28'; wfCtx.fillRect(0,toY(Math.min(z.max,1.5)),W,toY(z.min)-toY(Math.min(z.max,1.5))) })
+  ;[0.5,0.75,1.0,1.25].forEach(a => { wfCtx.strokeStyle='rgba(255,255,255,0.06)'; wfCtx.lineWidth=1; wfCtx.beginPath(); wfCtx.moveTo(0,toY(a)); wfCtx.lineTo(W,toY(a)); wfCtx.stroke() })
+  if (dfaHistory.length<2) return
+  wfCtx.strokeStyle='rgba(255,255,255,0.88)'; wfCtx.lineWidth=2*devicePixelRatio; wfCtx.lineJoin='round'
+  wfCtx.beginPath()
+  dfaHistory.forEach((v,i)=>{ const x=(i/(dfaHistory.length-1))*W,y=toY(v); i===0?wfCtx.moveTo(x,y):wfCtx.lineTo(x,y) })
+  wfCtx.stroke()
+  if (dfaAlpha!=null) {
+    const cy=toY(dfaAlpha),s=8*devicePixelRatio
+    wfCtx.fillStyle='#fff'; wfCtx.beginPath(); wfCtx.moveTo(W-s*1.8,cy-s); wfCtx.lineTo(W,cy); wfCtx.lineTo(W-s*1.8,cy+s); wfCtx.closePath(); wfCtx.fill()
+  }
+}
+
+function drawPhaseBar() {
+  const total=Object.values(phaseTime).reduce((a,b)=>a+b,0); if(!total) return
+  const bar=document.getElementById('phase-bar'); bar.innerHTML=''
+  ZONES.forEach(z=>{ const p=(phaseTime[z.name]/total)*100; if(p<0.5)return; const d=document.createElement('div'); d.style.cssText=`width:${p}%;background:${z.color};opacity:0.55;`; bar.appendChild(d) })
+  document.getElementById('phase-labels').textContent=[...ZONES].sort((a,b)=>phaseTime[b.name]-phaseTime[a.name]).filter(z=>phaseTime[z.name]>2).slice(0,3).map(z=>`${z.name.toLowerCase()} ${Math.round(phaseTime[z.name])}s`).join('  ·  ')
+}
+
+// ═══════════════════════════════════════════════
+// WebSocket
+// ═══════════════════════════════════════════════
+let ws, wsFallback
+
+function parseSoma(raw) {
+  try {
+    const d=JSON.parse(raw)
+    if (Array.isArray(d.bundle)) { const it=d.bundle.find(b=>b.address==='/dfa'); if(it)return parseFloat(it.value) }
+    const v=d.alpha??d.dfaAlpha??d.dfa_alpha??d.fractalIndex??d.value??d.dfa
+    if(v!=null)return parseFloat(v)
+  } catch{}
+  return null
+}
+
+function connectWS() {
+  const host=window.location.hostname||'localhost'
+  ws=new WebSocket(`ws://${host}:${window.location.port||3000}`)
+  ws.onopen=()=>{ wsConnected=true; mockMode=false; clearTimeout(wsFallback); const el=document.getElementById('ws-dot'); el.textContent='● live'; el.style.color='#00ff88'; document.getElementById('mock-tag').style.display='none' }
+  ws.onmessage=e=>{ const v=parseSoma(e.data); if(v&&v>0.2&&v<2.0&&!h10Active) dfaAlpha=v }
+  ws.onclose=()=>{ wsConnected=false; document.getElementById('ws-dot').textContent='○ no signal'; document.getElementById('ws-dot').style.color='#444'; if(!h10Active)enableMock(); setTimeout(connectWS,4000) }
+  ws.onerror=()=>ws.close()
+}
+
+function enableMock() { if(mockMode||h10Active)return; mockMode=true; document.getElementById('mock-tag').style.display='inline-block' }
+function mockDFA(dt) { mockT+=dt; return Math.max(0.35,Math.min(1.5,0.875+Math.sin(mockT*0.18)*0.18+Math.sin(mockT*0.07)*0.08+(Math.random()-0.5)*0.04)) }
+
+// ═══════════════════════════════════════════════
+// Polar H10 — BLE + DFA alpha
+// ═══════════════════════════════════════════════
+const rrBuffer = []; let h10Active=false, rrNew=0
+
+function linReg(xs,ys) {
+  const n=xs.length,mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n
+  let num=0,den=0; for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my);den+=(xs[i]-mx)**2}
+  const s=den?num/den:0; return {slope:s,intercept:my-s*mx}
 }
 
 function computeDFA(rr) {
-  const N = rr.length
-  if (N < DFA_MIN_RR) return null
-
-  // Integrate (cumulative sum of mean-subtracted series)
-  const mean = rr.reduce((a,b)=>a+b,0)/N
-  const y = []; let s=0
-  for (const v of rr) { s += v-mean; y.push(s) }
-
-  // Log-spaced window sizes from 8 to N/4
-  const maxW = Math.min(Math.floor(N/4), 64)
-  const wins = []
-  for (let w=8; w<=maxW; w=Math.ceil(w*1.3)) wins.push(w)
-  if (wins.length < 4) return null
-
-  const logN=[], logF=[]
-  for (const n of wins) {
-    const segs = Math.floor(N/n)
-    if (segs < 2) continue
-    let sumSq=0
-    for (let w=0; w<segs; w++) {
-      const seg = y.slice(w*n, w*n+n)
-      const xs = Array.from({length:n},(_,i)=>i)
-      const {slope,intercept} = linReg(xs, seg)
-      let rms=0
-      for (let i=0;i<n;i++) rms += (seg[i]-(slope*i+intercept))**2
-      sumSq += rms/n
+  const N=rr.length; if(N<128) return null
+  const mean=rr.reduce((a,b)=>a+b,0)/N
+  const y=[]; let s=0; for(const v of rr){s+=v-mean;y.push(s)}
+  const maxW=Math.min(Math.floor(N/4),64)
+  const wins=[]; for(let w=8;w<=maxW;w=Math.ceil(w*1.3))wins.push(w)
+  if(wins.length<4) return null
+  const logN=[],logF=[]
+  for(const n of wins){
+    const segs=Math.floor(N/n); if(segs<2)continue
+    let sq=0
+    for(let w=0;w<segs;w++){
+      const seg=y.slice(w*n,w*n+n),xs=Array.from({length:n},(_,i)=>i)
+      const {slope,intercept}=linReg(xs,seg)
+      let r=0; for(let i=0;i<n;i++)r+=(seg[i]-(slope*i+intercept))**2
+      sq+=r/n
     }
-    logN.push(Math.log(n))
-    logF.push(Math.log(Math.sqrt(sumSq/segs) + 1e-10))
+    logN.push(Math.log(n)); logF.push(Math.log(Math.sqrt(sq/segs)+1e-10))
   }
-  if (logN.length < 4) return null
-  return linReg(logN, logF).slope
+  if(logN.length<4) return null
+  return linReg(logN,logF).slope
 }
 
-// ── BLE connection ───────────────────────────────────────────
-function setH10Status(msg, color='#666') {
-  const el = document.getElementById('h10-status')
-  el.textContent = msg; el.style.color = color
-}
+function setH10Status(msg,color='#666'){const el=document.getElementById('h10-status');el.textContent=msg;el.style.color=color}
 
 function parseHR(event) {
-  const d     = event.target.value
-  const flags = d.getUint8(0)
-  const is16  = flags & 0x1
-  const hasRR = (flags >> 4) & 0x1
-  if (!hasRR) return
-  let offset = is16 ? 3 : 2
-  while (offset + 1 < d.byteLength) {
-    const raw = d.getUint16(offset, true)
-    const ms  = (raw / 1024) * 1000   // 1/1024 s → ms
-    if (ms > 300 && ms < 2000) {      // plausible RR range
-      rrBuffer.push(ms)
-      if (rrBuffer.length > 512) rrBuffer.shift()
-      rrSinceLastDFA++
-    }
-    offset += 2
+  const d=event.target.value,flags=d.getUint8(0),is16=flags&1,hasRR=(flags>>4)&1
+  if(!hasRR)return
+  let offset=is16?3:2
+  while(offset+1<d.byteLength){
+    const ms=(d.getUint16(offset,true)/1024)*1000; offset+=2
+    if(ms>300&&ms<2000){rrBuffer.push(ms);if(rrBuffer.length>512)rrBuffer.shift();rrNew++}
   }
-
-  // Recompute DFA every 8 new beats
-  if (rrSinceLastDFA >= 8) {
-    rrSinceLastDFA = 0
-    const alpha = computeDFA(rrBuffer)
-    if (alpha !== null) {
-      dfaAlpha  = Math.max(0.3, Math.min(1.8, alpha))
-      mockMode  = false
-      h10Active = true
-      document.getElementById('mock-tag').style.display = 'none'
-      setH10Status(`H10 ● α=${dfaAlpha.toFixed(3)}  n=${rrBuffer.length}`, '#00ff88')
+  if(rrNew>=8){
+    rrNew=0
+    const alpha=computeDFA(rrBuffer)
+    if(alpha!==null){
+      dfaAlpha=Math.max(0.3,Math.min(1.8,alpha)); h10Active=true; mockMode=false
+      document.getElementById('mock-tag').style.display='none'
+      setH10Status(`H10 ● α=${dfaAlpha.toFixed(3)}  n=${rrBuffer.length}`,'#00ff88')
     } else {
-      const needed = DFA_MIN_RR - rrBuffer.length
-      setH10Status(`calibrating… ${rrBuffer.length}/${DFA_MIN_RR} beats`, '#ff8800')
+      setH10Status(`calibrating… ${rrBuffer.length}/128`,'#ff8800')
     }
   }
 }
 
 async function connectH10() {
-  if (!navigator.bluetooth) {
-    setH10Status('Web Bluetooth not supported — use Chrome', '#ff2200')
-    return
-  }
+  if(!navigator.bluetooth){setH10Status('needs Chrome','#ff2200');return}
   try {
-    setH10Status('searching…', '#ff8800')
-    const device = await navigator.bluetooth.requestDevice({
-      filters: [{ services: ['heart_rate'] }]
-    })
-    setH10Status('connecting…', '#ff8800')
-    const server  = await device.gatt.connect()
-    const service = await server.getPrimaryService('heart_rate')
-    const chr     = await service.getCharacteristic('heart_rate_measurement')
+    setH10Status('searching…','#ff8800')
+    const dev=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]})
+    setH10Status('connecting…','#ff8800')
+    const chr=await (await (await dev.gatt.connect()).getPrimaryService('heart_rate')).getCharacteristic('heart_rate_measurement')
     await chr.startNotifications()
-    chr.addEventListener('characteristicvaluechanged', parseHR)
-    document.getElementById('h10-btn').textContent = '⬡ H10 CONNECTED'
-    document.getElementById('h10-btn').style.borderColor = '#00ff88'
-    document.getElementById('h10-btn').style.color = '#00ff88'
-    setH10Status(`waiting for beats…`, '#ff8800')
-    device.addEventListener('gattserverdisconnected', () => {
-      h10Active = false
-      setH10Status('H10 disconnected', '#ff2200')
-      document.getElementById('h10-btn').textContent = '⬡ CONNECT H10'
-      document.getElementById('h10-btn').style.borderColor = '#333'
-      document.getElementById('h10-btn').style.color = '#666'
-    })
-  } catch(e) {
-    setH10Status(e.name === 'NotFoundError' ? 'no device selected' : e.message, '#ff2200')
+    chr.addEventListener('characteristicvaluechanged',parseHR)
+    const btn=document.getElementById('h10-btn'); btn.textContent='⬡ H10 CONNECTED'; btn.style.borderColor='#00ff88'; btn.style.color='#00ff88'
+    setH10Status('waiting for beats…','#ff8800')
+    dev.addEventListener('gattserverdisconnected',()=>{ h10Active=false; setH10Status('disconnected','#ff2200'); btn.textContent='⬡ CONNECT H10'; btn.style.borderColor='#333'; btn.style.color='#666' })
+  } catch(e){ setH10Status(e.name==='NotFoundError'?'no device selected':e.message,'#ff2200') }
+}
+
+// ═══════════════════════════════════════════════
+// Main loop
+// ═══════════════════════════════════════════════
+function tick() {
+  requestAnimationFrame(tick)
+  const now=Date.now(), dt=lastTick?Math.min((now-lastTick)/1000,0.1):0.016
+  lastTick=now
+
+  if (started) {
+    if(mockMode) dfaAlpha=mockDFA(dt)
+    if(dfaAlpha!=null){
+      if(now-lastHistorySample>1000/HISTORY_RATE){dfaHistory.push(dfaAlpha);if(dfaHistory.length>HISTORY_SECS*HISTORY_RATE)dfaHistory.shift();lastHistorySample=now}
+      currentZone=getZone(dfaAlpha)
+      const isGlow=dfaAlpha>=DFA_LOW&&dfaAlpha<DFA_HIGH
+      phaseTime[currentZone.name]+=dt
+      if(isGlow){outOfZoneSec=Math.max(0,outOfZoneSec-dt*1.5);if(currentPlaybackRate<0.99)setRate(1.0,3)}
+      else{outOfZoneSec+=dt;if(outOfZoneSec>SLOWDOWN_AFTER){const t=1.0-Math.min(1,(outOfZoneSec-SLOWDOWN_AFTER)/FULLY_STOPPED);setRate(t,0.4)}}
+      const complete=document.getElementById('complete')
+      if(!complete.style.display||complete.style.display==='none')songProgress+=dt*Math.max(0,currentPlaybackRate)
+      const col=currentZone.color
+      document.documentElement.style.setProperty('--zone',col)
+      document.documentElement.style.setProperty('--zone-dim',col+'20')
+      document.getElementById('alpha-num').textContent=dfaAlpha.toFixed(3)
+      const isGl=dfaAlpha>=DFA_LOW&&dfaAlpha<DFA_HIGH
+      document.getElementById('zone-word').textContent=isGl?'glow':'flow'
+      const st=document.getElementById('play-state')
+      if(currentPlaybackRate>0.95){st.textContent='▶ playing';st.style.color='#666'}
+      else if(currentPlaybackRate>0.1){st.textContent='◌ slowing';st.style.color='#ff8800'}
+      else{st.textContent='■ stopped';st.style.color='#ff2200'}
+      const pct=Math.min(1,songProgress/SONG_DURATION)
+      document.getElementById('prog-fill').style.width=(pct*100).toFixed(1)+'%'
+      document.getElementById('song-pct').textContent=Math.floor(pct*100)+'%'
+      drawWF(); drawPhaseBar()
+      renderPyramid(pct, isGl, col)
+      if(songProgress>=SONG_DURATION){
+        complete.style.display='flex'
+        const ad=Math.round(phaseTime['ADAPTIVE']),tot=Math.round(Object.values(phaseTime).reduce((a,b)=>a+b,0))
+        document.getElementById('complete-stats').textContent=`glow: ${ad}s of ${tot}s`
+      }
+    } else {
+      renderPyramid(songProgress/SONG_DURATION, false, '#444')
+    }
+  } else {
+    // Animate pyramid on start screen
+    renderPyramid(0, false, '#333')
   }
 }
+
+// ═══════════════════════════════════════════════
+// Boot
+// ═══════════════════════════════════════════════
+wsFallback = setTimeout(()=>{ if(!wsConnected)enableMock() }, 6000)
+connectWS()
+requestAnimationFrame(tick)
 </script>
 </body>
 </html>
