@@ -57,9 +57,11 @@
     <div id="zone-word">—</div>
     <div id="play-state">○ waiting</div>
   </div>
-  <div>
+  <div style="text-align:right">
     <div id="ws-dot">○ no signal</div>
     <div id="mock-tag">MOCK</div>
+    <button id="h10-btn" onclick="connectH10()" style="margin-top:8px;background:none;border:1px solid #333;color:#666;font-family:inherit;font-size:10px;letter-spacing:0.12em;padding:4px 10px;border-radius:3px;cursor:pointer;">⬡ CONNECT H10</button>
+    <div id="h10-status" style="font-size:10px;color:#444;margin-top:3px;letter-spacing:0.08em;"></div>
   </div>
 </div>
 
@@ -464,6 +466,132 @@ document.getElementById('complete').addEventListener('click', () => {
   document.getElementById('complete').style.display = 'none'
   setRate(1.0, 1)
 })
+
+// ═══════════════════════════════════════════════════════
+// Polar H10 — Web Bluetooth + DFA alpha
+// ═══════════════════════════════════════════════════════
+const rrBuffer    = []        // raw RR intervals in ms
+const DFA_MIN_RR  = 128       // minimum samples before computing
+let   h10Active   = false
+let   rrSinceLastDFA = 0
+
+// ── DFA alpha (linear detrending, short-term) ────────────────
+function linReg(xs, ys) {
+  const n = xs.length
+  const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n
+  let num=0, den=0
+  for (let i=0;i<n;i++) { num+=(xs[i]-mx)*(ys[i]-my); den+=(xs[i]-mx)**2 }
+  const s = den===0 ? 0 : num/den
+  return { slope:s, intercept:my - s*mx }
+}
+
+function computeDFA(rr) {
+  const N = rr.length
+  if (N < DFA_MIN_RR) return null
+
+  // Integrate (cumulative sum of mean-subtracted series)
+  const mean = rr.reduce((a,b)=>a+b,0)/N
+  const y = []; let s=0
+  for (const v of rr) { s += v-mean; y.push(s) }
+
+  // Log-spaced window sizes from 8 to N/4
+  const maxW = Math.min(Math.floor(N/4), 64)
+  const wins = []
+  for (let w=8; w<=maxW; w=Math.ceil(w*1.3)) wins.push(w)
+  if (wins.length < 4) return null
+
+  const logN=[], logF=[]
+  for (const n of wins) {
+    const segs = Math.floor(N/n)
+    if (segs < 2) continue
+    let sumSq=0
+    for (let w=0; w<segs; w++) {
+      const seg = y.slice(w*n, w*n+n)
+      const xs = Array.from({length:n},(_,i)=>i)
+      const {slope,intercept} = linReg(xs, seg)
+      let rms=0
+      for (let i=0;i<n;i++) rms += (seg[i]-(slope*i+intercept))**2
+      sumSq += rms/n
+    }
+    logN.push(Math.log(n))
+    logF.push(Math.log(Math.sqrt(sumSq/segs) + 1e-10))
+  }
+  if (logN.length < 4) return null
+  return linReg(logN, logF).slope
+}
+
+// ── BLE connection ───────────────────────────────────────────
+function setH10Status(msg, color='#666') {
+  const el = document.getElementById('h10-status')
+  el.textContent = msg; el.style.color = color
+}
+
+function parseHR(event) {
+  const d     = event.target.value
+  const flags = d.getUint8(0)
+  const is16  = flags & 0x1
+  const hasRR = (flags >> 4) & 0x1
+  if (!hasRR) return
+  let offset = is16 ? 3 : 2
+  while (offset + 1 < d.byteLength) {
+    const raw = d.getUint16(offset, true)
+    const ms  = (raw / 1024) * 1000   // 1/1024 s → ms
+    if (ms > 300 && ms < 2000) {      // plausible RR range
+      rrBuffer.push(ms)
+      if (rrBuffer.length > 512) rrBuffer.shift()
+      rrSinceLastDFA++
+    }
+    offset += 2
+  }
+
+  // Recompute DFA every 8 new beats
+  if (rrSinceLastDFA >= 8) {
+    rrSinceLastDFA = 0
+    const alpha = computeDFA(rrBuffer)
+    if (alpha !== null) {
+      dfaAlpha  = Math.max(0.3, Math.min(1.8, alpha))
+      mockMode  = false
+      h10Active = true
+      document.getElementById('mock-tag').style.display = 'none'
+      setH10Status(`H10 ● α=${dfaAlpha.toFixed(3)}  n=${rrBuffer.length}`, '#00ff88')
+    } else {
+      const needed = DFA_MIN_RR - rrBuffer.length
+      setH10Status(`calibrating… ${rrBuffer.length}/${DFA_MIN_RR} beats`, '#ff8800')
+    }
+  }
+}
+
+async function connectH10() {
+  if (!navigator.bluetooth) {
+    setH10Status('Web Bluetooth not supported — use Chrome', '#ff2200')
+    return
+  }
+  try {
+    setH10Status('searching…', '#ff8800')
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ services: ['heart_rate'] }]
+    })
+    setH10Status('connecting…', '#ff8800')
+    const server  = await device.gatt.connect()
+    const service = await server.getPrimaryService('heart_rate')
+    const chr     = await service.getCharacteristic('heart_rate_measurement')
+    await chr.startNotifications()
+    chr.addEventListener('characteristicvaluechanged', parseHR)
+    document.getElementById('h10-btn').textContent = '⬡ H10 CONNECTED'
+    document.getElementById('h10-btn').style.borderColor = '#00ff88'
+    document.getElementById('h10-btn').style.color = '#00ff88'
+    setH10Status(`waiting for beats…`, '#ff8800')
+    device.addEventListener('gattserverdisconnected', () => {
+      h10Active = false
+      setH10Status('H10 disconnected', '#ff2200')
+      document.getElementById('h10-btn').textContent = '⬡ CONNECT H10'
+      document.getElementById('h10-btn').style.borderColor = '#333'
+      document.getElementById('h10-btn').style.color = '#666'
+    })
+  } catch(e) {
+    setH10Status(e.name === 'NotFoundError' ? 'no device selected' : e.message, '#ff2200')
+  }
+}
 </script>
 </body>
 </html>
