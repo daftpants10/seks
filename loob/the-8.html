@@ -68,7 +68,7 @@
     <ul>
       <li><strong>move freely</strong> — stand in front of the screen. pick up the stick. let your body lead.</li>
       <li><strong>glow</strong> — you're in the adaptive zone. your movement has fractal self-similarity. the track mines.</li>
-      <li><strong>flow</strong> — you've left the adaptive zone. keep moving. find your way back.</li>
+      <li><strong>flow</strong> — music stops after 30s. change your movement. find your way back.</li>
     </ul>
     <div id="about-tap">tap to begin</div>
   </div>
@@ -109,6 +109,7 @@
 // Config
 // ═══════════════════════════════════════════════
 const DFA_LOW  = 0.75, DFA_HIGH = 1.0
+const GRACE_PERIOD = 30
 const HISTORY_SECS = 60, HISTORY_RATE = 4
 let SONG_DURATION = 240
 
@@ -125,9 +126,9 @@ const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0]
 // State
 // ═══════════════════════════════════════════════
 let started = false, dfaAlpha = null, currentZone = ZONES[2]
-let songProgress = 0, lastTick = null
+let outOfZoneSec = 0, songProgress = 0, lastTick = null
 let mockMode = false, mockT = 0, wsConnected = false
-let lastHistorySample = 0
+let audioPaused = true, lastHistorySample = 0
 const dfaHistory = [], phaseTime = {}
 ZONES.forEach(z => phaseTime[z.name] = 0)
 
@@ -147,10 +148,11 @@ document.getElementById('about').addEventListener('click', () => {
 })
 
 document.getElementById('complete').addEventListener('click', () => {
-  songProgress = 0
+  songProgress = 0; outOfZoneSec = 0; audioPaused = true
   ZONES.forEach(z => phaseTime[z.name] = 0)
   dfaHistory.length = 0
   document.getElementById('complete').style.display = 'none'
+  restartTrackSource()
 })
 
 // ═══════════════════════════════════════════════
@@ -164,7 +166,7 @@ navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:12
 // Audio
 // ═══════════════════════════════════════════════
 let audioCtx, masterGain, trackSource, metroSource
-let trackArrayBuffer = null, trackLoaded = false
+let trackArrayBuffer = null, trackLoaded = false, decodedTrack = null
 
 fetch('/track').then(r => { if(!r.ok) throw 0; return r.arrayBuffer() })
   .then(b => { trackArrayBuffer = b; document.getElementById('loading').textContent = 'tap to begin' })
@@ -191,18 +193,41 @@ async function initAudio() {
   masterGain.connect(audioCtx.destination)
   if (trackArrayBuffer) {
     try {
-      const dec = await audioCtx.decodeAudioData(trackArrayBuffer)
-      SONG_DURATION = dec.duration
-      trackSource = audioCtx.createBufferSource()
-      trackSource.buffer = dec; trackSource.loop = false
-      trackSource.connect(masterGain); trackSource.start()
-      trackSource.onended = () => { songProgress = SONG_DURATION }
-      trackLoaded = true; return
+      decodedTrack = await audioCtx.decodeAudioData(trackArrayBuffer)
+      SONG_DURATION = decodedTrack.duration
+      startTrackSource()
+      return
     } catch(e) { console.warn('Decode failed:', e) }
   }
   metroSource = audioCtx.createBufferSource()
   metroSource.buffer = buildMetronome(audioCtx)
   metroSource.loop = true; metroSource.connect(masterGain); metroSource.start()
+  audioCtx.suspend()  // wait for glow
+}
+
+function startTrackSource() {
+  if (trackSource) { try { trackSource.disconnect() } catch {} }
+  trackSource = audioCtx.createBufferSource()
+  trackSource.buffer = decodedTrack; trackSource.loop = false
+  trackSource.connect(masterGain); trackSource.start()
+  trackSource.onended = () => { songProgress = SONG_DURATION }
+  trackLoaded = true
+  audioCtx.suspend()  // start silent — glow will resume
+}
+
+function restartTrackSource() {
+  if (!audioCtx || !decodedTrack) return
+  startTrackSource()
+}
+
+function pauseAudio() {
+  if (audioPaused || !audioCtx) return
+  audioPaused = true; audioCtx.suspend()
+}
+
+function resumeAudio() {
+  if (!audioPaused || !audioCtx) return
+  audioPaused = false; audioCtx.resume()
 }
 
 // ═══════════════════════════════════════════════
@@ -438,15 +463,35 @@ function tick() {
       const isGlow=dfaAlpha>=DFA_LOW&&dfaAlpha<DFA_HIGH
       phaseTime[currentZone.name]+=dt
 
+      // Real signal = WS connected or H10 active (not mock)
+      const hasReal = !mockMode
+      if (hasReal) {
+        if (isGlow) {
+          outOfZoneSec = 0
+          if (audioPaused) resumeAudio()
+        } else {
+          outOfZoneSec += dt
+          if (outOfZoneSec >= GRACE_PERIOD) pauseAudio()
+        }
+      } else {
+        if (!audioPaused) pauseAudio()
+      }
+
       const complete=document.getElementById('complete')
-      if(!complete.style.display||complete.style.display==='none') songProgress+=dt
+      if(!complete.style.display||complete.style.display==='none') {
+        if (!audioPaused) songProgress += dt
+      }
       const col=currentZone.color
       document.documentElement.style.setProperty('--zone',col)
       document.documentElement.style.setProperty('--zone-dim',col+'20')
       document.getElementById('alpha-num').textContent=dfaAlpha.toFixed(3)
       document.getElementById('zone-word').textContent=isGlow?'glow':'flow'
       const st=document.getElementById('play-state')
-      st.textContent='▶ playing'; st.style.color='#666'
+      if (!hasReal) { st.textContent='○ connect somasync'; st.style.color='#444' }
+      else if (audioPaused && outOfZoneSec >= GRACE_PERIOD) { st.textContent='■ stopped · find glow'; st.style.color='#ff2200' }
+      else if (audioPaused) { st.textContent='○ enter glow to start'; st.style.color='#555' }
+      else if (outOfZoneSec > 0) { st.textContent=`◌ ${Math.round(GRACE_PERIOD - outOfZoneSec)}s`; st.style.color='#ff8800' }
+      else { st.textContent='▶ playing'; st.style.color='#666' }
       const pct=Math.min(1,songProgress/SONG_DURATION)
       document.getElementById('prog-fill').style.width=(pct*100).toFixed(1)+'%'
       document.getElementById('song-pct').textContent=Math.floor(pct*100)+'%'
