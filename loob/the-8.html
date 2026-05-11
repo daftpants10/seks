@@ -18,6 +18,15 @@
     #start .sub { color:#555; font-size:12px; letter-spacing:0.2em; }
     #loading { color:#444; font-size:11px; letter-spacing:0.15em; }
 
+    #about { position:fixed; inset:0; background:rgba(0,0,0,0.95); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:100; cursor:pointer; }
+    #about-inner { max-width:480px; width:90%; padding:0 20px; }
+    #about h2 { font-size:clamp(18px,3vw,26px); font-weight:700; letter-spacing:-0.01em; margin-bottom:32px; color:#fff; }
+    #about ul { list-style:none; display:flex; flex-direction:column; gap:20px; margin-bottom:48px; }
+    #about li { font-size:clamp(12px,1.8vw,15px); color:#888; line-height:1.6; letter-spacing:0.04em; padding-left:20px; position:relative; }
+    #about li::before { content:'—'; position:absolute; left:0; color:#333; }
+    #about li strong { color:#fff; font-weight:600; }
+    #about-tap { font-size:11px; color:#444; letter-spacing:0.2em; text-align:center; }
+
     #top { position:fixed; top:0; left:0; right:0; padding:22px 28px 80px; background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent); z-index:20; display:flex; align-items:flex-start; justify-content:space-between; }
     #alpha-num { font-size:clamp(56px,10vw,104px); font-weight:700; line-height:1; color:var(--zone); transition:color 2s; letter-spacing:-0.04em; }
     #zone-word  { font-size:clamp(13px,2vw,18px); letter-spacing:0.22em; color:var(--zone); transition:color 2s; margin-top:2px; }
@@ -51,6 +60,18 @@
   <h1>⦿-⦿</h1>
   <div class="sub">stay fractal · mine the track</div>
   <div id="loading">loading track…</div>
+</div>
+
+<div id="about">
+  <div id="about-inner">
+    <h2>the 8</h2>
+    <ul>
+      <li><strong>move freely</strong> — stand in front of the screen. pick up the stick. let your body lead.</li>
+      <li><strong>glow</strong> — you're in the adaptive zone. your movement has fractal self-similarity. the track mines.</li>
+      <li><strong>flow</strong> — music stops after 30s outside the zone. change your movement. find your way back.</li>
+    </ul>
+    <div id="about-tap">tap to begin</div>
+  </div>
 </div>
 
 <div id="top">
@@ -88,7 +109,7 @@
 // Config
 // ═══════════════════════════════════════════════
 const DFA_LOW  = 0.75, DFA_HIGH = 1.0
-const SLOWDOWN_AFTER = 15, FULLY_STOPPED = 20
+const GRACE_PERIOD = 30   // seconds outside adaptive before music stops
 const HISTORY_SECS = 60, HISTORY_RATE = 4
 let SONG_DURATION = 240
 
@@ -107,26 +128,31 @@ const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0]
 let started = false, dfaAlpha = null, currentZone = ZONES[2]
 let outOfZoneSec = 0, songProgress = 0, lastTick = null
 let mockMode = false, mockT = 0, wsConnected = false
-let currentPlaybackRate = 1.0, lastHistorySample = 0
+let audioPaused = false, lastHistorySample = 0
 const dfaHistory = [], phaseTime = {}
 ZONES.forEach(z => phaseTime[z.name] = 0)
 
 // ═══════════════════════════════════════════════
-// Register start handler FIRST (before anything can crash)
+// Register start handlers FIRST (before anything can crash)
 // ═══════════════════════════════════════════════
 document.getElementById('start').addEventListener('click', () => {
   if (started) return
   started = true
   document.getElementById('start').style.display = 'none'
+  document.getElementById('about').style.display = 'flex'
+})
+
+document.getElementById('about').addEventListener('click', () => {
+  document.getElementById('about').style.display = 'none'
   initAudio().catch(e => console.warn('Audio:', e))
 })
 
 document.getElementById('complete').addEventListener('click', () => {
-  songProgress = 0; outOfZoneSec = 0
+  songProgress = 0; outOfZoneSec = 0; audioPaused = false
   ZONES.forEach(z => phaseTime[z.name] = 0)
   dfaHistory.length = 0
   document.getElementById('complete').style.display = 'none'
-  setRate(1.0, 1)
+  resumeAudio()
 })
 
 // ═══════════════════════════════════════════════
@@ -139,7 +165,7 @@ navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:12
 // ═══════════════════════════════════════════════
 // Audio
 // ═══════════════════════════════════════════════
-let audioCtx, lowpass, masterGain, trackSource, metroSource
+let audioCtx, masterGain, trackSource, metroSource
 let trackArrayBuffer = null, trackLoaded = false
 
 fetch('/track').then(r => { if(!r.ok) throw 0; return r.arrayBuffer() })
@@ -162,38 +188,35 @@ function buildMetronome(ctx) {
 
 async function initAudio() {
   audioCtx   = new (window.AudioContext||window.webkitAudioContext)()
-  lowpass    = audioCtx.createBiquadFilter()
   masterGain = audioCtx.createGain()
-  lowpass.type='lowpass'; lowpass.frequency.value=20000; masterGain.gain.value=0.9
-  lowpass.connect(masterGain); masterGain.connect(audioCtx.destination)
+  masterGain.gain.value = 0.9
+  masterGain.connect(audioCtx.destination)
   if (trackArrayBuffer) {
     try {
       const dec = await audioCtx.decodeAudioData(trackArrayBuffer)
       SONG_DURATION = dec.duration
       trackSource = audioCtx.createBufferSource()
       trackSource.buffer = dec; trackSource.loop = false
-      trackSource.connect(lowpass); trackSource.start()
+      trackSource.connect(masterGain); trackSource.start()
       trackSource.onended = () => { songProgress = SONG_DURATION }
       trackLoaded = true; return
     } catch(e) { console.warn('Decode failed:', e) }
   }
   metroSource = audioCtx.createBufferSource()
   metroSource.buffer = buildMetronome(audioCtx)
-  metroSource.loop = true; metroSource.connect(lowpass); metroSource.start()
+  metroSource.loop = true; metroSource.connect(masterGain); metroSource.start()
 }
 
-function setRate(rate, ramp) {
-  rate = Math.max(0.005, Math.min(1.0, rate))
-  const now = audioCtx.currentTime, src = trackLoaded ? trackSource : metroSource
-  if (!src) return
-  src.playbackRate.cancelScheduledValues(now)
-  src.playbackRate.setValueAtTime(src.playbackRate.value, now)
-  src.playbackRate.linearRampToValueAtTime(rate, now+ramp)
-  const fHz = 400 + rate*19600
-  lowpass.frequency.cancelScheduledValues(now)
-  lowpass.frequency.setValueAtTime(lowpass.frequency.value, now)
-  lowpass.frequency.linearRampToValueAtTime(fHz, now+ramp)
-  currentPlaybackRate = rate
+function pauseAudio() {
+  if (audioPaused || !audioCtx) return
+  audioPaused = true
+  audioCtx.suspend()
+}
+
+function resumeAudio() {
+  if (!audioPaused || !audioCtx) return
+  audioPaused = false
+  audioCtx.resume()
 }
 
 // ═══════════════════════════════════════════════
@@ -428,25 +451,34 @@ function tick() {
       currentZone=getZone(dfaAlpha)
       const isGlow=dfaAlpha>=DFA_LOW&&dfaAlpha<DFA_HIGH
       phaseTime[currentZone.name]+=dt
-      if(isGlow){outOfZoneSec=Math.max(0,outOfZoneSec-dt*1.5);if(currentPlaybackRate<0.99)setRate(1.0,3)}
-      else{outOfZoneSec+=dt;if(outOfZoneSec>SLOWDOWN_AFTER){const t=1.0-Math.min(1,(outOfZoneSec-SLOWDOWN_AFTER)/FULLY_STOPPED);setRate(t,0.4)}}
+
+      // Gate: adaptive zone resets timer and resumes; 30s outside stops music
+      if(isGlow){
+        outOfZoneSec=0
+        if(audioPaused) resumeAudio()
+      } else {
+        outOfZoneSec+=dt
+        if(outOfZoneSec>=GRACE_PERIOD) pauseAudio()
+      }
+
       const complete=document.getElementById('complete')
-      if(!complete.style.display||complete.style.display==='none')songProgress+=dt*Math.max(0,currentPlaybackRate)
+      if(!complete.style.display||complete.style.display==='none') {
+        if(!audioPaused) songProgress+=dt
+      }
       const col=currentZone.color
       document.documentElement.style.setProperty('--zone',col)
       document.documentElement.style.setProperty('--zone-dim',col+'20')
       document.getElementById('alpha-num').textContent=dfaAlpha.toFixed(3)
-      const isGl=dfaAlpha>=DFA_LOW&&dfaAlpha<DFA_HIGH
-      document.getElementById('zone-word').textContent=isGl?'glow':'flow'
+      document.getElementById('zone-word').textContent=isGlow?'glow':'flow'
       const st=document.getElementById('play-state')
-      if(currentPlaybackRate>0.95){st.textContent='▶ playing';st.style.color='#666'}
-      else if(currentPlaybackRate>0.1){st.textContent='◌ slowing';st.style.color='#ff8800'}
-      else{st.textContent='■ stopped';st.style.color='#ff2200'}
+      if(audioPaused){st.textContent='■ stopped';st.style.color='#ff2200'}
+      else if(outOfZoneSec>0){st.textContent=`◌ ${Math.round(GRACE_PERIOD-outOfZoneSec)}s`;st.style.color='#ff8800'}
+      else{st.textContent='▶ playing';st.style.color='#666'}
       const pct=Math.min(1,songProgress/SONG_DURATION)
       document.getElementById('prog-fill').style.width=(pct*100).toFixed(1)+'%'
       document.getElementById('song-pct').textContent=Math.floor(pct*100)+'%'
       drawWF(); drawPhaseBar()
-      renderPyramid(pct, isGl, col)
+      renderPyramid(pct, isGlow, col)
       if(songProgress>=SONG_DURATION){
         complete.style.display='flex'
         const ad=Math.round(phaseTime['ADAPTIVE']),tot=Math.round(Object.values(phaseTime).reduce((a,b)=>a+b,0))
