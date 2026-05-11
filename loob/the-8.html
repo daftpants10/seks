@@ -68,7 +68,7 @@
     <ul>
       <li><strong>move freely</strong> — stand in front of the screen. pick up the stick. let your body lead.</li>
       <li><strong>glow</strong> — you're in the adaptive zone. your movement has fractal self-similarity. the track mines.</li>
-      <li><strong>flow</strong> — music stops after 30s outside the zone. change your movement. find your way back.</li>
+      <li><strong>flow</strong> — you've left the adaptive zone. keep moving. find your way back.</li>
     </ul>
     <div id="about-tap">tap to begin</div>
   </div>
@@ -109,7 +109,6 @@
 // Config
 // ═══════════════════════════════════════════════
 const DFA_LOW  = 0.75, DFA_HIGH = 1.0
-const GRACE_PERIOD = 30   // seconds outside adaptive before music stops
 const HISTORY_SECS = 60, HISTORY_RATE = 4
 let SONG_DURATION = 240
 
@@ -126,9 +125,9 @@ const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0]
 // State
 // ═══════════════════════════════════════════════
 let started = false, dfaAlpha = null, currentZone = ZONES[2]
-let outOfZoneSec = 0, songProgress = 0, lastTick = null
+let songProgress = 0, lastTick = null
 let mockMode = false, mockT = 0, wsConnected = false
-let audioPaused = false, lastHistorySample = 0
+let lastHistorySample = 0
 const dfaHistory = [], phaseTime = {}
 ZONES.forEach(z => phaseTime[z.name] = 0)
 
@@ -148,11 +147,10 @@ document.getElementById('about').addEventListener('click', () => {
 })
 
 document.getElementById('complete').addEventListener('click', () => {
-  songProgress = 0; outOfZoneSec = 0; audioPaused = false
+  songProgress = 0
   ZONES.forEach(z => phaseTime[z.name] = 0)
   dfaHistory.length = 0
   document.getElementById('complete').style.display = 'none'
-  resumeAudio()
 })
 
 // ═══════════════════════════════════════════════
@@ -205,18 +203,6 @@ async function initAudio() {
   metroSource = audioCtx.createBufferSource()
   metroSource.buffer = buildMetronome(audioCtx)
   metroSource.loop = true; metroSource.connect(masterGain); metroSource.start()
-}
-
-function pauseAudio() {
-  if (audioPaused || !audioCtx) return
-  audioPaused = true
-  audioCtx.suspend()
-}
-
-function resumeAudio() {
-  if (!audioPaused || !audioCtx) return
-  audioPaused = false
-  audioCtx.resume()
 }
 
 // ═══════════════════════════════════════════════
@@ -452,28 +438,15 @@ function tick() {
       const isGlow=dfaAlpha>=DFA_LOW&&dfaAlpha<DFA_HIGH
       phaseTime[currentZone.name]+=dt
 
-      // Gate: adaptive zone resets timer and resumes; 30s outside stops music
-      if(isGlow){
-        outOfZoneSec=0
-        if(audioPaused) resumeAudio()
-      } else {
-        outOfZoneSec+=dt
-        if(outOfZoneSec>=GRACE_PERIOD) pauseAudio()
-      }
-
       const complete=document.getElementById('complete')
-      if(!complete.style.display||complete.style.display==='none') {
-        if(!audioPaused) songProgress+=dt
-      }
+      if(!complete.style.display||complete.style.display==='none') songProgress+=dt
       const col=currentZone.color
       document.documentElement.style.setProperty('--zone',col)
       document.documentElement.style.setProperty('--zone-dim',col+'20')
       document.getElementById('alpha-num').textContent=dfaAlpha.toFixed(3)
       document.getElementById('zone-word').textContent=isGlow?'glow':'flow'
       const st=document.getElementById('play-state')
-      if(audioPaused){st.textContent='■ stopped';st.style.color='#ff2200'}
-      else if(outOfZoneSec>0){st.textContent=`◌ ${Math.round(GRACE_PERIOD-outOfZoneSec)}s`;st.style.color='#ff8800'}
-      else{st.textContent='▶ playing';st.style.color='#666'}
+      st.textContent='▶ playing'; st.style.color='#666'
       const pct=Math.min(1,songProgress/SONG_DURATION)
       document.getElementById('prog-fill').style.width=(pct*100).toFixed(1)+'%'
       document.getElementById('song-pct').textContent=Math.floor(pct*100)+'%'
