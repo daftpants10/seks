@@ -17,7 +17,8 @@ const os = require('os')
 
 const HTTP_PORT = 3000
 const SOMA_PORT = 8765
-const HTML_FILE = path.join(__dirname, 'the-8.html')
+const HTML_FILE    = path.join(__dirname, 'the-8.html')
+const SESSION_FILE = path.join(__dirname, 'sessions.json')
 
 const AUDIO_EXTS = ['.mp3', '.wav', '.ogg', '.m4a', '.flac']
 function findTrack() {
@@ -57,6 +58,29 @@ const httpServer = http.createServer((req, res) => {
       fs.createReadStream(filePath).pipe(res)
     }
     console.log(`🎵 serving: ${track}`)
+  } else if (urlPath === '/sessions' && req.method === 'GET') {
+    try {
+      const data = fs.existsSync(SESSION_FILE) ? fs.readFileSync(SESSION_FILE, 'utf8') : '[]'
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' })
+      res.end(data)
+    } catch { res.writeHead(500); res.end('[]') }
+
+  } else if (urlPath === '/sessions' && req.method === 'POST') {
+    let body = ''
+    req.on('data', d => body += d.toString())
+    req.on('end', () => {
+      try {
+        const session = JSON.parse(body)
+        let sessions = []
+        try { sessions = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf8')) } catch {}
+        sessions.push({ ...session, savedAt: new Date().toISOString() })
+        fs.writeFileSync(SESSION_FILE, JSON.stringify(sessions, null, 2))
+        console.log(`\n💾 session saved: ${session.name} · ${session.mode} · glow ${session.glowTime}s / ${session.totalPlayTime}s`)
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: true, count: sessions.length }))
+      } catch { res.writeHead(400); res.end('bad request') }
+    })
+
   } else {
     res.writeHead(404); res.end('not found')
   }
