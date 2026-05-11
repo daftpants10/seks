@@ -175,7 +175,7 @@
           <strong>the 8</strong> is a biometric movement installation that asks a simple question:
           can you find your way to a fractal state? One participant at a time stands in front of the screen,
           picks up the stick, and moves freely while their DFA alpha 1 is measured in real time.
-          The goal is not performance — it is presence. The music mines when your nervous system
+          The goal is presence. The music mines when your nervous system
           organises itself into that particular quality of aliveness that sits between order and chaos.
         </p>
       </div>
@@ -183,51 +183,53 @@
       <div class="ca-section">
         <div class="ca-label">what is DFA alpha 1?</div>
         <p class="ca-body">
-          Imagine your heartbeat as a river. A <strong>random</strong> river (α ≈ 0.5) has no memory —
-          each ripple ignores the last one. A <strong>frozen</strong> river (α ≈ 1.5) is too correlated —
-          every ripple just copies the previous one. A <strong>fractal</strong> river (α ≈ 1.0) is different:
-          it has just the right amount of memory. It's complex, self-similar across time scales, and endlessly
-          adaptive. That's what a healthy, engaged nervous system looks like.
+          Imagine your heartbeat as a river. A <strong>random</strong> river (α ≈ 0.5) carries zero memory.
+          Each ripple is independent of the last, producing pure noise with low structure.
+          A <strong>frozen</strong> river (α ≈ 1.5) is over-correlated:
+          every ripple simply copies the previous one, rigid and predictable.
+          A <strong>fractal</strong> river (α ≈ 1.0) carries just the right amount of memory.
+          Complex, self-similar across time scales, and endlessly adaptive.
+          That is what a healthy, engaged nervous system looks like.
         </p>
         <p class="ca-body" style="margin-top:10px">
           DFA alpha 1 (Detrended Fluctuation Analysis, short-range scaling exponent) captures this
-          by analysing the pattern of fluctuations in your RR intervals — the gaps between heartbeats —
-          across many time windows simultaneously. If those fluctuations scale like pink noise, your
-          autonomic nervous system is in a self-organising, adaptive state. That's the zone. That's the glow.
+          by analysing the pattern of fluctuations in a physiological signal
+          across many time windows simultaneously. When those fluctuations scale like pink noise,
+          the autonomic nervous system is in a self-organising, adaptive state. That is the zone. That is the glow.
         </p>
       </div>
 
       <div class="ca-section">
         <div class="ca-label">how it's computed</div>
         <ul class="ca-list">
-          <li>Collect a sequence of RR intervals (time between heartbeats in milliseconds)</li>
-          <li>Subtract the mean and integrate — turn the fluctuations into a running sum</li>
-          <li>Divide the resulting signal into windows of many different sizes</li>
-          <li>In each window, fit a straight line (detrend); measure the residual fluctuation</li>
-          <li>Plot log(window size) vs log(fluctuation) — the slope of that line is alpha</li>
-          <li>α ≈ 1.0 means the fluctuations scale fractally: the same wiggle pattern appears at every scale</li>
+          <li>The input signal can be RR intervals from a heart rate sensor (time between beats, in milliseconds) or acceleration magnitude from a motion sensor. Both reveal the same underlying fractal structure. In this installation, SomaSync samples acceleration at 250ms intervals, producing a continuous 4Hz data stream.</li>
+          <li>The signal is demeaned and integrated into a cumulative sum, which reveals the underlying structure of fluctuations across time.</li>
+          <li>The integrated signal is divided into windows of many different sizes. Here the analysis window is 128 samples. At 4Hz that equals a 32-second window of movement or heartbeat data. Shorter windows capture fast dynamics; longer windows capture slow ones.</li>
+          <li>Inside each window, a straight line is fit to remove local trends. The residual fluctuation around that line is measured and averaged across all segments of that window size.</li>
+          <li>This process repeats across all window sizes. Plotting log(window size) against log(average fluctuation) produces a straight line. The slope of that line is alpha.</li>
+          <li>A slope of 1.0 means the fluctuations scale the same way at every window size: the fractal signature. A new DFA value is produced every 2 seconds, incorporating 8 fresh samples per update.</li>
         </ul>
       </div>
 
       <div class="ca-section">
         <div class="ca-label">what your score says about you</div>
         <ul class="ca-list">
-          <li><strong style="color:#00ff88">0.75–1.0 (glow)</strong> — adaptive zone. Parasympathetic dominance, autonomic resilience, flow state. Your heart is organising complexity in real time.</li>
-          <li><strong style="color:#ff8800">0.5–0.75 (tension)</strong> — physiological load is rising. Common during moderate exercise or stress. The fractal structure starts to break down.</li>
-          <li><strong style="color:#ff2200">below 0.5 (chaos)</strong> — very high load or fragmentation. Seen near exhaustion or in acute stress. The river is turbulent.</li>
-          <li><strong style="color:#0088ff">above 1.0 (stable/rigid)</strong> — over-correlated. Often seen at deep rest or in reduced autonomic complexity. The river has slowed to almost nothing.</li>
+          <li><strong style="color:#00ff88">0.75–1.0 (glow)</strong> adaptive zone. Parasympathetic dominance, autonomic resilience, flow state. Your system is organising complexity in real time.</li>
+          <li><strong style="color:#ff8800">0.5–0.75 (tension)</strong> physiological load is rising. Common during moderate exercise or stress. The fractal structure grows less coherent.</li>
+          <li><strong style="color:#ff2200">below 0.5 (chaos)</strong> high load or fragmentation. Seen near exhaustion or in acute stress. The river is turbulent.</li>
+          <li><strong style="color:#0088ff">above 1.0 (stable/rigid)</strong> over-correlated. Often seen at deep rest or in states of reduced autonomic complexity. The river has slowed considerably.</li>
         </ul>
       </div>
 
       <div class="ca-section">
-        <div class="ca-label">DFA alpha 1 vs HRV — how they're different</div>
+        <div class="ca-label">DFA alpha 1 vs HRV: how they're different</div>
         <p class="ca-body">
           Standard HRV metrics like <strong>RMSSD</strong> measure <em>how much</em> your heart rate varies.
-          DFA alpha 1 measures <em>how</em> it varies — the fractal structure of that variation.
-          You can have high HRV but low alpha (lots of variation with no pattern),
+          DFA alpha 1 measures <em>how</em> it varies: the fractal structure of that variation.
+          You can have high HRV and low alpha (lots of variation with low structure),
           or modest HRV with alpha near 1.0 (small but exquisitely structured variation).
           During movement, standard HRV collapses at higher intensities and becomes hard to interpret.
-          DFA alpha 1 remains meaningful throughout — which is why it works as a real-time signal during free movement.
+          DFA alpha 1 remains meaningful throughout, which is why it works as a real-time signal during free movement.
           They are complementary: HRV tells you the amplitude; alpha tells you the architecture.
         </p>
       </div>
@@ -236,11 +238,11 @@
         <div class="ca-label">fun facts</div>
         <ul class="ca-list">
           <li>DFA was originally invented to study <strong>DNA sequences</strong> before anyone thought to apply it to heartbeats. Peng et al. made that leap in 1995.</li>
-          <li>The fractal heart was identified by <strong>Ary Goldberger</strong> at Harvard, who noticed that healthy hearts look like coastlines — irregular at every scale, not just the obvious one.</li>
-          <li><strong>Pink noise (1/f noise, α=1)</strong> shows up in music, brainwaves, river flows, forest fires, and financial markets. It's the signature of complex systems balanced at the edge of order and chaos.</li>
-          <li>DFA alpha 1 reliably drops below 0.75 at the <strong>aerobic threshold</strong> during exercise — making it a non-invasive way to find your sustainable effort ceiling without a lab test.</li>
-          <li>During deep sleep, alpha drifts toward 1.5 — the body becomes more rigid and less adaptive. Waking up pulls it back toward 1.0.</li>
-          <li>The Dune sandwalk: walking on loose sand without sinking requires matching the terrain's natural rhythm. Too rigid — you punch through. Too random — you slide. Fractal movement finds the grain.</li>
+          <li>The fractal heart was identified by <strong>Ary Goldberger</strong> at Harvard, who noticed that healthy hearts look like coastlines: irregular at every scale, self-similar across all of them.</li>
+          <li><strong>Pink noise (1/f noise, α = 1)</strong> shows up in music, brainwaves, river flows, forest fires, and financial markets. It is the signature of complex systems balanced at the edge of order and chaos.</li>
+          <li>DFA alpha 1 drops reliably below 0.75 at the <strong>aerobic threshold</strong> during exercise, making it a practical way to find your sustainable effort ceiling outside a lab setting.</li>
+          <li>During deep sleep, alpha drifts toward 1.5. The body becomes more rigid and less adaptive. Waking pulls it back toward 1.0.</li>
+          <li>The Dune sandwalk: walking on loose sand without sinking requires matching the terrain's natural rhythm. Too rigid, you punch through. Too random, you slide. Fractal movement finds the grain.</li>
         </ul>
       </div>
 
@@ -257,7 +259,7 @@
 
       <div class="ca-credits">
         experience designed &amp; built by arvy<br>
-        biometric streaming — <strong style="color:#444">SomaSync</strong> by Dmitry<br>
+        biometric streaming: <strong style="color:#444">SomaSync</strong> by Dmitry<br>
         presented at Tryp Expo
       </div>
 
