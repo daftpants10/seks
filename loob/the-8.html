@@ -9,9 +9,9 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body { background:#000; color:#fff; font-family:ui-monospace,'Menlo',monospace; overflow:hidden; height:100vh; width:100vw; user-select:none; }
 
-    #cam  { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); opacity:0.55; z-index:1; }
-    #bg   { position:fixed; inset:0; z-index:3; mix-blend-mode:screen; pointer-events:none; }
-    #py   { position:fixed; inset:0; z-index:15; pointer-events:none; opacity:0.5; }
+    #cam  { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); opacity:0.28; z-index:2; }
+    #bg   { position:fixed; inset:0; z-index:1; pointer-events:none; }
+    #py   { position:fixed; inset:0; z-index:15; pointer-events:none; }
     #glow { position:fixed; inset:0; pointer-events:none; border:3px solid var(--zone); box-shadow:0 0 50px var(--zone) inset, 0 0 100px var(--zone-dim) inset; transition:border-color 2s, box-shadow 2s; z-index:10; }
 
     /* ── overlays ─────────────────────────────────── */
@@ -471,12 +471,12 @@ const FRAG_SRC = `
                   fbm(uv + 3.5 * q + vec2(8.3, 2.8) + 0.12  * t));
     float f = fbm(uv + 3.0 * r + t * 0.35);
 
-    vec3 c_glow = mix(vec3(0.0,  0.04, 0.02), vec3(0.02, 0.82, 0.42), smoothstep(0.28, 0.72, f));
-    vec3 c_flow = mix(vec3(0.01, 0.01, 0.07), vec3(0.38, 0.08, 0.78), smoothstep(0.28, 0.72, f));
+    vec3 c_glow = mix(vec3(0.0,  0.06, 0.03), vec3(0.04, 1.0,  0.55), smoothstep(0.25, 0.70, f));
+    vec3 c_flow = mix(vec3(0.02, 0.01, 0.10), vec3(0.55, 0.12, 1.0 ), smoothstep(0.25, 0.70, f));
     vec3 col = mix(c_flow, c_glow, u_glow);
 
-    float pulse = clamp(1.0 - abs(u_alpha - 0.875) * 1.6, 0.0, 1.0);
-    col *= 0.32 + 0.22 * pulse;
+    float pulse = clamp(1.0 - abs(u_alpha - 0.875) * 1.4, 0.0, 1.0);
+    col *= 0.55 + 0.45 * pulse;
 
     gl_FragColor = vec4(col, 1.0);
   }
@@ -607,9 +607,9 @@ function renderPyramid(progress, isGlow, color) {
     pyCtx.fill(); pyCtx.stroke()
   }
 
-  const wireOpacity = isGlow ? 0.4+Math.sin(Date.now()*0.003)*0.15 : 0.28
+  const wireOpacity = isGlow ? 0.92 + Math.sin(Date.now()*0.003)*0.08 : 0.72
   pyCtx.strokeStyle = hex2rgba(color, wireOpacity)
-  pyCtx.lineWidth   = 1.5*devicePixelRatio
+  pyCtx.lineWidth   = 2.5*devicePixelRatio
   const edges = [[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]]
   edges.forEach(([a,b]) => {
     pyCtx.beginPath(); pyCtx.moveTo(pv[a][0],pv[a][1]); pyCtx.lineTo(pv[b][0],pv[b][1]); pyCtx.stroke()
