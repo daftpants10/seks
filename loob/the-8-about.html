@@ -10,7 +10,7 @@
     :root {
       --bg:   #0a0a0a;
       --fg:   #c8c8c8;
-      --dim:  #666;
+      --dim:  #555;
       --glow: #7fff7f;
       --blue: #7fdfff;
       --line: #1e1e1e;
@@ -28,16 +28,13 @@
     }
 
     .wrap {
-      max-width: 640px;
+      max-width: 660px;
       margin: 0 auto;
       padding: 5rem 0 6rem;
     }
 
     /* ── header ── */
-    .site-header {
-      margin-bottom: 4rem;
-    }
-
+    .site-header { margin-bottom: 3.5rem; }
     .site-header h1 {
       font-size: 2.2rem;
       font-weight: 400;
@@ -45,138 +42,193 @@
       color: #fff;
       margin-bottom: 0.35rem;
     }
-
     .site-header .sub {
       color: var(--dim);
       font-size: 0.85rem;
       letter-spacing: 0.08em;
     }
 
-    /* ── sections ── */
-    section {
-      margin-bottom: 3.5rem;
-    }
-
+    /* ── section heading ── */
+    section { margin-bottom: 3.5rem; }
     h2 {
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--dim);
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.4rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--line);
     }
 
-    p {
-      margin-bottom: 1.1rem;
-      color: var(--fg);
-    }
-
+    p { margin-bottom: 1.1rem; color: var(--fg); }
     p:last-child { margin-bottom: 0; }
+
+    /* ── fork diagram ── */
+    .fork-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2.2rem;
+    }
 
     /* ── track cards ── */
     .track {
       border: 1px solid var(--line);
-      padding: 1.6rem;
+      padding: 1.5rem;
       margin-bottom: 1.25rem;
     }
-
     .track-label {
-      font-size: 0.65rem;
-      letter-spacing: 0.18em;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      margin-bottom: 0.6rem;
+      margin-bottom: 0.55rem;
     }
-
-    .track-label.art   { color: var(--glow); }
-    .track-label.sci   { color: var(--blue); }
-
+    .track-label.art { color: var(--glow); }
+    .track-label.sci { color: var(--blue); }
     .track h3 {
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 400;
       color: #fff;
-      margin-bottom: 0.9rem;
+      margin-bottom: 1.1rem;
     }
 
-    .track p {
-      font-size: 0.9rem;
+    /* ── two-col layout inside art card ── */
+    .track-body {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .track-text p {
+      font-size: 0.88rem;
       color: #aaa;
       line-height: 1.7;
+      margin-bottom: 0.9rem;
+    }
+    .track-text p:last-child { margin-bottom: 0; }
+
+    /* ── gantt ── */
+    .gantt {
+      margin-top: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .gantt-days {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+    .gantt-day-num {
+      font-size: 0.55rem;
+      color: var(--dim);
+      text-align: center;
+      letter-spacing: 0;
+    }
+    .gantt-bars {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 2px;
+      margin-bottom: 6px;
+    }
+    .gantt-bar {
+      height: 10px;
+      border-radius: 1px;
+    }
+    .gantt-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem 1.4rem;
+      margin-top: 0.6rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.65rem;
+      color: #888;
+      letter-spacing: 0.05em;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 1px;
+      flex-shrink: 0;
     }
 
-    /* ── zone pill ── */
+    /* ── sci text ── */
+    .sci-text p {
+      font-size: 0.88rem;
+      color: #aaa;
+      line-height: 1.7;
+      margin-bottom: 0.9rem;
+    }
+    .sci-text p:last-child { margin-bottom: 0; }
+
+    /* ── cta ── */
+    .cta {
+      display: inline-block;
+      margin-top: 1.3rem;
+      padding: 0.6rem 1.3rem;
+      border: 1px solid var(--blue);
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 0.75rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
+    }
+    .cta:hover { background: var(--blue); color: #000; }
+
+    /* ── zone pills ── */
     .zone-row {
       display: flex;
-      gap: 0.6rem;
+      gap: 0.55rem;
       flex-wrap: wrap;
       margin: 1rem 0;
     }
-
     .zone {
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
-      padding: 0.25rem 0.7rem;
+      font-size: 0.68rem;
+      letter-spacing: 0.09em;
+      padding: 0.22rem 0.65rem;
       border: 1px solid;
     }
-
     .zone.glow  { border-color: var(--glow); color: var(--glow); }
     .zone.flow  { border-color: #bfff7f;     color: #bfff7f; }
     .zone.rigid { border-color: #ff9966;     color: #ff9966; }
     .zone.chaos { border-color: #ff5566;     color: #ff5566; }
 
-    /* ── cta button ── */
-    .cta {
-      display: inline-block;
-      margin-top: 1.25rem;
-      padding: 0.65rem 1.4rem;
-      border: 1px solid var(--blue);
-      color: var(--blue);
-      text-decoration: none;
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .cta:hover {
-      background: var(--blue);
-      color: #000;
-    }
-
-    /* ── dfa range table ── */
+    /* ── dfa table ── */
     .dfa-table {
       width: 100%;
       border-collapse: collapse;
       margin: 1.2rem 0;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
     }
-
     .dfa-table td {
-      padding: 0.5rem 0.75rem;
+      padding: 0.48rem 0.7rem;
       border-bottom: 1px solid var(--line);
       vertical-align: top;
     }
-
     .dfa-table td:first-child {
       width: 5.5rem;
       color: var(--dim);
-      font-size: 0.78rem;
+      font-size: 0.76rem;
     }
 
     /* ── credits ── */
-    .credits {
-      font-size: 0.8rem;
-      color: var(--dim);
-      line-height: 2;
-    }
+    .credits { font-size: 0.8rem; color: var(--dim); line-height: 2.1; }
 
     /* ── footer ── */
     footer {
       margin-top: 5rem;
       padding-top: 1.5rem;
       border-top: 1px solid var(--line);
-      font-size: 0.75rem;
-      color: #444;
+      font-size: 0.72rem;
+      color: #333;
+    }
+
+    @media (max-width: 480px) {
+      .track-body { grid-template-columns: 1fr; }
+      .loop-svg   { display: none; }
     }
   </style>
 </head>
@@ -189,47 +241,231 @@
   </header>
 
 
-  <!-- ── two tracks ── -->
+  <!-- ══════════════════════════════════════════
+       TWO TRACKS
+  ══════════════════════════════════════════ -->
   <section>
     <h2>two tracks</h2>
 
+    <!-- fork diagram -->
+    <div class="fork-wrap">
+      <svg width="400" height="110" viewBox="0 0 400 110"
+           fill="none" xmlns="http://www.w3.org/2000/svg"
+           style="overflow:visible">
+
+        <!-- root node -->
+        <rect x="152" y="0" width="96" height="28" rx="2"
+              fill="#141414" stroke="#2a2a2a" stroke-width="1"/>
+        <text x="200" y="18" text-anchor="middle"
+              font-family="'Courier New',monospace" font-size="11" fill="#fff">the 8</text>
+
+        <!-- stem down -->
+        <line x1="200" y1="28" x2="200" y2="52" stroke="#333" stroke-width="1"/>
+        <!-- fork left -->
+        <line x1="200" y1="52" x2="88"  y2="52" stroke="#333" stroke-width="1"/>
+        <!-- fork right -->
+        <line x1="200" y1="52" x2="312" y2="52" stroke="#333" stroke-width="1"/>
+        <!-- drop left -->
+        <line x1="88"  y1="52" x2="88"  y2="72" stroke="#2a5a2a" stroke-width="1"/>
+        <!-- drop right -->
+        <line x1="312" y1="52" x2="312" y2="72" stroke="#1a4a5a" stroke-width="1"/>
+
+        <!-- art box -->
+        <rect x="28" y="72" width="120" height="34" rx="2"
+              fill="#0d1a0d" stroke="#2a5a2a" stroke-width="1"/>
+        <text x="88" y="86" text-anchor="middle"
+              font-family="'Courier New',monospace" font-size="9.5" fill="#7fff7f">art installation</text>
+        <text x="88" y="99" text-anchor="middle"
+              font-family="'Courier New',monospace" font-size="8" fill="#3a7a3a">tryp expo</text>
+
+        <!-- sci box -->
+        <rect x="252" y="72" width="120" height="34" rx="2"
+              fill="#0d1a22" stroke="#1a5a7a" stroke-width="1"/>
+        <text x="312" y="86" text-anchor="middle"
+              font-family="'Courier New',monospace" font-size="9.5" fill="#7fdfff">longitudinal study</text>
+        <text x="312" y="99" text-anchor="middle"
+              font-family="'Courier New',monospace" font-size="8" fill="#2a6a8a">fu berlin / 14 days</text>
+      </svg>
+    </div>
+
+    <!-- ── art card ── -->
     <div class="track">
       <div class="track-label art">track 01 / art installation</div>
       <h3>the 8 at tryp expo</h3>
-      <p>
-        arvy wears a biometric sensor that streams heart rate and movement data in real time.
-        you hold a stick or a bodyloop and use it to manipulate arvy's limbs with slow, rhythmic pressure.
-        the goal is co-regulation: guiding arvy's nervous system into the fractal adaptive zone.
-      </p>
-      <p>
-        a large screen shows arvy's DFA alpha 1 signal live.
-        when the value reaches the adaptive range (0.75 to 1.0), the music plays.
-        outside that range, the music pauses.
-        the group's collective touch determines whether the music continues.
-      </p>
+      <div class="track-body">
+        <div class="track-text">
+          <p>
+            arvy wears a biometric sensor streaming heart rate
+            and movement data in real time. you hold a stick
+            or a bodyloop and use it to manipulate arvy's
+            limbs with slow, rhythmic pressure. the goal is
+            co-regulation: guiding arvy's nervous system into
+            the fractal adaptive zone.
+          </p>
+          <p>
+            a screen shows the DFA alpha 1 signal live.
+            when the value reaches 0.75 to 1.0, the music
+            plays. the group's collective touch determines
+            whether the music continues.
+          </p>
+        </div>
+
+        <!-- minimal game loop diagram -->
+        <svg class="loop-svg" width="130" height="230"
+             viewBox="0 0 130 230" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+
+          <!-- you -->
+          <circle cx="65" cy="20"  r="10" stroke="#555" stroke-width="1" fill="#111"/>
+          <text x="65" y="24" text-anchor="middle"
+                font-family="'Courier New',monospace" font-size="8" fill="#888">you</text>
+
+          <!-- arrow down + label -->
+          <line x1="65" y1="30" x2="65" y2="55" stroke="#333" stroke-width="1"/>
+          <polygon points="65,58 62,52 68,52" fill="#333"/>
+          <text x="80" y="46" font-family="'Courier New',monospace" font-size="7.5" fill="#444">touch</text>
+
+          <!-- arvy -->
+          <circle cx="65" cy="70"  r="10" stroke="#444" stroke-width="1" fill="#111"/>
+          <text x="65" y="74" text-anchor="middle"
+                font-family="'Courier New',monospace" font-size="7.5" fill="#888">arvy</text>
+
+          <!-- arrow down + label -->
+          <line x1="65" y1="80" x2="65" y2="105" stroke="#333" stroke-width="1"/>
+          <polygon points="65,108 62,102 68,102" fill="#333"/>
+          <text x="72" y="97" font-family="'Courier New',monospace" font-size="7" fill="#444">signal</text>
+
+          <!-- dfa diamond -->
+          <polygon points="65,118 85,130 65,142 45,130"
+                   stroke="#555" stroke-width="1" fill="#111"/>
+          <text x="65" y="128" text-anchor="middle"
+                font-family="'Courier New',monospace" font-size="7" fill="#888">DFA</text>
+          <text x="65" y="138" text-anchor="middle"
+                font-family="'Courier New',monospace" font-size="7" fill="#888">&#945;1</text>
+
+          <!-- fork left (in zone) -->
+          <line x1="45" y1="130" x2="20" y2="155" stroke="#2a5a2a" stroke-width="1"/>
+          <polygon points="17,158 16,151 23,153" fill="#2a5a2a"/>
+
+          <!-- fork right (out of zone) -->
+          <line x1="85" y1="130" x2="110" y2="155" stroke="#553a1a" stroke-width="1"/>
+          <polygon points="113,158 106,153 113,151" fill="#553a1a"/>
+
+          <!-- glow box -->
+          <rect x="2" y="160" width="46" height="24" rx="1"
+                fill="#0a1a0a" stroke="#2a5a2a" stroke-width="1"/>
+          <text x="25" y="170" text-anchor="middle"
+                font-family="'Courier New',monospace" font-size="7.5" fill="#7fff7f">glow</text>
+          <text x="25" y="180" text-anchor="middle"
+                font-family="'Courier New',monospace" font-size="6.5" fill="#3a7a3a">music plays</text>
+
+          <!-- grace box -->
+          <rect x="82" y="160" width="46" height="24" rx="1"
+                fill="#1a1000" stroke="#554a1a" stroke-width="1"/>
+          <text x="105" y="170" text-anchor="middle"
+                font-family="'Courier New',monospace" font-size="7.5" fill="#aa7700">grace</text>
+          <text x="105" y="180" text-anchor="middle"
+                font-family="'Courier New',monospace" font-size="6.5" fill="#664400">30s window</text>
+
+          <!-- in zone label -->
+          <text x="18" y="151" font-family="'Courier New',monospace" font-size="6.5" fill="#3a6a3a">in zone</text>
+          <!-- out label -->
+          <text x="84" y="151" font-family="'Courier New',monospace" font-size="6.5" fill="#664422">outside</text>
+
+          <!-- loop arrow back up (right side) -->
+          <path d="M 128 172 Q 128 210 65 210 Q 2 210 2 172"
+                stroke="#222" stroke-width="1" fill="none" stroke-dasharray="3,3"/>
+          <polygon points="2,169 0,176 5,174" fill="#222"/>
+        </svg>
+      </div>
     </div>
 
+    <!-- ── science card ── -->
     <div class="track">
       <div class="track-label sci">track 02 / science study</div>
       <h3>longitudinal research / fu berlin</h3>
-      <p>
-        the same setup runs as a 14-day longitudinal study through the Mind, Brain, and Cognitive Neuroscience
-        program at Freie Universitat Berlin.
-      </p>
-      <p>
-        the question: do trained participants guide arvy into the adaptive zone faster, more smoothly,
-        and with greater consistency over time? each session logs DFA alpha 1 history,
-        time in each zone, and glow percentage for later analysis.
-      </p>
-      <p>
-        interested in participating or want to learn more? reach arvy directly via the form below.
-      </p>
+      <div class="sci-text">
+        <p>
+          the same setup runs as a 14-day longitudinal study through the
+          Mind, Brain, and Cognitive Neuroscience program at
+          Freie Universitat Berlin.
+        </p>
+        <p>
+          the question: do trained participants guide arvy into the adaptive
+          zone faster, more smoothly, and with greater consistency over time?
+          each session logs DFA alpha 1 history, time in each zone, and glow
+          percentage for later analysis.
+        </p>
+      </div>
+
+      <!-- 14-day gantt -->
+      <div class="gantt">
+        <div class="gantt-days">
+          <div class="gantt-day-num">1</div>
+          <div class="gantt-day-num">2</div>
+          <div class="gantt-day-num">3</div>
+          <div class="gantt-day-num">4</div>
+          <div class="gantt-day-num">5</div>
+          <div class="gantt-day-num">6</div>
+          <div class="gantt-day-num">7</div>
+          <div class="gantt-day-num">8</div>
+          <div class="gantt-day-num">9</div>
+          <div class="gantt-day-num">10</div>
+          <div class="gantt-day-num">11</div>
+          <div class="gantt-day-num">12</div>
+          <div class="gantt-day-num">13</div>
+          <div class="gantt-day-num">14</div>
+        </div>
+
+        <!-- baseline: day 1 -->
+        <div class="gantt-bars">
+          <div class="gantt-bar" style="background:#3a3a3a"></div>
+          <div class="gantt-bar" style="background:#1a3a1a"></div>
+          <div class="gantt-bar" style="background:#1a3a1a"></div>
+          <div class="gantt-bar" style="background:#1a3a1a"></div>
+          <div class="gantt-bar" style="background:#1a3a1a"></div>
+          <div class="gantt-bar" style="background:#1a3a1a"></div>
+          <div class="gantt-bar" style="background:#1a3a1a"></div>
+          <div class="gantt-bar" style="background:#2a5a2a"></div>
+          <div class="gantt-bar" style="background:#2a5a2a"></div>
+          <div class="gantt-bar" style="background:#2a5a2a"></div>
+          <div class="gantt-bar" style="background:#2a5a2a"></div>
+          <div class="gantt-bar" style="background:#2a5a2a"></div>
+          <div class="gantt-bar" style="background:#2a5a2a"></div>
+          <div class="gantt-bar" style="background:#1a3a5a"></div>
+        </div>
+
+        <div class="gantt-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#3a3a3a"></div>
+            baseline
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#1a3a1a"></div>
+            early phase (days 2-7)
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#2a5a2a"></div>
+            experienced phase (days 8-13)
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#1a3a5a"></div>
+            final assessment
+          </div>
+        </div>
+      </div>
+
+      <div class="sci-text" style="margin-top:1.1rem">
+        <p>interested in participating or want to learn more? reach arvy directly via the form below.</p>
+      </div>
       <a class="cta" href="https://docs.google.com/forms/d/e/1FAIpQLSfi_5Xxro3FIHSyoR3icb-jTbHFc8c3P0L4Z42qhuMiURDQhw/viewform?usp=sharing&ouid=111248368582722733761" target="_blank" rel="noopener">get in touch</a>
     </div>
   </section>
 
 
-  <!-- ── what is dfa alpha 1 ── -->
+  <!-- ══════════════════════════════════════════
+       WHAT IS DFA ALPHA 1
+  ══════════════════════════════════════════ -->
   <section>
     <h2>what is DFA alpha 1</h2>
 
@@ -253,36 +489,33 @@
     <table class="dfa-table">
       <tr>
         <td>0.75 to 1.0</td>
-        <td><strong style="color:#7fff7f">glow</strong> / fractal adaptive zone. music plays. this is the sweet spot.</td>
+        <td><strong style="color:#7fff7f">glow</strong> / fractal adaptive zone. music plays.</td>
       </tr>
       <tr>
         <td>1.0 to 1.25</td>
-        <td><strong style="color:#bfff7f">flow</strong> / correlated but trending toward rigidity. sustained activity.</td>
+        <td><strong style="color:#bfff7f">flow</strong> / correlated, trending toward rigidity.</td>
       </tr>
       <tr>
         <td>above 1.5</td>
-        <td><strong style="color:#ff9966">rigid</strong> / highly correlated, low variability. fatigued or overcontrolled.</td>
+        <td><strong style="color:#ff9966">rigid</strong> / low variability. fatigued or overcontrolled.</td>
       </tr>
       <tr>
         <td>below 0.5</td>
-        <td><strong style="color:#ff5566">chaos</strong> / anti-correlated. erratic, fragmented regulation.</td>
+        <td><strong style="color:#ff5566">chaos</strong> / anti-correlated. erratic, fragmented.</td>
       </tr>
     </table>
 
     <p>
-      DFA alpha 1 can be computed from RR intervals (cardiac, via Polar H10 or similar chest strap)
+      DFA alpha 1 can be computed from RR intervals (cardiac, via Polar H10)
       or from accelerometer magnitude (motion, via Apple Watch + SomaSync).
-      the interpretation is consistent across both signal types.
-    </p>
-
-    <p>
-      SomaSync streams at 4 Hz with a 128-sample window, producing a new DFA value every 2 seconds.
-      this gives a responsive, science-grade signal suitable for both art and research.
+      SomaSync streams at 4 Hz with a 128-sample window, updating every 2 seconds.
     </p>
   </section>
 
 
-  <!-- ── credits ── -->
+  <!-- ══════════════════════════════════════════
+       CREDITS
+  ══════════════════════════════════════════ -->
   <section>
     <h2>credits</h2>
     <div class="credits">
