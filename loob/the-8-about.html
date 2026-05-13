@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>the 8 / about</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:   #0a0a0a;
+      --fg:   #c8c8c8;
+      --dim:  #666;
+      --glow: #7fff7f;
+      --blue: #7fdfff;
+      --line: #1e1e1e;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 15px;
+      line-height: 1.75;
+      padding: 0 1.5rem;
+    }
+
+    .wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 5rem 0 6rem;
+    }
+
+    /* ── header ── */
+    .site-header {
+      margin-bottom: 4rem;
+    }
+
+    .site-header h1 {
+      font-size: 2.2rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      color: #fff;
+      margin-bottom: 0.35rem;
+    }
+
+    .site-header .sub {
+      color: var(--dim);
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── sections ── */
+    section {
+      margin-bottom: 3.5rem;
+    }
+
+    h2 {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    p {
+      margin-bottom: 1.1rem;
+      color: var(--fg);
+    }
+
+    p:last-child { margin-bottom: 0; }
+
+    /* ── track cards ── */
+    .track {
+      border: 1px solid var(--line);
+      padding: 1.6rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .track-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+
+    .track-label.art   { color: var(--glow); }
+    .track-label.sci   { color: var(--blue); }
+
+    .track h3 {
+      font-size: 1.05rem;
+      font-weight: 400;
+      color: #fff;
+      margin-bottom: 0.9rem;
+    }
+
+    .track p {
+      font-size: 0.9rem;
+      color: #aaa;
+      line-height: 1.7;
+    }
+
+    /* ── zone pill ── */
+    .zone-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .zone {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      padding: 0.25rem 0.7rem;
+      border: 1px solid;
+    }
+
+    .zone.glow  { border-color: var(--glow); color: var(--glow); }
+    .zone.flow  { border-color: #bfff7f;     color: #bfff7f; }
+    .zone.rigid { border-color: #ff9966;     color: #ff9966; }
+    .zone.chaos { border-color: #ff5566;     color: #ff5566; }
+
+    /* ── cta button ── */
+    .cta {
+      display: inline-block;
+      margin-top: 1.25rem;
+      padding: 0.65rem 1.4rem;
+      border: 1px solid var(--blue);
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .cta:hover {
+      background: var(--blue);
+      color: #000;
+    }
+
+    /* ── dfa range table ── */
+    .dfa-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2rem 0;
+      font-size: 0.85rem;
+    }
+
+    .dfa-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    .dfa-table td:first-child {
+      width: 5.5rem;
+      color: var(--dim);
+      font-size: 0.78rem;
+    }
+
+    /* ── credits ── */
+    .credits {
+      font-size: 0.8rem;
+      color: var(--dim);
+      line-height: 2;
+    }
+
+    /* ── footer ── */
+    footer {
+      margin-top: 5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.75rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="site-header">
+    <h1>the 8</h1>
+    <div class="sub">biometric movement experience / tryp expo 2025</div>
+  </header>
+
+
+  <!-- ── two tracks ── -->
+  <section>
+    <h2>two tracks</h2>
+
+    <div class="track">
+      <div class="track-label art">track 01 / art installation</div>
+      <h3>the 8 at tryp expo</h3>
+      <p>
+        arvy wears a biometric sensor that streams heart rate and movement data in real time.
+        you hold a stick or a bodyloop and use it to manipulate arvy's limbs with slow, rhythmic pressure.
+        the goal is co-regulation: guiding arvy's nervous system into the fractal adaptive zone.
+      </p>
+      <p>
+        a large screen shows arvy's DFA alpha 1 signal live.
+        when the value reaches the adaptive range (0.75 to 1.0), the music plays.
+        outside that range, the music pauses.
+        the group's collective touch determines whether the music continues.
+      </p>
+    </div>
+
+    <div class="track">
+      <div class="track-label sci">track 02 / science study</div>
+      <h3>longitudinal research / fu berlin</h3>
+      <p>
+        the same setup runs as a 14-day longitudinal study through the Mind, Brain, and Cognitive Neuroscience
+        program at Freie Universitat Berlin.
+      </p>
+      <p>
+        the question: do trained participants guide arvy into the adaptive zone faster, more smoothly,
+        and with greater consistency over time? each session logs DFA alpha 1 history,
+        time in each zone, and glow percentage for later analysis.
+      </p>
+      <p>
+        interested in participating or want to learn more? reach arvy directly via the form below.
+      </p>
+      <a class="cta" href="https://docs.google.com/forms/d/e/1FAIpQLSfi_5Xxro3FIHSyoR3icb-jTbHFc8c3P0L4Z42qhuMiURDQhw/viewform?usp=sharing&ouid=111248368582722733761" target="_blank" rel="noopener">get in touch</a>
+    </div>
+  </section>
+
+
+  <!-- ── what is dfa alpha 1 ── -->
+  <section>
+    <h2>what is DFA alpha 1</h2>
+
+    <p>
+      DFA alpha 1 is the short-range scaling exponent of detrended fluctuation analysis.
+      it measures how self-similar a signal is across time scales, heart beats, or movement cycles.
+    </p>
+
+    <p>
+      a value near 1.0 means the signal behaves like pink noise: fractal, adaptive, alive.
+      this is the signature of a healthy, responsive nervous system.
+    </p>
+
+    <div class="zone-row">
+      <span class="zone glow">0.75 to 1.0 glow</span>
+      <span class="zone flow">1.0 to 1.25 flow</span>
+      <span class="zone rigid">above 1.5 rigid</span>
+      <span class="zone chaos">below 0.5 chaos</span>
+    </div>
+
+    <table class="dfa-table">
+      <tr>
+        <td>0.75 to 1.0</td>
+        <td><strong style="color:#7fff7f">glow</strong> / fractal adaptive zone. music plays. this is the sweet spot.</td>
+      </tr>
+      <tr>
+        <td>1.0 to 1.25</td>
+        <td><strong style="color:#bfff7f">flow</strong> / correlated but trending toward rigidity. sustained activity.</td>
+      </tr>
+      <tr>
+        <td>above 1.5</td>
+        <td><strong style="color:#ff9966">rigid</strong> / highly correlated, low variability. fatigued or overcontrolled.</td>
+      </tr>
+      <tr>
+        <td>below 0.5</td>
+        <td><strong style="color:#ff5566">chaos</strong> / anti-correlated. erratic, fragmented regulation.</td>
+      </tr>
+    </table>
+
+    <p>
+      DFA alpha 1 can be computed from RR intervals (cardiac, via Polar H10 or similar chest strap)
+      or from accelerometer magnitude (motion, via Apple Watch + SomaSync).
+      the interpretation is consistent across both signal types.
+    </p>
+
+    <p>
+      SomaSync streams at 4 Hz with a 128-sample window, producing a new DFA value every 2 seconds.
+      this gives a responsive, science-grade signal suitable for both art and research.
+    </p>
+  </section>
+
+
+  <!-- ── credits ── -->
+  <section>
+    <h2>credits</h2>
+    <div class="credits">
+      experience designed and built by arvy<br>
+      biometric streaming: SomaSync by Dmitry<br>
+      presented at Tryp Expo, Berlin 2025<br>
+      research: MCNB program, Freie Universitat Berlin
+    </div>
+  </section>
+
+
+  <footer>
+    the 8 / 2025 / all sessions are local and private
+  </footer>
+
+</div>
+</body>
+</html>
