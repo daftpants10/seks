@@ -90,12 +90,17 @@
     .ca-list li     { font-size:12px; color:#555; line-height:1.7; padding-left:16px; position:relative; }
     .ca-list li::before { content:'·'; position:absolute; left:0; color:#333; }
     .ca-credits     { font-size:11px; color:#333; letter-spacing:0.08em; line-height:2; margin-top:32px; padding-top:20px; border-top:1px solid #111; }
+
+    #pose-cv  { position:fixed; inset:0; width:100%; height:100%; transform:scaleX(-1); z-index:16; pointer-events:none; display:none; }
+    #pose-btn { margin-top:8px; background:none; border:1px solid #333; color:#555; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; transition:border-color 0.2s, color 0.2s; }
+    #pose-btn.active { border-color:#00ff88; color:#00ff88; }
   </style>
 </head>
 <body>
 
 <video id="cam" autoplay playsinline muted></video>
 <canvas id="py"></canvas>
+<canvas id="pose-cv"></canvas>
 <div id="glow"></div>
 
 <!-- Screen 1: tap to begin -->
@@ -161,6 +166,7 @@
     <div id="mock-tag">MOCK</div>
     <button id="h10-btn" onclick="connectH10()">⬡ CONNECT H10</button>
     <div id="h10-status"></div>
+    <button id="pose-btn" onclick="togglePose()">◈ BODY</button>
   </div>
 </div>
 
@@ -827,6 +833,94 @@ function tick() {
 wsFallback = setTimeout(() => { if (!wsConnected) enableMock() }, 6000)
 connectWS()
 requestAnimationFrame(tick)
+
+// ═══════════════════════════════════════════════
+// MediaPipe Pose — toggle overlay
+// ═══════════════════════════════════════════════
+let mpPose = null, poseOn = false
+
+const POSE_LINKS = [
+  [11,12],                        // shoulders
+  [11,13],[13,15],                // left arm
+  [12,14],[14,16],                // right arm
+  [11,23],[12,24],[23,24],        // torso
+  [23,25],[25,27],[24,26],[26,28] // legs
+]
+
+function togglePose() {
+  poseOn = !poseOn
+  const btn = document.getElementById('pose-btn')
+  btn.classList.toggle('active', poseOn)
+  btn.textContent = poseOn ? '◈ BODY ON' : '◈ BODY'
+  const cv = document.getElementById('pose-cv')
+  cv.style.display = poseOn ? 'block' : 'none'
+  if (poseOn && !mpPose) loadPose()
+  if (!poseOn) cv.getContext('2d').clearRect(0, 0, cv.width, cv.height)
+}
+
+function loadPose() {
+  mpPose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` })
+  mpPose.setOptions({ modelComplexity:1, smoothLandmarks:true, enableSegmentation:false,
+                      minDetectionConfidence:0.5, minTrackingConfidence:0.5 })
+  mpPose.onResults(drawPose)
+  schedulePose()
+}
+
+function schedulePose() {
+  if (!poseOn) return
+  const vid = document.getElementById('cam')
+  if (vid.readyState >= 2) {
+    mpPose.send({ image: vid }).then(() => { if (poseOn) setTimeout(schedulePose, 50) })
+  } else {
+    if (poseOn) setTimeout(schedulePose, 100)
+  }
+}
+
+function drawPose(results) {
+  const cv  = document.getElementById('pose-cv')
+  const ctx = cv.getContext('2d')
+  const w = cv.width, h = cv.height
+  ctx.clearRect(0, 0, w, h)
+  if (!results.poseLandmarks || !poseOn) return
+
+  const lm    = results.poseLandmarks
+  const color = currentZone ? currentZone.color : '#00ff88'
+  const dpr   = window.devicePixelRatio || 1
+
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+
+  // skeleton
+  ctx.strokeStyle = color; ctx.lineWidth = 2 * dpr; ctx.globalAlpha = 0.6
+  POSE_LINKS.forEach(([a, b]) => {
+    const pa = lm[a], pb = lm[b]
+    if (!pa || !pb || pa.visibility < 0.4 || pb.visibility < 0.4) return
+    ctx.beginPath(); ctx.moveTo(pa.x * w, pa.y * h); ctx.lineTo(pb.x * w, pb.y * h); ctx.stroke()
+  })
+
+  // stick line (wrist-to-wrist) — bolder, full opacity
+  const lw = lm[15], rw = lm[16]
+  if (lw && rw && lw.visibility > 0.4 && rw.visibility > 0.4) {
+    ctx.lineWidth = 4 * dpr; ctx.globalAlpha = 0.95
+    ctx.beginPath(); ctx.moveTo(lw.x * w, lw.y * h); ctx.lineTo(rw.x * w, rw.y * h); ctx.stroke()
+  }
+
+  // joint dots
+  ctx.fillStyle = color; ctx.globalAlpha = 0.85
+  ;[11,12,13,14,15,16,23,24,25,26,27,28].forEach(i => {
+    const p = lm[i]; if (!p || p.visibility < 0.4) return
+    ctx.beginPath(); ctx.arc(p.x * w, p.y * h, 4 * dpr, 0, Math.PI * 2); ctx.fill()
+  })
+  ctx.globalAlpha = 1
+}
+
+;(function resizePoseCv() {
+  const cv = document.getElementById('pose-cv')
+  const dpr = window.devicePixelRatio || 1
+  cv.width  = window.innerWidth  * dpr
+  cv.height = window.innerHeight * dpr
+  window.addEventListener('resize', resizePoseCv)
+})()
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 </body>
 </html>
