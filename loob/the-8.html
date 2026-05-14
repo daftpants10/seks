@@ -889,26 +889,30 @@ function drawPose(results) {
 
   ctx.lineCap = 'round'; ctx.lineJoin = 'round'
 
-  // skeleton
-  ctx.strokeStyle = color; ctx.lineWidth = 2 * dpr; ctx.globalAlpha = 0.6
+  // skeleton — faint dotted lines
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5 * dpr; ctx.globalAlpha = 0.28
+  ctx.setLineDash([3 * dpr, 6 * dpr])
   POSE_LINKS.forEach(([a, b]) => {
     const pa = lm[a], pb = lm[b]
     if (!pa || !pb || pa.visibility < 0.4 || pb.visibility < 0.4) return
     ctx.beginPath(); ctx.moveTo(pa.x * w, pa.y * h); ctx.lineTo(pb.x * w, pb.y * h); ctx.stroke()
   })
 
-  // stick line (wrist-to-wrist) — bolder, full opacity
+  // stick line (wrist-to-wrist) — slightly more visible but still subtle
   const lw = lm[15], rw = lm[16]
   if (lw && rw && lw.visibility > 0.4 && rw.visibility > 0.4) {
-    ctx.lineWidth = 4 * dpr; ctx.globalAlpha = 0.95
+    ctx.lineWidth = 2.5 * dpr; ctx.globalAlpha = 0.55
+    ctx.setLineDash([5 * dpr, 5 * dpr])
     ctx.beginPath(); ctx.moveTo(lw.x * w, lw.y * h); ctx.lineTo(rw.x * w, rw.y * h); ctx.stroke()
   }
 
-  // joint dots
-  ctx.fillStyle = color; ctx.globalAlpha = 0.85
+  ctx.setLineDash([])
+
+  // joint dots — small and faint
+  ctx.fillStyle = color; ctx.globalAlpha = 0.35
   ;[11,12,13,14,15,16,23,24,25,26,27,28].forEach(i => {
     const p = lm[i]; if (!p || p.visibility < 0.4) return
-    ctx.beginPath(); ctx.arc(p.x * w, p.y * h, 4 * dpr, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(p.x * w, p.y * h, 2.5 * dpr, 0, Math.PI * 2); ctx.fill()
   })
   ctx.globalAlpha = 1
 }
