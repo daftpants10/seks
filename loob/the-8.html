@@ -36,10 +36,16 @@
     #name-input  { width:100%; background:none; border:none; border-bottom:1px solid #2a2a2a; color:#fff; font-family:inherit; font-size:clamp(20px,3vw,28px); padding:8px 0 12px; outline:none; letter-spacing:0.02em; }
     #name-input::placeholder { color:#2a2a2a; }
     .mode-buttons{ display:flex; gap:12px; margin-top:10px; }
-    .mode-btn    { flex:1; background:none; border:1px solid #2a2a2a; color:#fff; font-family:inherit; padding:22px 18px; cursor:pointer; text-align:left; border-radius:4px; transition:border-color 0.25s; }
+    .mode-btn    { flex:1; background:none; border:1px solid #2a2a2a; color:#fff; font-family:inherit; padding:22px 18px; cursor:pointer; text-align:left; border-radius:4px; transition:border-color 0.25s, opacity 0.25s; }
     .mode-btn:hover { border-color:#00ff88; }
+    .mode-btn:disabled { opacity:0.25; cursor:default; pointer-events:none; }
     .mb-title    { font-size:clamp(16px,2.5vw,22px); font-weight:700; letter-spacing:-0.01em; }
     .mb-desc     { font-size:11px; color:#555; margin-top:8px; letter-spacing:0.08em; line-height:1.5; }
+    .track-grid  { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+    .track-btn   { background:none; border:1px solid #222; color:#555; font-family:inherit; font-size:clamp(16px,2.5vw,22px); font-weight:700; padding:14px 0; cursor:pointer; border-radius:3px; transition:border-color 0.2s, color 0.2s; }
+    .track-btn:hover { border-color:#555; color:#aaa; }
+    .track-btn.selected { border-color:#00ff88; color:#00ff88; }
+    #track-status { font-size:10px; color:#555; letter-spacing:0.12em; min-height:16px; margin-bottom:4px; }
 
     /* ── HUD ──────────────────────────────────────── */
     #top { position:fixed; top:0; left:0; right:0; padding:22px 28px 80px; background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent); z-index:20; display:flex; align-items:flex-start; justify-content:space-between; }
@@ -96,7 +102,7 @@
 <div id="start" class="overlay" style="display:flex">
   <h1>⦿-⦿</h1>
   <div class="sub">stay fractal · mine the track</div>
-  <div id="loading">loading track…</div>
+  <div id="loading">tap to begin</div>
 </div>
 
 <!-- Screen 2: about -->
@@ -112,18 +118,30 @@
   </div>
 </div>
 
-<!-- Screen 3: mode + name -->
+<!-- Screen 3: track + name + mode -->
 <div id="mode-select" class="overlay">
   <div id="mode-inner">
-    <div class="ms-label">your name</div>
+    <div class="ms-label">choose track</div>
+    <div class="track-grid">
+      <button class="track-btn" onclick="selectTrack(1)">1</button>
+      <button class="track-btn" onclick="selectTrack(2)">2</button>
+      <button class="track-btn" onclick="selectTrack(3)">3</button>
+      <button class="track-btn" onclick="selectTrack(4)">4</button>
+      <button class="track-btn" onclick="selectTrack(5)">5</button>
+      <button class="track-btn" onclick="selectTrack(6)">6</button>
+      <button class="track-btn" onclick="selectTrack(7)">7</button>
+      <button class="track-btn" onclick="selectTrack(8)">8</button>
+    </div>
+    <div id="track-status"></div>
+    <div class="ms-label" style="margin-top:24px">your name</div>
     <input id="name-input" type="text" placeholder="enter name" autocomplete="off" spellcheck="false">
-    <div class="ms-label" style="margin-top:36px">choose mode</div>
+    <div class="ms-label" style="margin-top:28px">choose mode</div>
     <div class="mode-buttons">
-      <button class="mode-btn" onclick="selectMode('simple')">
+      <button class="mode-btn" id="btn-simple" onclick="selectMode('simple')" disabled>
         <div class="mb-title">simple</div>
         <div class="mb-desc">1 minute<br>15s grace period</div>
       </button>
-      <button class="mode-btn" onclick="selectMode('full')">
+      <button class="mode-btn" id="btn-full" onclick="selectMode('full')" disabled>
         <div class="mb-title">full</div>
         <div class="mb-desc">full track<br>30s grace period</div>
       </button>
@@ -288,6 +306,7 @@ const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0]
 // State
 // ═══════════════════════════════════════════════
 let started = false, dfaAlpha = null, currentZone = ZONES[2]
+let selectedTrack = null, trackFetching = false
 let outOfZoneSec = 0, songProgress = 0, lastTick = null
 let mockMode = false, mockT = 0, wsConnected = false
 let audioPaused = true, lastHistorySample = 0
@@ -318,12 +337,40 @@ document.getElementById('complete').addEventListener('click', () => {
   document.getElementById('mode-select').style.display = 'flex'
   document.getElementById('name-input').value = ''
   document.getElementById('name-input').focus()
+  // re-enable mode buttons if a track is still loaded
+  if (trackArrayBuffer) {
+    document.getElementById('btn-simple').disabled = false
+    document.getElementById('btn-full').disabled   = false
+  }
 })
 
 // Stop mode-select div from reacting to clicks on its children (input / buttons)
 document.getElementById('mode-select').addEventListener('click', e => e.stopPropagation())
 
+function selectTrack(n) {
+  selectedTrack = n
+  document.querySelectorAll('.track-btn').forEach((b, i) => b.classList.toggle('selected', i + 1 === n))
+  const st = document.getElementById('track-status')
+  st.textContent = `loading seks_track_${n}…`
+  trackArrayBuffer = null; decodedTrack = null; trackFetching = true
+  document.getElementById('btn-simple').disabled = true
+  document.getElementById('btn-full').disabled   = true
+  fetch(`/track?n=${n}`)
+    .then(r => { if (!r.ok) throw 0; return r.arrayBuffer() })
+    .then(b => {
+      trackArrayBuffer = b; trackFetching = false
+      st.textContent = `seks_track_${n} · ready`
+      document.getElementById('btn-simple').disabled = false
+      document.getElementById('btn-full').disabled   = false
+    })
+    .catch(() => {
+      trackFetching = false
+      st.textContent = `track ${n} · file not found`
+    })
+}
+
 function selectMode(mode) {
+  if (!selectedTrack || trackFetching || !trackArrayBuffer) return
   currentMode = mode
   playerName = document.getElementById('name-input').value.trim() || 'anonymous'
   modeDuration = mode === 'simple' ? 60 : SONG_DURATION
@@ -353,10 +400,6 @@ navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:12
 let audioCtx, masterGain, trackSource, metroSource
 let trackArrayBuffer = null, trackLoaded = false, decodedTrack = null
 
-fetch('/track').then(r => { if(!r.ok) throw 0; return r.arrayBuffer() })
-  .then(b => { trackArrayBuffer = b; document.getElementById('loading').textContent = 'tap to begin' })
-  .catch(() => { document.getElementById('loading').textContent = 'tap to begin' })
-
 function buildMetronome(ctx) {
   const sr = ctx.sampleRate, beats = 8, bs = 0.5
   const buf = ctx.createBuffer(2, Math.floor(bs*beats*sr), sr)
@@ -372,14 +415,15 @@ function buildMetronome(ctx) {
 }
 
 async function initAudio() {
-  if (audioCtx) return  // already initialised
-  audioCtx   = new (window.AudioContext||window.webkitAudioContext)()
-  masterGain = audioCtx.createGain()
-  masterGain.gain.value = 0.9
-  masterGain.connect(audioCtx.destination)
+  if (!audioCtx) {
+    audioCtx   = new (window.AudioContext||window.webkitAudioContext)()
+    masterGain = audioCtx.createGain()
+    masterGain.gain.value = 0.9
+    masterGain.connect(audioCtx.destination)
+  }
   if (trackArrayBuffer) {
     try {
-      decodedTrack = await audioCtx.decodeAudioData(trackArrayBuffer)
+      decodedTrack = await audioCtx.decodeAudioData(trackArrayBuffer.slice(0))
       SONG_DURATION = decodedTrack.duration
       if (currentMode === 'full') modeDuration = decodedTrack.duration
       startTrackSource()
@@ -594,6 +638,7 @@ async function saveSession(total, glowTime, glowPct, dfaMean) {
   const session = {
     name:        playerName,
     mode:        currentMode,
+    track:       selectedTrack,
     timestamp:   new Date().toISOString(),
     modeDuration,
     totalPlayTime: Math.round(total * 10) / 10,

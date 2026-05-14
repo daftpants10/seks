@@ -40,8 +40,17 @@ const httpServer = http.createServer((req, res) => {
       res.writeHead(500); res.end('Could not read the-8.html')
     }
   } else if (urlPath === '/track') {
-    const track = findTrack()
-    if (!track) { res.writeHead(404); res.end('no audio file in loob/'); return }
+    const qs  = new URL('http://x' + req.url).searchParams
+    const n   = qs.get('n')
+    let track
+    if (n) {
+      const num = parseInt(n, 10)
+      track = AUDIO_EXTS.map(ext => `seks_track_${num}${ext}`)
+        .find(f => { try { fs.accessSync(path.join(__dirname, f)); return true } catch { return false } })
+    } else {
+      track = findTrack()
+    }
+    if (!track) { res.writeHead(404); res.end('track not found'); return }
     const filePath = path.join(__dirname, track)
     const stat     = fs.statSync(filePath)
     const mime     = { '.mp3':'audio/mpeg', '.wav':'audio/wav', '.ogg':'audio/ogg', '.m4a':'audio/mp4', '.flac':'audio/flac' }
