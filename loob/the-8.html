@@ -447,10 +447,9 @@ function startTrackSource() {
   if (trackSource) { try { trackSource.stop(); trackSource.disconnect() } catch {} }
   trackSource = audioCtx.createBufferSource()
   trackSource.buffer = decodedTrack
-  trackSource.loop = false
+  trackSource.loop = true
   trackSource.connect(masterGain)
   trackSource.start()
-  trackSource.onended = () => { if (!completeFired) songProgress = modeDuration }
   trackLoaded = true
   audioCtx.suspend()  // silent until glow
 }
