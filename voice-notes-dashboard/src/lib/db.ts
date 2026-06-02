@@ -89,11 +89,19 @@ export interface NoteWithContexts extends Note {
   context_venues: string;
 }
 
+// Parse timestamp from filename like "20260602 155928-0939D473.m4a"
+function parseDateFromFilename(filename: string): string | null {
+  const m = filename.match(/^(\d{4})(\d{2})(\d{2})\s+(\d{2})(\d{2})(\d{2})/);
+  if (!m) return null;
+  return new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}`).toISOString();
+}
+
 export function insertNote(filePath: string): number {
   const db = getDb();
   const filename = path.basename(filePath);
+  const fromFilename = parseDateFromFilename(filename);
   const stat = fs.existsSync(filePath) ? fs.statSync(filePath) : null;
-  const createdAt = stat ? stat.birthtime.toISOString() : new Date().toISOString();
+  const createdAt = fromFilename ?? (stat ? stat.birthtime.toISOString() : new Date().toISOString());
 
   const stmt = db.prepare(`
     INSERT INTO notes (original_filename, file_path, created_at, status, type)

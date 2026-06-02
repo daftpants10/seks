@@ -87,36 +87,26 @@ interface WeekendModalProps {
 }
 
 function WeekendModal({ onClose, onSaved }: WeekendModalProps) {
-  const [form, setForm] = useState({
-    city: '',
-    venue: '',
-    people: '',
-    vibe: '',
-    date_from: '',
-    date_to: '',
-    notes: '',
-  });
-  const [saving, setSaving] = useState(false);
+  const [stage, setStage] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
+  const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+  const handleFile = async (file: File) => {
+    setStage('processing');
     setError('');
+    const formData = new FormData();
+    formData.append('file', file);
     try {
-      const res = await fetch('/api/weekend-context', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch('/api/context-from-voice', { method: 'POST', body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      setResult(data);
+      setStage('done');
       onSaved();
-      onClose();
     } catch (err: any) {
       setError(err.message);
-    } finally {
-      setSaving(false);
+      setStage('error');
     }
   };
 
@@ -127,105 +117,63 @@ function WeekendModal({ onClose, onSaved }: WeekendModalProps) {
           <h2 className="text-[#00ff88] font-mono text-sm uppercase tracking-widest">weekend context</h2>
           <button onClick={onClose} className="text-[#888] hover:text-white text-lg leading-none">×</button>
         </div>
-        <form onSubmit={handleSubmit} className="p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] text-[#888] uppercase tracking-wider block mb-1">city</label>
+        <div className="p-6">
+          {stage === 'idle' && (
+            <>
+              <p className="text-[#888] font-mono text-xs mb-4 leading-relaxed">
+                record a quick voice note saying where you were, who you were with, and when — the app will extract the details and tag your recordings automatically.
+              </p>
+              <p className="text-[#555] font-mono text-[10px] mb-5 italic">
+                e.g. "I was in Berlin at CDV on Friday night into Saturday morning, I was with Tom and Maria, really energetic techno night"
+              </p>
               <input
-                type="text"
-                value={form.city}
-                onChange={e => setForm({ ...form, city: e.target.value })}
-                placeholder="new york"
-                className="w-full bg-[#222] border border-[#333] rounded px-3 py-2 text-sm font-mono text-[#f0f0f0] placeholder-[#555] focus:outline-none focus:border-[#00ff88]"
+                ref={fileInputRef}
+                type="file"
+                accept=".m4a,.mp3,.wav"
+                className="hidden"
+                onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
               />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full bg-[#00ff88] text-black font-mono text-sm py-3 rounded hover:bg-[#00dd77] transition-colors"
+              >
+                ↑ upload context voice note
+              </button>
+            </>
+          )}
+
+          {stage === 'processing' && (
+            <div className="text-center py-6">
+              <p className="text-[#00ff88] font-mono text-sm animate-pulse">transcribing + extracting context...</p>
             </div>
-            <div>
-              <label className="text-[10px] text-[#888] uppercase tracking-wider block mb-1">venue</label>
-              <input
-                type="text"
-                value={form.venue}
-                onChange={e => setForm({ ...form, venue: e.target.value })}
-                placeholder="the studio"
-                className="w-full bg-[#222] border border-[#333] rounded px-3 py-2 text-sm font-mono text-[#f0f0f0] placeholder-[#555] focus:outline-none focus:border-[#00ff88]"
-              />
+          )}
+
+          {stage === 'done' && result && (
+            <div className="space-y-3">
+              <p className="text-[#00ff88] font-mono text-xs uppercase tracking-wider">extracted</p>
+              <div className="bg-[#111] border border-[#2a2a2a] rounded p-3 space-y-1.5 text-xs font-mono">
+                {result.extracted.city && <p><span className="text-[#555]">city:</span> <span className="text-[#f0f0f0]">{result.extracted.city}</span></p>}
+                {result.extracted.venue && <p><span className="text-[#555]">venue:</span> <span className="text-[#f0f0f0]">{result.extracted.venue}</span></p>}
+                {result.extracted.people?.length > 0 && <p><span className="text-[#555]">with:</span> <span className="text-[#f0f0f0]">{result.extracted.people.join(', ')}</span></p>}
+                {result.extracted.vibe && <p><span className="text-[#555]">vibe:</span> <span className="text-[#f0f0f0]">{result.extracted.vibe}</span></p>}
+                {result.extracted.date_from && <p><span className="text-[#555]">from:</span> <span className="text-[#f0f0f0]">{new Date(result.extracted.date_from).toLocaleString()}</span></p>}
+                {result.extracted.date_to && <p><span className="text-[#555]">to:</span> <span className="text-[#f0f0f0]">{new Date(result.extracted.date_to).toLocaleString()}</span></p>}
+              </div>
+              <p className="text-[#555] font-mono text-[10px]">
+                {result.linkedCount} recording{result.linkedCount !== 1 ? 's' : ''} tagged
+              </p>
+              <p className="text-[#444] font-mono text-[10px] italic line-clamp-2">"{result.transcript}"</p>
+              <button onClick={onClose} className="w-full bg-[#333] text-[#aaa] font-mono text-sm py-2 rounded hover:bg-[#444] transition-colors mt-2">done</button>
             </div>
-          </div>
+          )}
 
-          <div>
-            <label className="text-[10px] text-[#888] uppercase tracking-wider block mb-1">who you were with</label>
-            <input
-              type="text"
-              value={form.people}
-              onChange={e => setForm({ ...form, people: e.target.value })}
-              placeholder="comma separated names"
-              className="w-full bg-[#222] border border-[#333] rounded px-3 py-2 text-sm font-mono text-[#f0f0f0] placeholder-[#555] focus:outline-none focus:border-[#00ff88]"
-            />
-          </div>
-
-          <div>
-            <label className="text-[10px] text-[#888] uppercase tracking-wider block mb-1">vibe</label>
-            <input
-              type="text"
-              value={form.vibe}
-              onChange={e => setForm({ ...form, vibe: e.target.value })}
-              placeholder="late night, creative, energetic..."
-              className="w-full bg-[#222] border border-[#333] rounded px-3 py-2 text-sm font-mono text-[#f0f0f0] placeholder-[#555] focus:outline-none focus:border-[#00ff88]"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] text-[#888] uppercase tracking-wider block mb-1">date from</label>
-              <input
-                type="datetime-local"
-                value={form.date_from}
-                onChange={e => setForm({ ...form, date_from: e.target.value })}
-                required
-                className="w-full bg-[#222] border border-[#333] rounded px-3 py-2 text-sm font-mono text-[#f0f0f0] focus:outline-none focus:border-[#00ff88]"
-              />
+          {stage === 'error' && (
+            <div className="space-y-3">
+              <p className="text-red-400 font-mono text-xs">{error}</p>
+              <button onClick={() => setStage('idle')} className="w-full bg-[#333] text-[#aaa] font-mono text-sm py-2 rounded hover:bg-[#444] transition-colors">try again</button>
             </div>
-            <div>
-              <label className="text-[10px] text-[#888] uppercase tracking-wider block mb-1">date to</label>
-              <input
-                type="datetime-local"
-                value={form.date_to}
-                onChange={e => setForm({ ...form, date_to: e.target.value })}
-                required
-                className="w-full bg-[#222] border border-[#333] rounded px-3 py-2 text-sm font-mono text-[#f0f0f0] focus:outline-none focus:border-[#00ff88]"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] text-[#888] uppercase tracking-wider block mb-1">notes (optional)</label>
-            <textarea
-              value={form.notes}
-              onChange={e => setForm({ ...form, notes: e.target.value })}
-              placeholder="any other context..."
-              rows={2}
-              className="w-full bg-[#222] border border-[#333] rounded px-3 py-2 text-sm font-mono text-[#f0f0f0] placeholder-[#555] focus:outline-none focus:border-[#00ff88] resize-none"
-            />
-          </div>
-
-          {error && <p className="text-red-400 text-xs">{error}</p>}
-
-          <div className="flex gap-2 pt-1">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 bg-[#00ff88] text-black font-mono text-sm py-2 rounded hover:bg-[#00dd77] disabled:opacity-50 transition-colors"
-            >
-              {saving ? 'saving...' : 'save context'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 bg-[#333] text-[#aaa] font-mono text-sm py-2 rounded hover:bg-[#444] transition-colors"
-            >
-              cancel
-            </button>
-          </div>
-        </form>
+          )}
+        </div>
       </div>
     </div>
   );
