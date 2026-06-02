@@ -324,6 +324,7 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
+  const [processingAll, setProcessingAll] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -392,6 +393,23 @@ export default function Dashboard() {
       setIsPlaying(false);
       alert('Could not play audio. File may not exist on disk.');
     };
+  };
+
+  const handleProcessAll = async () => {
+    const unprocessed = notes.filter(n => n.status === 'unprocessed' || n.status === 'error');
+    if (unprocessed.length === 0) return;
+    setProcessingAll(true);
+    for (const note of unprocessed) {
+      setProcessingIds(prev => new Set(prev).add(note.id));
+      await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath: note.file_path, noteId: note.id }),
+      });
+      setProcessingIds(prev => { const s = new Set(prev); s.delete(note.id); return s; });
+      await fetchNotes();
+    }
+    setProcessingAll(false);
   };
 
   const handleProcess = async (id: number) => {
@@ -482,6 +500,15 @@ export default function Dashboard() {
             >
               {uploading ? 'uploading...' : '↑ upload'}
             </button>
+            {notes.some(n => n.status === 'unprocessed' || n.status === 'error') && (
+              <button
+                onClick={handleProcessAll}
+                disabled={processingAll}
+                className="text-xs font-mono px-3 py-1.5 bg-[#00ff88]/10 border border-[#00ff88]/30 text-[#00ff88] rounded hover:bg-[#00ff88]/20 disabled:opacity-50 transition-colors"
+              >
+                {processingAll ? `processing ${processingIds.size > 0 ? `(${notes.filter(n => n.status === 'processed').length}/${notes.length})` : '...'}` : `▶▶ process all (${notes.filter(n => n.status === 'unprocessed' || n.status === 'error').length})`}
+              </button>
+            )}
             <button
               onClick={() => setShowWeekendModal(true)}
               className="text-xs font-mono px-3 py-1.5 bg-[#1a1a1a] border border-[#333] text-[#aaa] rounded hover:border-[#00ff88] hover:text-[#00ff88] transition-colors"
