@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 interface WeekendContext {
   id: number;
@@ -538,7 +538,214 @@ function NoteCard({ note, onToggleCleanup, onPlay, onProcess, onUpdate, isPlayin
   );
 }
 
+// Deterministic color per city name
+function cityColor(city: string | null): string {
+  if (!city) return '#555';
+  const colors = ['#7c3aed','#0ea5e9','#f59e0b','#10b981','#ef4444','#ec4899','#8b5cf6','#06b6d4'];
+  let hash = 0;
+  for (let i = 0; i < city.length; i++) hash = city.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+interface CalendarViewProps {
+  contexts: WeekendContext[];
+  onUpdate: () => void;
+  onAdd: () => void;
+}
+
+function CalendarView({ contexts, onUpdate, onAdd }: CalendarViewProps) {
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth());
+  const [editing, setEditing] = useState<WeekendContext | null>(null);
+  const [form, setForm] = useState({ city: '', venue: '', people: '', vibe: '', date_from: '', date_to: '' });
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const toLocal = (iso: string | null) => {
+    if (!iso) return '';
+    try { return new Date(iso).toISOString().slice(0, 16); } catch { return ''; }
+  };
+
+  const openEdit = (ctx: WeekendContext) => {
+    setEditing(ctx);
+    setForm({
+      city: ctx.city || '', venue: ctx.venue || '',
+      people: ctx.people || '', vibe: ctx.vibe || '',
+      date_from: toLocal(ctx.date_from), date_to: toLocal(ctx.date_to),
+    });
+  };
+
+  const handleSave = async () => {
+    if (!editing) return;
+    setSaving(true);
+    await fetch(`/api/weekend-context/${editing.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...form,
+        date_from: form.date_from ? new Date(form.date_from).toISOString() : null,
+        date_to: form.date_to ? new Date(form.date_to).toISOString() : null,
+      }),
+    });
+    setSaving(false);
+    setEditing(null);
+    onUpdate();
+  };
+
+  const handleDelete = async () => {
+    if (!editing) return;
+    setDeleting(true);
+    await fetch(`/api/weekend-context/${editing.id}`, { method: 'DELETE' });
+    setDeleting(false);
+    setEditing(null);
+    onUpdate();
+  };
+
+  // Build calendar grid
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const weeks: (number | null)[][] = [];
+  let week: (number | null)[] = Array(firstDay).fill(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    week.push(d);
+    if (week.length === 7) { weeks.push(week); week = []; }
+  }
+  if (week.length) weeks.push([...week, ...Array(7 - week.length).fill(null)]);
+
+  // Map contexts to days they cover
+  const contextsByDay = useMemo(() => {
+    const map = new Map<string, WeekendContext[]>();
+    for (const ctx of contexts) {
+      if (!ctx.date_from) continue;
+      const from = new Date(ctx.date_from);
+      const to = ctx.date_to ? new Date(ctx.date_to) : from;
+      const cur = new Date(from);
+      while (cur <= to) {
+        const key = cur.toISOString().slice(0, 10);
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(ctx);
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    return map;
+  }, [contexts]);
+
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const ic = "w-full bg-[#222] border border-[#333] rounded px-2 py-1.5 text-xs font-mono text-[#f0f0f0] placeholder-[#555] focus:outline-none focus:border-[#00ff88]";
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      {/* Month nav */}
+      <div className="flex items-center gap-4 mb-4">
+        <button onClick={() => { if (month === 0) { setMonth(11); setYear(y => y-1); } else setMonth(m => m-1); }}
+          className="text-[#555] hover:text-[#aaa] font-mono text-sm px-2 py-1 rounded border border-[#222] hover:border-[#333] transition-colors">←</button>
+        <span className="text-[#f0f0f0] font-mono text-sm w-24 text-center">{monthNames[month]} {year}</span>
+        <button onClick={() => { if (month === 11) { setMonth(0); setYear(y => y+1); } else setMonth(m => m+1); }}
+          className="text-[#555] hover:text-[#aaa] font-mono text-sm px-2 py-1 rounded border border-[#222] hover:border-[#333] transition-colors">→</button>
+        <button onClick={() => { setMonth(today.getMonth()); setYear(today.getFullYear()); }}
+          className="text-[10px] font-mono text-[#555] hover:text-[#aaa] transition-colors ml-2">today</button>
+        <button onClick={onAdd}
+          className="ml-auto text-xs font-mono px-3 py-1.5 bg-[#00ff88]/10 border border-[#00ff88]/30 text-[#00ff88] rounded hover:bg-[#00ff88]/20 transition-colors">
+          + add context
+        </button>
+      </div>
+
+      {/* Day headers */}
+      <div className="grid grid-cols-7 mb-1">
+        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+          <div key={d} className="text-[10px] font-mono text-[#444] text-center py-1">{d}</div>
+        ))}
+      </div>
+
+      {/* Weeks */}
+      <div className="space-y-px">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="grid grid-cols-7 gap-px">
+            {week.map((day, di) => {
+              if (!day) return <div key={di} className="bg-[#0d0d0d] min-h-[80px] rounded" />;
+              const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+              const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+              const dayContexts = contextsByDay.get(dateStr) || [];
+              return (
+                <div key={di}
+                  className={`bg-[#1a1a1a] min-h-[80px] rounded p-1.5 border transition-colors ${isToday ? 'border-[#00ff88]/40' : 'border-[#222] hover:border-[#333]'}`}
+                >
+                  <span className={`text-[11px] font-mono block mb-1 ${isToday ? 'text-[#00ff88]' : 'text-[#444]'}`}>{day}</span>
+                  <div className="space-y-0.5">
+                    {dayContexts.map((ctx, i) => (
+                      <button key={i} onClick={() => openEdit(ctx)}
+                        className="w-full text-left text-[9px] font-mono px-1.5 py-0.5 rounded truncate hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: cityColor(ctx.city) + '33', color: cityColor(ctx.city), border: `1px solid ${cityColor(ctx.city)}44` }}
+                      >
+                        {ctx.venue || ctx.city || 'context'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* Edit modal */}
+      {editing && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b border-[#333]">
+              <h2 className="text-[#00ff88] font-mono text-sm uppercase tracking-widest">edit context</h2>
+              <button onClick={() => setEditing(null)} className="text-[#888] hover:text-white text-lg">×</button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">city</label>
+                  <input className={ic} value={form.city} onChange={e => setForm({...form, city: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">venue</label>
+                  <input className={ic} value={form.venue} onChange={e => setForm({...form, venue: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">with</label>
+                <input className={ic} value={form.people} onChange={e => setForm({...form, people: e.target.value})} placeholder="comma separated" />
+              </div>
+              <div>
+                <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">vibe</label>
+                <input className={ic} value={form.vibe} onChange={e => setForm({...form, vibe: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">from</label>
+                  <input type="datetime-local" className={ic} value={form.date_from} onChange={e => setForm({...form, date_from: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">to</label>
+                  <input type="datetime-local" className={ic} value={form.date_to} onChange={e => setForm({...form, date_to: e.target.value})} />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={handleSave} disabled={saving}
+                  className="flex-1 bg-[#00ff88] text-black font-mono text-sm py-2 rounded hover:bg-[#00dd77] disabled:opacity-50 transition-colors">
+                  {saving ? 'saving...' : 'save'}
+                </button>
+                <button onClick={handleDelete} disabled={deleting}
+                  className="px-4 bg-[#2a1a1a] text-red-400 font-mono text-xs py-2 rounded border border-red-900 hover:bg-[#3a1a1a] disabled:opacity-50 transition-colors">
+                  {deleting ? '...' : 'delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
+  const [tab, setTab] = useState<'notes' | 'calendar'>('notes');
   const [notes, setNotes] = useState<Note[]>([]);
   const [contexts, setContexts] = useState<WeekendContext[]>([]);
   const [loading, setLoading] = useState(true);
@@ -710,12 +917,22 @@ export default function Dashboard() {
       {/* Header */}
       <header className="border-b border-[#222] px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-[#00ff88] font-mono text-xl tracking-tight">voice notes</h1>
-            <p className="text-[#555] text-[11px] font-mono mt-0.5">
-              {notes.length} notes · {spokenCount} spoken · {referenceCount} reference
-              {unprocessedCount > 0 && ` · ${unprocessedCount} pending`}
-            </p>
+          <div className="flex items-center gap-6">
+            <div>
+              <h1 className="text-[#00ff88] font-mono text-xl tracking-tight">voice notes</h1>
+              <p className="text-[#555] text-[11px] font-mono mt-0.5">
+                {notes.length} notes · {spokenCount} spoken · {referenceCount} reference
+                {unprocessedCount > 0 && ` · ${unprocessedCount} pending`}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 bg-[#111] border border-[#222] rounded p-0.5">
+              {(['notes', 'calendar'] as const).map(t => (
+                <button key={t} onClick={() => setTab(t)}
+                  className={`text-[11px] font-mono px-3 py-1 rounded transition-colors ${tab === t ? 'bg-[#00ff88] text-black' : 'text-[#555] hover:text-[#aaa]'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <input
@@ -764,8 +981,11 @@ export default function Dashboard() {
         )}
       </header>
 
-      {/* Filter bar */}
-      <div className="border-b border-[#222] px-6 py-3">
+      {tab === 'calendar' && <CalendarView contexts={contexts} onUpdate={fetchContexts} onAdd={() => setShowWeekendModal(true)} />}
+
+      {/* Filter bar — notes tab only */}
+      {tab === 'notes' && <div className="border-b border-[#222] px-6 py-3" style={{}}>
+
         <div className="max-w-7xl mx-auto space-y-2">
           <div className="flex items-center gap-4 flex-wrap">
             {/* Type filter */}
@@ -831,10 +1051,10 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
-      {/* Main content */}
-      <main
+      {/* Main content — notes tab */}
+      {tab === 'notes' && <main
         className="max-w-7xl mx-auto px-6 py-6"
         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -881,7 +1101,7 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-      </main>
+      </main>}
 
       {/* Active audio indicator */}
       {activeNoteId && (
