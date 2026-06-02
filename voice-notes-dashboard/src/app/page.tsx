@@ -82,6 +82,15 @@ function StatusDot({ status }: { status: string }) {
   );
 }
 
+type SegmentForm = { city: string; venue: string; people: string; vibe: string; date_from: string; date_to: string; };
+
+const emptySegment = (): SegmentForm => ({ city: '', venue: '', people: '', vibe: '', date_from: '', date_to: '' });
+
+const toLocal = (iso: string | null) => {
+  if (!iso) return '';
+  try { return new Date(iso).toISOString().slice(0, 16); } catch { return ''; }
+};
+
 interface WeekendModalProps {
   onClose: () => void;
   onSaved: () => void;
@@ -91,15 +100,12 @@ function WeekendModal({ onClose, onSaved }: WeekendModalProps) {
   const [stage, setStage] = useState<'idle' | 'processing' | 'review' | 'saving' | 'saved' | 'error'>('idle');
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState('');
-  const [linkedCount, setLinkedCount] = useState(0);
-  const [form, setForm] = useState({
-    city: '', venue: '', people: '', vibe: '', date_from: '', date_to: '', notes: '',
-  });
+  const [totalLinked, setTotalLinked] = useState(0);
+  const [segments, setSegments] = useState<SegmentForm[]>([emptySegment()]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const toDatetimeLocal = (iso: string | null) => {
-    if (!iso) return '';
-    try { return new Date(iso).toISOString().slice(0, 16); } catch { return ''; }
+  const updateSegment = (i: number, field: keyof SegmentForm, value: string) => {
+    setSegments(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: value } : s));
   };
 
   const handleFile = async (file: File) => {
@@ -112,15 +118,14 @@ function WeekendModal({ onClose, onSaved }: WeekendModalProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setTranscript(data.transcript);
-      setForm({
-        city: data.extracted.city || '',
-        venue: data.extracted.venue || '',
-        people: data.extracted.people?.join(', ') || '',
-        vibe: data.extracted.vibe || '',
-        date_from: toDatetimeLocal(data.extracted.date_from),
-        date_to: toDatetimeLocal(data.extracted.date_to),
-        notes: data.transcript,
-      });
+      setSegments((data.segments || [data.extracted]).map((s: any) => ({
+        city: s?.city || '',
+        venue: s?.venue || '',
+        people: Array.isArray(s?.people) ? s.people.join(', ') : (s?.people || ''),
+        vibe: s?.vibe || '',
+        date_from: toLocal(s?.date_from),
+        date_to: toLocal(s?.date_to),
+      })));
       setStage('review');
     } catch (err: any) {
       setError(err.message);
@@ -130,19 +135,24 @@ function WeekendModal({ onClose, onSaved }: WeekendModalProps) {
 
   const handleSave = async () => {
     setStage('saving');
+    let linked = 0;
     try {
-      const res = await fetch('/api/weekend-context', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          date_from: form.date_from ? new Date(form.date_from).toISOString() : null,
-          date_to: form.date_to ? new Date(form.date_to).toISOString() : null,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setLinkedCount(data.linkedCount || 0);
+      for (const seg of segments) {
+        const res = await fetch('/api/weekend-context', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...seg,
+            date_from: seg.date_from ? new Date(seg.date_from).toISOString() : null,
+            date_to: seg.date_to ? new Date(seg.date_to).toISOString() : null,
+            notes: transcript || null,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        linked += data.linkedCount || 0;
+      }
+      setTotalLinked(linked);
       setStage('saved');
       onSaved();
     } catch (err: any) {
@@ -151,7 +161,7 @@ function WeekendModal({ onClose, onSaved }: WeekendModalProps) {
     }
   };
 
-  const inputCls = "w-full bg-[#222] border border-[#333] rounded px-3 py-1.5 text-xs font-mono text-[#f0f0f0] placeholder-[#555] focus:outline-none focus:border-[#00ff88]";
+  const ic = "w-full bg-[#222] border border-[#333] rounded px-2 py-1.5 text-xs font-mono text-[#f0f0f0] placeholder-[#555] focus:outline-none focus:border-[#00ff88]";
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -161,14 +171,13 @@ function WeekendModal({ onClose, onSaved }: WeekendModalProps) {
           <button onClick={onClose} className="text-[#888] hover:text-white text-lg leading-none">×</button>
         </div>
         <div className="p-5">
-
           {stage === 'idle' && (
             <div className="space-y-4">
               <p className="text-[#888] font-mono text-xs leading-relaxed">
-                record a voice note saying where you were, who you were with, and when.
+                describe your whole weekend in one voice note — multiple cities and venues will be extracted as separate segments.
               </p>
               <p className="text-[#555] font-mono text-[10px] italic">
-                e.g. "Friday night into Saturday at Platformer Wolf in Bucharest, I was with Cap and Giles, really inspiring techno"
+                e.g. "Friday in Berlin at Tresor, then flew to Bucharest Saturday for Platformer Wolf with Cap and Giles"
               </p>
               <input ref={fileInputRef} type="file" accept=".m4a,.mp3,.wav" className="hidden"
                 onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
@@ -177,9 +186,7 @@ function WeekendModal({ onClose, onSaved }: WeekendModalProps) {
                 ↑ upload context voice note
               </button>
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-px bg-[#222]" />
-                <span className="text-[#444] text-[10px] font-mono">or fill in manually</span>
-                <div className="flex-1 h-px bg-[#222]" />
+                <div className="flex-1 h-px bg-[#222]" /><span className="text-[#444] text-[10px] font-mono">or</span><div className="flex-1 h-px bg-[#222]" />
               </div>
               <button onClick={() => setStage('review')}
                 className="w-full bg-[#1a1a1a] border border-[#333] text-[#666] font-mono text-xs py-2 rounded hover:border-[#555] hover:text-[#888] transition-colors">
@@ -190,60 +197,76 @@ function WeekendModal({ onClose, onSaved }: WeekendModalProps) {
 
           {stage === 'processing' && (
             <div className="text-center py-8">
-              <p className="text-[#00ff88] font-mono text-sm animate-pulse">transcribing + extracting context...</p>
+              <p className="text-[#00ff88] font-mono text-sm animate-pulse">transcribing + extracting locations...</p>
             </div>
           )}
 
           {(stage === 'review' || stage === 'saving') && (
-            <div className="space-y-3">
-              {transcript && (
-                <p className="text-[#444] font-mono text-[10px] italic line-clamp-2 mb-1">"{transcript}"</p>
-              )}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">city</label>
-                  <input className={inputCls} value={form.city} onChange={e => setForm({...form, city: e.target.value})} placeholder="Berlin" />
+            <div className="space-y-4">
+              {transcript && <p className="text-[#444] font-mono text-[10px] italic line-clamp-2">"{transcript}"</p>}
+
+              {segments.map((seg, i) => (
+                <div key={i} className="border border-[#2a2a2a] rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[#00ff88] font-mono text-[10px] uppercase tracking-wider">
+                      {segments.length > 1 ? `segment ${i + 1}` : 'location'}
+                    </span>
+                    {segments.length > 1 && (
+                      <button onClick={() => setSegments(prev => prev.filter((_, idx) => idx !== i))}
+                        className="text-[#444] hover:text-red-400 text-xs transition-colors">✕</button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">city</label>
+                      <input className={ic} value={seg.city} onChange={e => updateSegment(i, 'city', e.target.value)} placeholder="Berlin" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">venue</label>
+                      <input className={ic} value={seg.venue} onChange={e => updateSegment(i, 'venue', e.target.value)} placeholder="Tresor" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">with</label>
+                    <input className={ic} value={seg.people} onChange={e => updateSegment(i, 'people', e.target.value)} placeholder="comma separated names" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">vibe</label>
+                    <input className={ic} value={seg.vibe} onChange={e => updateSegment(i, 'vibe', e.target.value)} placeholder="dark, energetic..." />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">from</label>
+                      <input type="datetime-local" className={ic} value={seg.date_from} onChange={e => updateSegment(i, 'date_from', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">to</label>
+                      <input type="datetime-local" className={ic} value={seg.date_to} onChange={e => updateSegment(i, 'date_to', e.target.value)} />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">venue</label>
-                  <input className={inputCls} value={form.venue} onChange={e => setForm({...form, venue: e.target.value})} placeholder="Berghain" />
-                </div>
-              </div>
-              <div>
-                <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">who you were with</label>
-                <input className={inputCls} value={form.people} onChange={e => setForm({...form, people: e.target.value})} placeholder="comma separated names" />
-              </div>
-              <div>
-                <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">vibe</label>
-                <input className={inputCls} value={form.vibe} onChange={e => setForm({...form, vibe: e.target.value})} placeholder="late night, creative..." />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">from</label>
-                  <input type="datetime-local" className={inputCls} value={form.date_from} onChange={e => setForm({...form, date_from: e.target.value})} />
-                </div>
-                <div>
-                  <label className="text-[10px] text-[#555] uppercase tracking-wider block mb-1">to</label>
-                  <input type="datetime-local" className={inputCls} value={form.date_to} onChange={e => setForm({...form, date_to: e.target.value})} />
-                </div>
-              </div>
+              ))}
+
+              <button onClick={() => setSegments(prev => [...prev, emptySegment()])}
+                className="w-full border border-dashed border-[#333] text-[#555] font-mono text-xs py-2 rounded hover:border-[#555] hover:text-[#777] transition-colors">
+                + add another location
+              </button>
+
               <div className="flex gap-2 pt-1">
                 <button onClick={handleSave} disabled={stage === 'saving'}
                   className="flex-1 bg-[#00ff88] text-black font-mono text-sm py-2 rounded hover:bg-[#00dd77] disabled:opacity-50 transition-colors">
-                  {stage === 'saving' ? 'saving...' : 'save + tag recordings'}
+                  {stage === 'saving' ? 'saving...' : `save + tag (${segments.length} location${segments.length > 1 ? 's' : ''})`}
                 </button>
                 <button onClick={() => setStage('idle')}
-                  className="px-4 bg-[#222] text-[#666] font-mono text-xs py-2 rounded hover:bg-[#333] transition-colors">
-                  back
-                </button>
+                  className="px-4 bg-[#222] text-[#666] font-mono text-xs py-2 rounded hover:bg-[#333] transition-colors">back</button>
               </div>
             </div>
           )}
 
           {stage === 'saved' && (
             <div className="space-y-3 text-center py-4">
-              <p className="text-[#00ff88] font-mono text-sm">saved</p>
-              <p className="text-[#555] font-mono text-xs">{linkedCount} recording{linkedCount !== 1 ? 's' : ''} tagged</p>
+              <p className="text-[#00ff88] font-mono text-sm">saved {segments.length} location{segments.length > 1 ? 's' : ''}</p>
+              <p className="text-[#555] font-mono text-xs">{totalLinked} recording{totalLinked !== 1 ? 's' : ''} tagged</p>
               <button onClick={onClose} className="w-full bg-[#333] text-[#aaa] font-mono text-sm py-2 rounded hover:bg-[#444] transition-colors">done</button>
             </div>
           )}

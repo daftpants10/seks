@@ -6,7 +6,8 @@ import path from 'path';
 
 const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 
-// Only transcribes and extracts — does NOT save. The client confirms/edits then POSTs to /api/weekend-context.
+// Only transcribes and extracts segments — does NOT save.
+// Client confirms/edits then POSTs to /api/weekend-context for each segment.
 export async function POST(request: NextRequest) {
   try {
     if (!fs.existsSync(UPLOADS_DIR)) {
@@ -32,12 +33,9 @@ export async function POST(request: NextRequest) {
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const extracted = await extractContext(transcription.transcript, today);
+    const segments = await extractContext(transcription.transcript, today);
 
-    return NextResponse.json({
-      transcript: transcription.transcript,
-      extracted,
-    });
+    return NextResponse.json({ transcript: transcription.transcript, segments });
   } catch (err) {
     console.error('[POST /api/context-from-voice]', err);
     return NextResponse.json({ error: String(err) }, { status: 500 });

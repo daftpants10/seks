@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-export interface ContextExtraction {
+export interface ContextSegment {
   city: string | null;
   venue: string | null;
   people: string[];
@@ -9,35 +9,42 @@ export interface ContextExtraction {
   date_to: string | null;
 }
 
+// Legacy single-extraction type kept for compatibility
+export interface ContextExtraction extends ContextSegment {}
+
 export interface ClaudeAnalysis {
   title: string;
   rhymes: string[];
   key_phrases: string[];
 }
 
-export async function extractContext(transcript: string, todayIso: string): Promise<ContextExtraction> {
+export async function extractContext(transcript: string, todayIso: string): Promise<ContextSegment[]> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const prompt = `You are parsing a casual spoken description of a night out. Today's date is ${todayIso}.
-Extract the following fields from this transcript and return ONLY valid JSON:
+  const prompt = `You are parsing a casual spoken description of a weekend or trip. Today's date is ${todayIso}.
 
-- "city": city name mentioned, or null
+The person may have visited MULTIPLE cities or venues across different time periods. Extract each distinct location+time segment as a separate entry.
+
+Return a JSON array where each element has:
+- "city": city name, or null
 - "venue": club/bar/venue name, or null
-- "people": array of names of people mentioned (empty array if none)
-- "vibe": short mood/vibe description if mentioned, or null
-- "date_from": ISO 8601 datetime for start of the night (infer from context like "friday night", "last saturday"). If only a day is given, use 20:00 local as start time. null if unclear.
-- "date_to": ISO 8601 datetime for end. If they say "into saturday morning" or "until 6am", infer accordingly. null if unclear.
+- "people": array of names mentioned (can be shared across segments if they were together the whole time)
+- "vibe": short mood/vibe if mentioned, or null
+- "date_from": ISO 8601 datetime for start of that segment. Infer from "friday night" = 20:00, "saturday afternoon" = 14:00, etc. null if unclear.
+- "date_to": ISO 8601 datetime for end of that segment. "into the morning" = next day 07:00, "until 6am" = 06:00. null if unclear.
+
+If only one location is mentioned, return an array with one element.
 
 Transcript:
 """
 ${transcript}
 """
 
-Return ONLY valid JSON, no explanation:`;
+Return ONLY a valid JSON array, no explanation:`;
 
   const message = await client.messages.create({
     model: 'claude-haiku-4-5',
-    max_tokens: 256,
+    max_tokens: 512,
     messages: [{ role: 'user', content: prompt }],
   });
 
@@ -46,16 +53,17 @@ Return ONLY valid JSON, no explanation:`;
   try {
     const raw = content.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(raw);
-    return {
-      city: parsed.city || null,
-      venue: parsed.venue || null,
-      people: Array.isArray(parsed.people) ? parsed.people : [],
-      vibe: parsed.vibe || null,
-      date_from: parsed.date_from || null,
-      date_to: parsed.date_to || null,
-    };
+    const arr = Array.isArray(parsed) ? parsed : [parsed];
+    return arr.map((p: any) => ({
+      city: p.city || null,
+      venue: p.venue || null,
+      people: Array.isArray(p.people) ? p.people : [],
+      vibe: p.vibe || null,
+      date_from: p.date_from || null,
+      date_to: p.date_to || null,
+    }));
   } catch {
-    return { city: null, venue: null, people: [], vibe: null, date_from: null, date_to: null };
+    return [{ city: null, venue: null, people: [], vibe: null, date_from: null, date_to: null }];
   }
 }
 
