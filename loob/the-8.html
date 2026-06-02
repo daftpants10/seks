@@ -51,6 +51,7 @@
     #top { position:fixed; top:0; left:0; right:0; padding:22px 28px 80px; background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent); z-index:20; display:flex; align-items:flex-start; justify-content:space-between; }
     #alpha-num { font-size:clamp(56px,10vw,104px); font-weight:700; line-height:1; color:var(--zone); transition:color 2s; letter-spacing:-0.04em; }
     #zone-word  { font-size:clamp(13px,2vw,18px); letter-spacing:0.22em; color:var(--zone); transition:color 2s; margin-top:2px; }
+    #zone-hint  { font-size:10px; letter-spacing:0.18em; color:var(--zone); opacity:0.6; margin-top:3px; min-height:14px; transition:color 2s; text-transform:uppercase; }
     #play-state { font-size:11px; color:#555; margin-top:6px; letter-spacing:0.1em; }
     #top-right  { text-align:right; }
     #ws-dot     { font-size:11px; color:#444; }
@@ -159,6 +160,7 @@
   <div>
     <div id="alpha-num">—</div>
     <div id="zone-word">—</div>
+    <div id="zone-hint"></div>
     <div id="play-state">○ waiting</div>
   </div>
   <div id="top-right">
@@ -807,6 +809,8 @@ function tick() {
       document.documentElement.style.setProperty('--zone-dim', col+'20')
       document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(3)
       document.getElementById('zone-word').textContent = isGlow ? 'glow' : 'flow'
+      const hint = currentZone.name === 'STABLE' ? 'breathe deeper' : currentZone.name === 'TENSION' ? 'move faster' : ''
+      document.getElementById('zone-hint').textContent = hint
       const st = document.getElementById('play-state')
       if (!hasReal)                               { st.textContent='○ connect somasync';        st.style.color='#444' }
       else if (audioPaused && outOfZoneSec >= modeGrace) { st.textContent='■ stopped · find glow';  st.style.color='#ff2200' }
