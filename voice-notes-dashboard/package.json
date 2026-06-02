@@ -10,7 +10,6 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
     "@deepgram/sdk": "^3.0.0",
-    "better-sqlite3": "^9.4.0",
     "chokidar": "^3.6.0",
     "googleapis": "^140.0.0",
     "music-tempo": "^1.0.3",
@@ -19,7 +18,6 @@
     "react-dom": "^18"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

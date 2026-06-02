@@ -1,21 +1,21 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import fs from 'fs';
 
 const DB_PATH = path.join(process.cwd(), 'voice-notes.db');
 
-let _db: Database.Database | null = null;
+let _db: DatabaseSync | null = null;
 
-export function getDb(): Database.Database {
+export function getDb(): DatabaseSync {
   if (_db) return _db;
-  _db = new Database(DB_PATH);
-  _db.pragma('journal_mode = WAL');
-  _db.pragma('foreign_keys = ON');
+  _db = new DatabaseSync(DB_PATH);
+  _db.exec('PRAGMA journal_mode = WAL');
+  _db.exec('PRAGMA foreign_keys = ON');
   initSchema(_db);
   return _db;
 }
 
-function initSchema(db: Database.Database) {
+function initSchema(db: DatabaseSync) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS notes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -95,19 +95,19 @@ export function insertNote(filePath: string): number {
   const stat = fs.existsSync(filePath) ? fs.statSync(filePath) : null;
   const createdAt = stat ? stat.birthtime.toISOString() : new Date().toISOString();
 
-  const result = db.prepare(`
+  const stmt = db.prepare(`
     INSERT INTO notes (original_filename, file_path, created_at, status, type)
     VALUES (?, ?, ?, 'unprocessed', 'unprocessed')
-  `).run(filename, filePath, createdAt);
-
-  return result.lastInsertRowid as number;
+  `);
+  const result = stmt.run(filename, filePath, createdAt);
+  return Number(result.lastInsertRowid);
 }
 
 export function updateNote(id: number, updates: Partial<Note>) {
   const db = getDb();
   const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
-  const values = Object.values(updates);
-  db.prepare(`UPDATE notes SET ${fields} WHERE id = ?`).run(...values, id);
+  const values = [...Object.values(updates), id];
+  db.prepare(`UPDATE notes SET ${fields} WHERE id = ?`).run(...values);
 }
 
 export function getNoteById(id: number): Note | undefined {
@@ -160,7 +160,7 @@ export function insertContext(ctx: Omit<WeekendContext, 'id' | 'created_at'>): n
     INSERT INTO weekend_contexts (city, venue, people, vibe, date_from, date_to, notes, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(ctx.city, ctx.venue, ctx.people, ctx.vibe, ctx.date_from, ctx.date_to, ctx.notes, new Date().toISOString());
-  return result.lastInsertRowid as number;
+  return Number(result.lastInsertRowid);
 }
 
 export function linkNoteToContext(noteId: number, contextId: number) {
@@ -171,17 +171,13 @@ export function linkNoteToContext(noteId: number, contextId: number) {
 export function linkNotesInDateRange(contextId: number, dateFrom: string, dateTo: string) {
   const db = getDb();
   const notes = db.prepare(`
-    SELECT id FROM notes
-    WHERE created_at >= ? AND created_at <= ?
+    SELECT id FROM notes WHERE created_at >= ? AND created_at <= ?
   `).all(dateFrom, dateTo) as { id: number }[];
 
   const insert = db.prepare('INSERT OR IGNORE INTO note_contexts (note_id, context_id) VALUES (?, ?)');
-  const insertMany = db.transaction((rows: { id: number }[]) => {
-    for (const row of rows) {
-      insert.run(row.id, contextId);
-    }
-  });
-  insertMany(notes);
+  for (const row of notes) {
+    insert.run(row.id, contextId);
+  }
   return notes.length;
 }
 
