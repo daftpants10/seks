@@ -184,18 +184,49 @@ interface NoteCardProps {
   onToggleCleanup: (id: number) => void;
   onPlay: (id: number) => void;
   onProcess: (id: number) => void;
+  onUpdate: (id: number, updates: Partial<Note>) => void;
   isPlaying: boolean;
   activeNoteId: number | null;
   processing: boolean;
 }
 
-function NoteCard({ note, onToggleCleanup, onPlay, onProcess, isPlaying, activeNoteId, processing }: NoteCardProps) {
+function NoteCard({ note, onToggleCleanup, onPlay, onProcess, onUpdate, isPlaying, activeNoteId, processing }: NoteCardProps) {
   let rhymes: string[] = [];
   let keyPhrases: string[] = [];
   try { rhymes = JSON.parse(note.rhymes || '[]'); } catch {}
   try { keyPhrases = JSON.parse(note.key_phrases || '[]'); } catch {}
 
   const cities = note.context_cities ? note.context_cities.split(',').filter(Boolean) : [];
+  const venues = note.context_venues ? note.context_venues.split(',').filter(Boolean) : [];
+
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleVal, setTitleVal] = useState(note.ai_title || '');
+  const [editingTags, setEditingTags] = useState(false);
+  const [tagsVal, setTagsVal] = useState(keyPhrases.join(', '));
+
+  const saveTitle = async () => {
+    setEditingTitle(false);
+    if (titleVal === note.ai_title) return;
+    await fetch(`/api/notes/${note.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ai_title: titleVal }),
+    });
+    onUpdate(note.id, { ai_title: titleVal });
+  };
+
+  const saveTags = async () => {
+    setEditingTags(false);
+    const newPhrases = tagsVal.split(',').map(s => s.trim()).filter(Boolean);
+    const newJson = JSON.stringify(newPhrases);
+    if (newJson === note.key_phrases) return;
+    await fetch(`/api/notes/${note.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key_phrases: newJson }),
+    });
+    onUpdate(note.id, { key_phrases: newJson });
+  };
 
   return (
     <div className={`bg-[#1a1a1a] border rounded-lg p-4 transition-all ${
@@ -205,9 +236,25 @@ function NoteCard({ note, onToggleCleanup, onPlay, onProcess, isPlaying, activeN
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <p className="text-[11px] text-[#555] font-mono truncate mb-0.5">{note.original_filename}</p>
-          <h3 className="text-[#f0f0f0] font-mono text-sm leading-tight">
-            {note.ai_title || (note.type === 'reference' ? 'untitled reference' : 'untitled')}
-          </h3>
+          {editingTitle ? (
+            <input
+              autoFocus
+              value={titleVal}
+              onChange={e => setTitleVal(e.target.value)}
+              onBlur={saveTitle}
+              onKeyDown={e => { if (e.key === 'Enter') saveTitle(); if (e.key === 'Escape') setEditingTitle(false); }}
+              className="w-full bg-[#222] border border-[#00ff88]/50 rounded px-2 py-0.5 text-sm font-mono text-[#f0f0f0] focus:outline-none"
+            />
+          ) : (
+            <h3
+              className="text-[#f0f0f0] font-mono text-sm leading-tight cursor-pointer hover:text-[#00ff88] transition-colors group"
+              onClick={() => setEditingTitle(true)}
+              title="click to edit title"
+            >
+              {note.ai_title || (note.type === 'reference' ? 'untitled reference' : 'untitled')}
+              <span className="text-[#444] ml-1 opacity-0 group-hover:opacity-100 text-[10px]">✎</span>
+            </h3>
+          )}
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <StatusDot status={note.status} />
@@ -241,23 +288,45 @@ function NoteCard({ note, onToggleCleanup, onPlay, onProcess, isPlaying, activeN
         </div>
       )}
 
-      {/* Key phrases */}
-      {keyPhrases.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          {keyPhrases.slice(0, 5).map((p, i) => (
-            <span key={i} className="text-[10px] bg-[#1a2a1a] text-[#00ff88] border border-[#1a4a1a] px-1.5 py-0.5 rounded font-mono">
-              {p}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* Key phrases — editable */}
+      <div className="mb-2">
+        {editingTags ? (
+          <input
+            autoFocus
+            value={tagsVal}
+            onChange={e => setTagsVal(e.target.value)}
+            onBlur={saveTags}
+            onKeyDown={e => { if (e.key === 'Enter') saveTags(); if (e.key === 'Escape') setEditingTags(false); }}
+            placeholder="comma separated tags"
+            className="w-full bg-[#222] border border-[#00ff88]/50 rounded px-2 py-0.5 text-xs font-mono text-[#f0f0f0] focus:outline-none"
+          />
+        ) : keyPhrases.length > 0 ? (
+          <div className="flex flex-wrap gap-1 cursor-pointer group" onClick={() => setEditingTags(true)} title="click to edit tags">
+            {keyPhrases.slice(0, 6).map((p, i) => (
+              <span key={i} className="text-[10px] bg-[#1a2a1a] text-[#00ff88] border border-[#1a4a1a] px-1.5 py-0.5 rounded font-mono group-hover:border-[#00ff88]/40 transition-colors">
+                {p}
+              </span>
+            ))}
+            <span className="text-[10px] text-[#333] opacity-0 group-hover:opacity-100 font-mono">✎</span>
+          </div>
+        ) : (
+          <button onClick={() => setEditingTags(true)} className="text-[10px] text-[#444] font-mono hover:text-[#666] transition-colors">
+            + add tags
+          </button>
+        )}
+      </div>
 
-      {/* Location tags */}
-      {cities.length > 0 && (
+      {/* Location + venue tags */}
+      {(cities.length > 0 || venues.length > 0) && (
         <div className="flex flex-wrap gap-1 mb-2">
           {cities.map((city, i) => (
-            <span key={i} className="text-[10px] bg-[#1a1a2a] text-blue-300 border border-blue-900 px-1.5 py-0.5 rounded font-mono">
+            <span key={`c${i}`} className="text-[10px] bg-[#1a1a2a] text-blue-300 border border-blue-900 px-1.5 py-0.5 rounded font-mono">
               📍 {city}
+            </span>
+          ))}
+          {venues.map((venue, i) => (
+            <span key={`v${i}`} className="text-[10px] bg-[#1a1a2a] text-indigo-300 border border-indigo-900 px-1.5 py-0.5 rounded font-mono">
+              ♪ {venue}
             </span>
           ))}
         </div>
@@ -355,6 +424,10 @@ export default function Dashboard() {
   const allCities = Array.from(new Set(
     notes.flatMap(n => n.context_cities ? n.context_cities.split(',').filter(Boolean) : [])
   ));
+
+  const handleUpdate = (id: number, updates: Partial<Note>) => {
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, ...updates } : n));
+  };
 
   const handleToggleCleanup = async (id: number) => {
     const res = await fetch(`/api/notes/${id}/toggle-cleanup`, { method: 'POST' });
@@ -513,7 +586,7 @@ export default function Dashboard() {
               onClick={() => setShowWeekendModal(true)}
               className="text-xs font-mono px-3 py-1.5 bg-[#1a1a1a] border border-[#333] text-[#aaa] rounded hover:border-[#00ff88] hover:text-[#00ff88] transition-colors"
             >
-              + this weekend
+              + add context
             </button>
             <button
               onClick={handleExport}
@@ -640,6 +713,7 @@ export default function Dashboard() {
                 onToggleCleanup={handleToggleCleanup}
                 onPlay={handlePlay}
                 onProcess={handleProcess}
+                onUpdate={handleUpdate}
                 isPlaying={isPlaying}
                 activeNoteId={activeNoteId}
                 processing={processingIds.has(note.id)}
