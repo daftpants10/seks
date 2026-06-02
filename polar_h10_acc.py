@@ -39,38 +39,60 @@ STOP_ACC          = bytes([0x03, 0x02])            # stop ACC
 
 def parse_acc_frame(data: bytearray) -> None:
     """Parse a PMD ACC data frame and print x/y/z samples."""
-    print(f"  [raw frame] {len(data)} bytes: {data[:16].hex()}")
     if len(data) < 10:
         return
-    measurement_type = data[0]
-    if measurement_type != 0x02:  # not ACC
-        print(f"  [skipped] measurement_type=0x{measurement_type:02x} (not ACC)")
+    if data[0] != 0x02:  # not ACC
         return
 
-    # Bytes 1-8: timestamp (uint64 nanoseconds)
     timestamp_ns = struct.unpack_from("<Q", data, 1)[0]
     frame_type = data[9]
 
     if frame_type == 0x00:
-        # Frame type 0: raw 16-bit signed x/y/z samples
+        # Raw 16-bit signed x/y/z samples
         offset = 10
-        sample_count = 0
         while offset + 5 < len(data):
             x = struct.unpack_from("<h", data, offset)[0]
             y = struct.unpack_from("<h", data, offset + 2)[0]
             z = struct.unpack_from("<h", data, offset + 4)[0]
             offset += 6
-            sample_count += 1
             ts_ms = timestamp_ns // 1_000_000
             print(f"ts={ts_ms}ms  x={x:6d} mG  y={y:6d} mG  z={z:6d} mG")
-    elif frame_type == 0x02:
-        # Frame type 2: delta-compressed samples — first sample is full 16-bit
+
+    elif frame_type == 0x01:
+        # Delta compressed: 16-bit reference sample, then 8-bit signed deltas
+        if len(data) < 16:
+            return
         offset = 10
-        ref_x = struct.unpack_from("<h", data, offset)[0]
-        ref_y = struct.unpack_from("<h", data, offset + 2)[0]
-        ref_z = struct.unpack_from("<h", data, offset + 4)[0]
+        x = struct.unpack_from("<h", data, offset)[0]
+        y = struct.unpack_from("<h", data, offset + 2)[0]
+        z = struct.unpack_from("<h", data, offset + 4)[0]
+        offset += 6
         ts_ms = timestamp_ns // 1_000_000
-        print(f"ts={ts_ms}ms  x={ref_x:6d} mG  y={ref_y:6d} mG  z={ref_z:6d} mG")
+        print(f"ts={ts_ms}ms  x={x:6d} mG  y={y:6d} mG  z={z:6d} mG")
+        while offset + 2 < len(data):
+            x += struct.unpack_from("b", data, offset)[0]
+            y += struct.unpack_from("b", data, offset + 1)[0]
+            z += struct.unpack_from("b", data, offset + 2)[0]
+            offset += 3
+            print(f"ts={ts_ms}ms  x={x:6d} mG  y={y:6d} mG  z={z:6d} mG")
+
+    elif frame_type == 0x02:
+        # Delta compressed: 16-bit reference sample, then 16-bit signed deltas
+        if len(data) < 16:
+            return
+        offset = 10
+        x = struct.unpack_from("<h", data, offset)[0]
+        y = struct.unpack_from("<h", data, offset + 2)[0]
+        z = struct.unpack_from("<h", data, offset + 4)[0]
+        offset += 6
+        ts_ms = timestamp_ns // 1_000_000
+        print(f"ts={ts_ms}ms  x={x:6d} mG  y={y:6d} mG  z={z:6d} mG")
+        while offset + 5 < len(data):
+            x += struct.unpack_from("<h", data, offset)[0]
+            y += struct.unpack_from("<h", data, offset + 2)[0]
+            z += struct.unpack_from("<h", data, offset + 4)[0]
+            offset += 6
+            print(f"ts={ts_ms}ms  x={x:6d} mG  y={y:6d} mG  z={z:6d} mG")
 
 
 async def run():
