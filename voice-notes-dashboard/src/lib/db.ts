@@ -208,3 +208,19 @@ export function toggleCleanup(id: number): number {
   db.prepare('UPDATE notes SET needs_cleanup = ? WHERE id = ?').run(newVal, id);
   return newVal;
 }
+
+export function updateContext(id: number, updates: Partial<WeekendContext>) {
+  const db = getDb();
+  const allowed = ['city', 'venue', 'people', 'vibe', 'date_from', 'date_to', 'notes'];
+  const filtered = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
+  if (Object.keys(filtered).length === 0) return;
+  const fields = Object.keys(filtered).map(k => `${k} = ?`).join(', ');
+  const values = [...Object.values(filtered), id];
+  db.prepare(`UPDATE weekend_contexts SET ${fields} WHERE id = ?`).run(...values);
+}
+
+export function deleteContext(id: number) {
+  const db = getDb();
+  db.prepare('DELETE FROM note_contexts WHERE context_id = ?').run(id);
+  db.prepare('DELETE FROM weekend_contexts WHERE id = ?').run(id);
+}
