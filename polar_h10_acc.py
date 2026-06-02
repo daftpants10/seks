@@ -39,10 +39,12 @@ STOP_ACC          = bytes([0x03, 0x02])            # stop ACC
 
 def parse_acc_frame(data: bytearray) -> None:
     """Parse a PMD ACC data frame and print x/y/z samples."""
+    print(f"  [raw frame] {len(data)} bytes: {data[:16].hex()}")
     if len(data) < 10:
         return
     measurement_type = data[0]
     if measurement_type != 0x02:  # not ACC
+        print(f"  [skipped] measurement_type=0x{measurement_type:02x} (not ACC)")
         return
 
     # Bytes 1-8: timestamp (uint64 nanoseconds)
@@ -86,12 +88,22 @@ async def run():
     async with BleakClient(device) as client:
         print("Connected. Starting ACC stream at 50 Hz...")
 
+        def on_control_point(_, data):
+            print(f"[ctrl response] {bytearray(data).hex()}")
+
         # Enable notifications on control point and data characteristic
-        await client.start_notify(PMD_CONTROL_POINT, lambda _, d: None)
+        await client.start_notify(PMD_CONTROL_POINT, on_control_point)
         await client.start_notify(PMD_DATA, lambda _, data: parse_acc_frame(bytearray(data)))
 
+        # Query available settings first
+        print("Querying ACC settings...")
+        await client.write_gatt_char(PMD_CONTROL_POINT, GET_ACC_SETTINGS, response=True)
+        await asyncio.sleep(1)
+
         # Start the ACC stream
+        print(f"Sending START_ACC: {START_ACC.hex()}")
         await client.write_gatt_char(PMD_CONTROL_POINT, START_ACC, response=True)
+        await asyncio.sleep(1)
         print("Streaming — press Ctrl+C to stop.\n")
 
         try:
