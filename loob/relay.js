@@ -14,6 +14,7 @@ const fs   = require('fs')
 const path = require('path')
 const WebSocket = require('ws')
 const os = require('os')
+const { exec } = require('child_process')
 
 const HTTP_PORT = 3000
 const SOMA_PORT = 8765
@@ -160,4 +161,5 @@ httpServer.listen(HTTP_PORT, '0.0.0.0', () => {
 
 Waiting for connections... (Ctrl+C to stop)
 `)
+  exec('open http://localhost:3000')
 })
