@@ -24,14 +24,14 @@ GET_ACC_SETTINGS  = bytes([0x01, 0x02])           # request available ACC settin
 START_ACC         = bytes([
     0x02,        # start measurement
     0x02,        # measurement type: ACC
-    0x00, 0x01,  # setting type: sample rate
-    0x01,        # array length
+    0x00,        # setting type: sample rate
+    0x01,        # array length: 1
     0x32, 0x00,  # 50 Hz (little-endian uint16)
-    0x01, 0x01,  # setting type: resolution
-    0x01,        # array length
+    0x01,        # setting type: resolution
+    0x01,        # array length: 1
     0x10, 0x00,  # 16-bit resolution
-    0x04, 0x01,  # setting type: range
-    0x01,        # array length
+    0x02,        # setting type: range
+    0x01,        # array length: 1
     0x08, 0x00,  # ±8g range
 ])
 STOP_ACC          = bytes([0x03, 0x02])            # stop ACC
