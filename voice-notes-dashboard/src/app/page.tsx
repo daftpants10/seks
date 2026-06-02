@@ -32,6 +32,7 @@ interface Note {
   context_cities: string | null;
   context_venues: string | null;
   track_id: string | null;
+  bars: string | null;
 }
 
 function formatDate(iso: string | null): string {
@@ -298,6 +299,32 @@ function NoteCard({ note, onToggleCleanup, onPlay, onProcess, onUpdate, isPlayin
   let rhymes: string[] = [];
   let keyPhrases: string[] = [];
   try { rhymes = JSON.parse(note.rhymes || '[]'); } catch {}
+  const [generatingBars, setGeneratingBars] = useState(false);
+  const [showBars, setShowBars] = useState(false);
+  const [barsVal, setBarsVal] = useState(note.bars || '');
+
+  const handleGenerateBars = async () => {
+    setGeneratingBars(true);
+    const res = await fetch(`/api/notes/${note.id}/generate-bars`, { method: 'POST' });
+    const data = await res.json();
+    if (data.bars) {
+      setBarsVal(data.bars);
+      onUpdate(note.id, { bars: data.bars });
+      setShowBars(true);
+    }
+    setGeneratingBars(false);
+  };
+
+  const saveBars = async () => {
+    if (barsVal !== note.bars) {
+      await fetch(`/api/notes/${note.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bars: barsVal }),
+      });
+      onUpdate(note.id, { bars: barsVal });
+    }
+  };
   try { keyPhrases = JSON.parse(note.key_phrases || '[]'); } catch {}
 
   const cities = note.context_cities ? note.context_cities.split(',').filter(Boolean) : [];
@@ -434,6 +461,39 @@ function NoteCard({ note, onToggleCleanup, onPlay, onProcess, onUpdate, isPlayin
               <span className="text-[#444] ml-1 opacity-0 group-hover:opacity-100">✎</span>
             </p>
           ) : null}
+        </div>
+      )}
+
+      {/* Bars */}
+      {(note.type === 'spoken' || note.transcript) && (
+        <div className="mb-2">
+          {barsVal ? (
+            <div>
+              <button
+                onClick={() => setShowBars(v => !v)}
+                className="text-[10px] font-mono text-purple-400 hover:text-purple-200 transition-colors mb-1"
+              >
+                ✦ bars {showBars ? '▲' : '▼'}
+              </button>
+              {showBars && (
+                <textarea
+                  value={barsVal}
+                  onChange={e => setBarsVal(e.target.value)}
+                  onBlur={saveBars}
+                  rows={Math.min(12, barsVal.split('\n').length + 1)}
+                  className="w-full bg-[#0d0d1a] border border-purple-900 rounded px-2 py-1.5 text-xs font-mono text-purple-100 focus:outline-none focus:border-purple-500 resize-none whitespace-pre-wrap leading-relaxed"
+                />
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={handleGenerateBars}
+              disabled={generatingBars || !note.transcript}
+              className="text-[10px] font-mono text-purple-600 hover:text-purple-400 disabled:opacity-30 transition-colors"
+            >
+              {generatingBars ? '✦ writing bars...' : '✦ write bars'}
+            </button>
+          )}
         </div>
       )}
 

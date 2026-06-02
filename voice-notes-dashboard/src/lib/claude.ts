@@ -119,3 +119,32 @@ Return ONLY valid JSON, no explanation:`;
     };
   }
 }
+
+export async function generateBars(transcript: string): Promise<string> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const prompt = `You are a hip hop ghostwriter. Take this raw voice memo transcript — someone mumbling ideas, rhyme schemes, half-formed bars — and structure it into clean, formatted hip hop bars.
+
+Rules:
+- Stay as close as possible to the original words and ideas. Don't invent new content.
+- Structure into bars (one bar per line, 8-16 syllables typically)
+- Group into couplets or quatrains where natural rhymes exist
+- Keep slang, vernacular, and the speaker's voice intact
+- If a section doesn't rhyme, leave it as a note/hook idea with a label like [hook idea] or [bridge]
+- Do not add explanations or commentary — output ONLY the bars
+
+Transcript:
+"""
+${transcript}
+"""`;
+
+  const message = await client.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 1024,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const content = message.content[0];
+  if (content.type !== 'text') throw new Error('Unexpected response');
+  return content.text.trim();
+}

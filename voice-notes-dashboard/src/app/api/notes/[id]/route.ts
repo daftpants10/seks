@@ -9,7 +9,7 @@ export async function PATCH(
   try {
     const id = parseInt(params.id);
     const body = await request.json();
-    const allowed = ['ai_title', 'key_phrases', 'rhymes', 'transcript', 'bpm', 'type', 'track_id'];
+    const allowed = ['ai_title', 'key_phrases', 'rhymes', 'transcript', 'bpm', 'type', 'track_id', 'bars'];
     const updates: Record<string, any> = {};
     for (const key of allowed) {
       if (key in body) updates[key] = body[key];

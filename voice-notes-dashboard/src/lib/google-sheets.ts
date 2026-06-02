@@ -53,6 +53,7 @@ const HEADERS = [
   'AI Title',
   'Type',
   'Transcript',
+  'Bars',
   'Rhymes',
   'Key Phrases',
   'Track ID',
@@ -78,6 +79,7 @@ function noteToRow(note: NoteRow): string[] {
     note.ai_title || '',
     note.type || 'unprocessed',
     note.transcript || '',
+    (note as any).bars || '',
     rhymes.join(' · '),
     keyPhrases.join(', '),
     (note as any).track_id || '',
@@ -151,8 +153,9 @@ export async function exportToSheets(notes: (Note & { context_cities?: string })
     },
   });
 
-  // Also refresh rhymes tab
+  // Also refresh rhymes + bars tabs
   await syncRhymesTab(notes as NoteRow[]);
+  await syncBarsTab(notes as NoteRow[]);
 
   return `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
 }
@@ -202,6 +205,41 @@ export async function syncRhymesTab(notes: NoteRow[]): Promise<void> {
     });
   } catch (err) {
     console.warn('[syncRhymesTab] failed:', err);
+  }
+}
+
+export async function syncBarsTab(notes: NoteRow[]): Promise<void> {
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+  if (!spreadsheetId) return;
+  try {
+    const auth = await getAuthenticatedClient();
+    const sheets = google.sheets({ version: 'v4', auth });
+
+    await ensureSheet(sheets, spreadsheetId, 'Bars');
+
+    const rows: string[][] = [['AI Title', 'Bars', 'Transcript', 'Date', 'City', 'Venue', 'Filename']];
+    for (const note of notes) {
+      const bars = (note as any).bars;
+      if (!bars) continue;
+      rows.push([
+        note.ai_title || '',
+        bars,
+        note.transcript || '',
+        note.created_at || '',
+        note.context_cities || '',
+        note.context_venues || '',
+        note.original_filename,
+      ]);
+    }
+
+    await sheets.spreadsheets.values.clear({ spreadsheetId, range: 'Bars!A:Z' });
+    await sheets.spreadsheets.values.update({
+      spreadsheetId, range: 'Bars!A1',
+      valueInputOption: 'RAW',
+      requestBody: { values: rows },
+    });
+  } catch (err) {
+    console.warn('[syncBarsTab] failed:', err);
   }
 }
 

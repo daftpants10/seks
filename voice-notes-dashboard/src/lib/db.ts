@@ -18,6 +18,7 @@ export function getDb(): DatabaseSync {
 
 function migrate(db: DatabaseSync) {
   try { db.exec('ALTER TABLE notes ADD COLUMN track_id TEXT'); } catch {}
+  try { db.exec('ALTER TABLE notes ADD COLUMN bars TEXT'); } catch {}
 }
 
 function initSchema(db: DatabaseSync) {
@@ -80,6 +81,7 @@ export interface Note {
   needs_cleanup: number;
   status: string;
   track_id: string | null;
+  bars: string | null;
   contexts?: WeekendContext[];
 }
 
