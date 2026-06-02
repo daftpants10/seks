@@ -235,11 +235,13 @@ interface NoteCardProps {
   note: Note;
   onToggleCleanup: (id: number) => void;
   onPlay: (id: number) => void;
+  onProcess: (id: number) => void;
   isPlaying: boolean;
   activeNoteId: number | null;
+  processing: boolean;
 }
 
-function NoteCard({ note, onToggleCleanup, onPlay, isPlaying, activeNoteId }: NoteCardProps) {
+function NoteCard({ note, onToggleCleanup, onPlay, onProcess, isPlaying, activeNoteId, processing }: NoteCardProps) {
   let rhymes: string[] = [];
   let keyPhrases: string[] = [];
   try { rhymes = JSON.parse(note.rhymes || '[]'); } catch {}
@@ -322,17 +324,27 @@ function NoteCard({ note, onToggleCleanup, onPlay, isPlaying, activeNoteId }: No
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onToggleCleanup(note.id)}
-            className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
-              note.needs_cleanup
-                ? 'bg-orange-900 text-orange-300 border-orange-700'
-                : 'bg-[#222] text-[#555] border-[#333] hover:border-[#555]'
-            }`}
-            title="toggle needs cleanup"
-          >
-            {note.needs_cleanup ? '⚠ cleanup' : 'cleanup?'}
-          </button>
+          {note.status === 'unprocessed' || note.status === 'error' ? (
+            <button
+              onClick={() => onProcess(note.id)}
+              disabled={processing}
+              className="text-[10px] font-mono px-2 py-0.5 rounded border bg-[#00ff88]/10 text-[#00ff88] border-[#00ff88]/30 hover:bg-[#00ff88]/20 disabled:opacity-50 transition-colors"
+            >
+              {processing ? 'processing...' : '▶ process'}
+            </button>
+          ) : (
+            <button
+              onClick={() => onToggleCleanup(note.id)}
+              className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                note.needs_cleanup
+                  ? 'bg-orange-900 text-orange-300 border-orange-700'
+                  : 'bg-[#222] text-[#555] border-[#333] hover:border-[#555]'
+              }`}
+              title="toggle needs cleanup"
+            >
+              {note.needs_cleanup ? '⚠ cleanup' : 'cleanup?'}
+            </button>
+          )}
           <button
             onClick={() => onPlay(note.id)}
             className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
@@ -361,7 +373,11 @@ export default function Dashboard() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchNotes = useCallback(async () => {
     const params = new URLSearchParams();
@@ -430,6 +446,44 @@ export default function Dashboard() {
     };
   };
 
+  const handleProcess = async (id: number) => {
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+    setProcessingIds(prev => new Set(prev).add(id));
+    try {
+      await fetch('/api/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath: note.file_path, noteId: id }),
+      });
+      fetchNotes();
+    } finally {
+      setProcessingIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+    }
+  };
+
+  const handleUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Upload failed: ${err.error}`);
+      }
+    }
+    setUploading(false);
+    fetchNotes();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    handleUpload(e.dataTransfer.files);
+  };
+
   const handleExport = async () => {
     setExporting(true);
     setExportMsg('');
@@ -465,6 +519,21 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".m4a,.mp3,.wav"
+              multiple
+              className="hidden"
+              onChange={e => handleUpload(e.target.files)}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="text-xs font-mono px-3 py-1.5 bg-[#1a1a1a] border border-[#333] text-[#aaa] rounded hover:border-[#00ff88] hover:text-[#00ff88] disabled:opacity-50 transition-colors"
+            >
+              {uploading ? 'uploading...' : '↑ upload'}
+            </button>
             <button
               onClick={() => setShowWeekendModal(true)}
               className="text-xs font-mono px-3 py-1.5 bg-[#1a1a1a] border border-[#333] text-[#aaa] rounded hover:border-[#00ff88] hover:text-[#00ff88] transition-colors"
@@ -557,18 +626,34 @@ export default function Dashboard() {
       </div>
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-6 py-6">
+      <main
+        className="max-w-7xl mx-auto px-6 py-6"
+        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+      >
+        {dragOver && (
+          <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center pointer-events-none">
+            <div className="border-2 border-dashed border-[#00ff88] rounded-xl px-16 py-12 text-center">
+              <p className="text-[#00ff88] font-mono text-lg">drop to upload</p>
+              <p className="text-[#555] font-mono text-xs mt-1">.m4a · .mp3 · .wav</p>
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="text-center py-20">
             <p className="text-[#555] font-mono text-sm animate-pulse">loading notes...</p>
           </div>
         ) : notes.length === 0 ? (
-          <div className="text-center py-20">
+          <div
+            className="text-center py-20 border-2 border-dashed border-[#222] rounded-xl cursor-pointer hover:border-[#333] transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <p className="text-[#444] font-mono text-sm mb-2">no notes found</p>
             <p className="text-[#333] font-mono text-xs">
               {typeFilter !== 'all' || locationFilter || statusFilter !== 'all'
                 ? 'try adjusting your filters'
-                : 'start recording on your Apple Watch to see notes here'}
+                : 'drag & drop .m4a files here, or click to upload'}
             </p>
           </div>
         ) : (
@@ -579,8 +664,10 @@ export default function Dashboard() {
                 note={note}
                 onToggleCleanup={handleToggleCleanup}
                 onPlay={handlePlay}
+                onProcess={handleProcess}
                 isPlaying={isPlaying}
                 activeNoteId={activeNoteId}
+                processing={processingIds.has(note.id)}
               />
             ))}
           </div>
