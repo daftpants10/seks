@@ -451,6 +451,7 @@ function startTrackSource() {
   trackSource.connect(masterGain)
   trackSource.start()
   trackLoaded = true
+  audioPaused = true
   audioCtx.suspend()  // silent until glow
 }
 
