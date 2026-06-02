@@ -55,14 +55,18 @@ const HEADERS = [
   'Transcript',
   'Rhymes',
   'Key Phrases',
-  'Date',
-  'Location Tags',
+  'Track ID',
   'BPM',
+  'Date',
+  'City',
+  'Venue',
   'Status',
   'Needs Cleanup',
 ];
 
-function noteToRow(note: Note & { context_cities?: string }): string[] {
+type NoteRow = Note & { context_cities?: string; context_venues?: string };
+
+function noteToRow(note: NoteRow): string[] {
   let rhymes: string[] = [];
   let keyPhrases: string[] = [];
   try { rhymes = JSON.parse(note.rhymes || '[]'); } catch {}
@@ -74,11 +78,13 @@ function noteToRow(note: Note & { context_cities?: string }): string[] {
     note.ai_title || '',
     note.type || 'unprocessed',
     note.transcript || '',
-    rhymes.join(', '),
+    rhymes.join(' · '),
     keyPhrases.join(', '),
-    note.created_at || '',
-    (note as any).context_cities || '',
+    (note as any).track_id || '',
     note.bpm ? String(note.bpm) : '',
+    note.created_at || '',
+    note.context_cities || '',
+    note.context_venues || '',
     note.status,
     note.needs_cleanup ? 'yes' : 'no',
   ];
@@ -146,4 +152,43 @@ export async function exportToSheets(notes: (Note & { context_cities?: string })
   });
 
   return `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+}
+
+// Update a single row in the sheet matching note.id — used for auto-sync on edit
+export async function syncNoteToSheet(note: NoteRow): Promise<void> {
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+  if (!spreadsheetId) return; // no sheet set up yet, skip silently
+
+  try {
+    const auth = await getAuthenticatedClient();
+    const sheets = google.sheets({ version: 'v4', auth });
+
+    // Find the row with this note's ID in column A
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Notes!A:A',
+    });
+    const rows = res.data.values || [];
+    const rowIndex = rows.findIndex(r => r[0] === String(note.id));
+    if (rowIndex === -1) {
+      // Note not in sheet yet — append it
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: 'Notes!A1',
+        valueInputOption: 'RAW',
+        requestBody: { values: [noteToRow(note)] },
+      });
+    } else {
+      // Update existing row (rowIndex is 0-based, sheets are 1-based)
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Notes!A${rowIndex + 1}`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [noteToRow(note)] },
+      });
+    }
+  } catch (err) {
+    // Sync failures are non-fatal — just log
+    console.warn('[syncNoteToSheet] failed:', err);
+  }
 }

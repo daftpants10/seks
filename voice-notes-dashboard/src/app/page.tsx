@@ -31,6 +31,7 @@ interface Note {
   status: string;
   context_cities: string | null;
   context_venues: string | null;
+  track_id: string | null;
 }
 
 function formatDate(iso: string | null): string {
@@ -203,29 +204,40 @@ function NoteCard({ note, onToggleCleanup, onPlay, onProcess, onUpdate, isPlayin
   const [titleVal, setTitleVal] = useState(note.ai_title || '');
   const [editingTags, setEditingTags] = useState(false);
   const [tagsVal, setTagsVal] = useState(keyPhrases.join(', '));
+  const [editingTranscript, setEditingTranscript] = useState(false);
+  const [transcriptVal, setTranscriptVal] = useState(note.transcript || '');
+  const [editingTrackId, setEditingTrackId] = useState(false);
+  const [trackIdVal, setTrackIdVal] = useState((note as any).track_id || '');
 
-  const saveTitle = async () => {
-    setEditingTitle(false);
-    if (titleVal === note.ai_title) return;
+  const patch = async (fields: Record<string, any>) => {
     await fetch(`/api/notes/${note.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ai_title: titleVal }),
+      body: JSON.stringify(fields),
     });
-    onUpdate(note.id, { ai_title: titleVal });
+    onUpdate(note.id, fields as any);
+  };
+
+  const saveTitle = async () => {
+    setEditingTitle(false);
+    if (titleVal !== note.ai_title) await patch({ ai_title: titleVal });
   };
 
   const saveTags = async () => {
     setEditingTags(false);
     const newPhrases = tagsVal.split(',').map(s => s.trim()).filter(Boolean);
     const newJson = JSON.stringify(newPhrases);
-    if (newJson === note.key_phrases) return;
-    await fetch(`/api/notes/${note.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key_phrases: newJson }),
-    });
-    onUpdate(note.id, { key_phrases: newJson });
+    if (newJson !== note.key_phrases) await patch({ key_phrases: newJson });
+  };
+
+  const saveTranscript = async () => {
+    setEditingTranscript(false);
+    if (transcriptVal !== note.transcript) await patch({ transcript: transcriptVal });
+  };
+
+  const saveTrackId = async () => {
+    setEditingTrackId(false);
+    if (trackIdVal !== (note as any).track_id) await patch({ track_id: trackIdVal });
   };
 
   return (
@@ -262,19 +274,64 @@ function NoteCard({ note, onToggleCleanup, onPlay, onProcess, onUpdate, isPlayin
         </div>
       </div>
 
-      {/* BPM for reference tracks */}
-      {note.type === 'reference' && note.bpm && (
-        <div className="mb-2">
-          <span className="text-[#00ff88] font-mono text-lg font-semibold">{note.bpm}</span>
-          <span className="text-[#555] text-xs ml-1">bpm</span>
+      {/* BPM + Track ID for reference tracks */}
+      {note.type === 'reference' && (
+        <div className="mb-2 space-y-1">
+          {note.bpm && (
+            <div>
+              <span className="text-[#00ff88] font-mono text-lg font-semibold">{note.bpm}</span>
+              <span className="text-[#555] text-xs ml-1">bpm</span>
+            </div>
+          )}
+          {editingTrackId ? (
+            <input
+              autoFocus
+              value={trackIdVal}
+              onChange={e => setTrackIdVal(e.target.value)}
+              onBlur={saveTrackId}
+              onKeyDown={e => { if (e.key === 'Enter') saveTrackId(); if (e.key === 'Escape') setEditingTrackId(false); }}
+              placeholder="artist — track name"
+              className="w-full bg-[#222] border border-[#00ff88]/50 rounded px-2 py-0.5 text-xs font-mono text-[#f0f0f0] focus:outline-none"
+            />
+          ) : (
+            <div
+              className="cursor-pointer group text-xs font-mono"
+              onClick={() => setEditingTrackId(true)}
+              title="click to add track ID"
+            >
+              {trackIdVal
+                ? <span className="text-yellow-300">{trackIdVal} <span className="text-[#444] opacity-0 group-hover:opacity-100">✎</span></span>
+                : <span className="text-[#333] hover:text-[#555] transition-colors">+ track id / shazam</span>
+              }
+            </div>
+          )}
         </div>
       )}
 
-      {/* Transcript preview */}
-      {note.transcript && (
-        <p className="text-[#777] text-xs font-mono leading-relaxed mb-2 line-clamp-2">
-          "{note.transcript}"
-        </p>
+      {/* Transcript — editable */}
+      {(note.type === 'spoken' || note.transcript) && (
+        <div className="mb-2">
+          {editingTranscript ? (
+            <textarea
+              autoFocus
+              value={transcriptVal}
+              onChange={e => setTranscriptVal(e.target.value)}
+              onBlur={saveTranscript}
+              onKeyDown={e => { if (e.key === 'Escape') setEditingTranscript(false); }}
+              rows={4}
+              className="w-full bg-[#222] border border-[#00ff88]/50 rounded px-2 py-1 text-xs font-mono text-[#f0f0f0] focus:outline-none resize-none"
+            />
+          ) : note.transcript ? (
+            <p
+              className="text-[#777] text-xs font-mono leading-relaxed line-clamp-2 cursor-pointer hover:text-[#999] transition-colors group"
+              onClick={() => setEditingTranscript(true)}
+              title="click to edit transcript"
+            >
+              "{note.transcript}"
+              <span className="text-[#444] ml-1 opacity-0 group-hover:opacity-100">✎</span>
+            </p>
+          ) : null}
+        </div>
       )}
 
       {/* Rhymes */}

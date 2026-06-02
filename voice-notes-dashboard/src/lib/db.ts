@@ -12,7 +12,12 @@ export function getDb(): DatabaseSync {
   _db.exec('PRAGMA journal_mode = WAL');
   _db.exec('PRAGMA foreign_keys = ON');
   initSchema(_db);
+  migrate(_db);
   return _db;
+}
+
+function migrate(db: DatabaseSync) {
+  try { db.exec('ALTER TABLE notes ADD COLUMN track_id TEXT'); } catch {}
 }
 
 function initSchema(db: DatabaseSync) {
@@ -31,8 +36,13 @@ function initSchema(db: DatabaseSync) {
       created_at TEXT,
       processed_at TEXT,
       needs_cleanup INTEGER DEFAULT 0,
-      status TEXT DEFAULT 'unprocessed'
+      status TEXT DEFAULT 'unprocessed',
+      track_id TEXT
     );
+
+    -- add track_id to existing databases
+    CREATE TABLE IF NOT EXISTS _migrations (key TEXT PRIMARY KEY);
+    INSERT OR IGNORE INTO _migrations (key) VALUES ('add_track_id');
 
     CREATE TABLE IF NOT EXISTS weekend_contexts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,6 +79,7 @@ export interface Note {
   processed_at: string | null;
   needs_cleanup: number;
   status: string;
+  track_id: string | null;
   contexts?: WeekendContext[];
 }
 

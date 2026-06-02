@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateNote } from '@/lib/db';
+import { updateNote, getNoteById, getAllNotes } from '@/lib/db';
+import { syncNoteToSheet } from '@/lib/google-sheets';
 
 export async function PATCH(
   request: NextRequest,
@@ -8,8 +9,7 @@ export async function PATCH(
   try {
     const id = parseInt(params.id);
     const body = await request.json();
-    // Only allow editing safe fields
-    const allowed = ['ai_title', 'key_phrases', 'rhymes', 'transcript', 'bpm', 'type'];
+    const allowed = ['ai_title', 'key_phrases', 'rhymes', 'transcript', 'bpm', 'type', 'track_id'];
     const updates: Record<string, any> = {};
     for (const key of allowed) {
       if (key in body) updates[key] = body[key];
@@ -18,6 +18,14 @@ export async function PATCH(
       return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
     }
     updateNote(id, updates);
+
+    // Auto-sync to Google Sheets in background (non-blocking)
+    const notes = getAllNotes();
+    const updated = notes.find(n => n.id === id);
+    if (updated) {
+      syncNoteToSheet(updated).catch(() => {});
+    }
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[PATCH /api/notes/[id]]', err);
