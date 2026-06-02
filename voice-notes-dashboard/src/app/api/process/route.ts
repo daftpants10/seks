@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getNoteById, updateNote, insertNote } from '@/lib/db';
+import { getNoteById, updateNote, insertNote, getAllNotes } from '@/lib/db';
 import { transcribeAudio } from '@/lib/deepgram';
 import { analyzeTranscript } from '@/lib/claude';
 import { detectBpm } from '@/lib/bpm';
+import { syncNoteToSheet, syncRhymesTab } from '@/lib/google-sheets';
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,6 +56,14 @@ export async function POST(request: NextRequest) {
           status: 'processed',
           processed_at: new Date().toISOString(),
         });
+      }
+
+      // Auto-sync to Sheets (non-blocking)
+      const allNotes = getAllNotes();
+      const processed = allNotes.find(n => n.id === id);
+      if (processed) {
+        syncNoteToSheet(processed).catch(() => {});
+        syncRhymesTab(allNotes).catch(() => {});
       }
 
       const note = getNoteById(id);

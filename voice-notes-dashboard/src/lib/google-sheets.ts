@@ -151,7 +151,58 @@ export async function exportToSheets(notes: (Note & { context_cities?: string })
     },
   });
 
+  // Also refresh rhymes tab
+  await syncRhymesTab(notes as NoteRow[]);
+
   return `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+}
+
+async function ensureSheet(sheets: any, spreadsheetId: string, title: string): Promise<number> {
+  const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
+  const existing = spreadsheet.data.sheets?.find((s: any) => s.properties?.title === title);
+  if (existing) return existing.properties.sheetId;
+  const res = await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: { requests: [{ addSheet: { properties: { title } } }] },
+  });
+  return res.data.replies?.[0].addSheet?.properties?.sheetId ?? 0;
+}
+
+export async function syncRhymesTab(notes: NoteRow[]): Promise<void> {
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+  if (!spreadsheetId) return;
+  try {
+    const auth = await getAuthenticatedClient();
+    const sheets = google.sheets({ version: 'v4', auth });
+
+    await ensureSheet(sheets, spreadsheetId, 'Rhymes');
+
+    const rows: string[][] = [['Rhyme / Scheme', 'From Note', 'Title', 'Date', 'City', 'Venue']];
+    for (const note of notes) {
+      let rhymes: string[] = [];
+      try { rhymes = JSON.parse(note.rhymes || '[]'); } catch {}
+      for (const rhyme of rhymes) {
+        rows.push([
+          rhyme,
+          note.original_filename,
+          note.ai_title || '',
+          note.created_at || '',
+          note.context_cities || '',
+          note.context_venues || '',
+        ]);
+      }
+    }
+
+    await sheets.spreadsheets.values.clear({ spreadsheetId, range: 'Rhymes!A:Z' });
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: 'Rhymes!A1',
+      valueInputOption: 'RAW',
+      requestBody: { values: rows },
+    });
+  } catch (err) {
+    console.warn('[syncRhymesTab] failed:', err);
+  }
 }
 
 // Update a single row in the sheet matching note.id — used for auto-sync on edit
