@@ -200,16 +200,11 @@ app.post('/api/generate-draft', async (req, res) => {
   // Build prompt
   const entriesText = entries.map(e => {
     const body = e.excerpts.length > 0
-      ? e.excerpts.map(ex => ex.content).join('
-
-')
+      ? e.excerpts.map(ex => ex.content).join('\n\n')
       : e.raw_text;
     const date = e.chat_date || e.imported_at || '';
-    return `## ${e.title || '(untitled)'} (${date})
-${body}`;
-  }).join('
-
-');
+    return `## ${e.title || '(untitled)'} (${date})\n${body}`;
+  }).join('\n\n');
 
   const prompt = `You are helping a researcher share their thesis progress with friends and family.
 Write a short update (150-250 words) in first person, warm and accessible (no academic jargon),
