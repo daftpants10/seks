@@ -20,6 +20,30 @@ const HTTP_PORT = 3000
 const SOMA_PORT = 8765
 const HTML_FILE    = path.join(__dirname, 'the-8.html')
 const SESSION_FILE = path.join(__dirname, 'sessions.json')
+const CSV_FILE     = path.join(__dirname, 'participants.csv')
+
+const CSV_HEADERS = 'participant_id,name,track,mode,timestamp,age,gender,total_play_time_s,glow_time_s,glow_pct,dfa_mean,tension_s,adaptive_s,stable_s\n'
+
+function appendCSV(participantId, s) {
+  const row = [
+    participantId,
+    `"${(s.name||'').replace(/"/g,'""')}"`,
+    s.track ?? '',
+    s.mode ?? '',
+    s.timestamp ?? '',
+    s.age ?? '',
+    `"${(s.gender||'').replace(/"/g,'""')}"`,
+    s.totalPlayTime ?? '',
+    s.glowTime ?? '',
+    s.glowPct ?? '',
+    s.dfaMean ?? '',
+    s.phaseTime?.TENSION   ?? '',
+    s.phaseTime?.ADAPTIVE  ?? '',
+    s.phaseTime?.STABLE    ?? '',
+  ].join(',') + '\n'
+  if (!fs.existsSync(CSV_FILE)) fs.writeFileSync(CSV_FILE, CSV_HEADERS)
+  fs.appendFileSync(CSV_FILE, row)
+}
 
 const AUDIO_EXTS = ['.mp3', '.wav', '.ogg', '.m4a', '.flac']
 function findTrack() {
@@ -83,13 +107,22 @@ const httpServer = http.createServer((req, res) => {
         const session = JSON.parse(body)
         let sessions = []
         try { sessions = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf8')) } catch {}
-        sessions.push({ ...session, savedAt: new Date().toISOString() })
+        const participantId = sessions.length + 1
+        sessions.push({ ...session, participantId, savedAt: new Date().toISOString() })
         fs.writeFileSync(SESSION_FILE, JSON.stringify(sessions, null, 2))
-        console.log(`\n💾 session saved: ${session.name} · ${session.mode} · glow ${session.glowTime}s / ${session.totalPlayTime}s`)
+        appendCSV(participantId, session)
+        console.log(`\n💾 p${String(participantId).padStart(3,'0')} · ${session.name} · ${session.mode} · glow ${session.glowTime}s / ${session.totalPlayTime}s`)
         res.writeHead(200, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ ok: true, count: sessions.length }))
+        res.end(JSON.stringify({ ok: true, count: sessions.length, participantId }))
       } catch { res.writeHead(400); res.end('bad request') }
     })
+
+  } else if (urlPath === '/participants.csv' && req.method === 'GET') {
+    try {
+      const data = fs.existsSync(CSV_FILE) ? fs.readFileSync(CSV_FILE, 'utf8') : CSV_HEADERS
+      res.writeHead(200, { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="participants.csv"', 'Access-Control-Allow-Origin': '*' })
+      res.end(data)
+    } catch { res.writeHead(500); res.end('error') }
 
   } else {
     res.writeHead(404); res.end('not found')

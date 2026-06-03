@@ -80,6 +80,14 @@
     #complete-stats { font-size:13px; color:#555; letter-spacing:0.08em; line-height:2.2; border-top:1px solid #111; padding-top:18px; }
     #complete-stats span { color:#fff; }
     #complete-tap   { margin-top:36px; font-size:11px; color:#2a2a2a; letter-spacing:0.2em; text-align:center; }
+    /* ── demographics + save ──────────────────────── */
+    #demo-form      { margin-top:28px; border-top:1px solid #111; padding-top:28px; }
+    .demo-label     { font-size:10px; letter-spacing:0.2em; color:#444; margin-bottom:8px; text-transform:uppercase; }
+    .demo-input     { background:none; border:none; border-bottom:1px solid #1e1e1e; color:#fff; font-family:inherit; font-size:20px; padding:6px 0 10px; outline:none; width:100%; margin-bottom:22px; }
+    .demo-input::placeholder { color:#222; }
+    #save-btn       { background:none; border:1px solid #00ff88; color:#00ff88; font-family:inherit; font-size:11px; letter-spacing:0.22em; padding:16px 0; cursor:pointer; border-radius:3px; width:100%; margin-top:6px; text-transform:uppercase; transition:opacity 0.2s; }
+    #save-btn:disabled { opacity:0.3; cursor:default; }
+    #save-status    { font-size:10px; color:#555; letter-spacing:0.12em; margin-top:12px; text-align:center; min-height:14px; }
 
     #complete-about { margin-top:48px; border-top:1px solid #111; padding-top:32px; }
     .ca-section     { margin-bottom:28px; }
@@ -191,7 +199,18 @@
     <div id="cz-bars"></div>
     <div id="cz-list"></div>
     <div id="complete-stats"></div>
-    <div id="complete-tap">tap to play again</div>
+
+    <!-- demographics + save -->
+    <div id="demo-form" onclick="event.stopPropagation()">
+      <div class="demo-label">age</div>
+      <input class="demo-input" id="demo-age" type="number" min="1" max="120" placeholder="—" autocomplete="off">
+      <div class="demo-label">gender</div>
+      <input class="demo-input" id="demo-gender" type="text" placeholder="—" autocomplete="off">
+      <button id="save-btn" onclick="saveAndDownload(event)">save + download</button>
+      <div id="save-status"></div>
+    </div>
+
+    <div id="complete-tap">tap anywhere to play again</div>
 
     <div id="complete-about">
 
@@ -639,31 +658,69 @@ function showComplete() {
     `flow &nbsp;<span>${(total-glowTime).toFixed(0)}s</span><br>` +
     `α mean &nbsp;<span>${dfaMean}</span>`
 
-  saveSession(total, glowTime, glowPct, vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0)
+  // reset demo form
+  document.getElementById('demo-age').value    = ''
+  document.getElementById('demo-gender').value = ''
+  document.getElementById('save-status').textContent = ''
+  document.getElementById('save-btn').disabled = false
 }
 
-async function saveSession(total, glowTime, glowPct, dfaMean) {
+async function saveAndDownload(e) {
+  e.stopPropagation()
+  const btn    = document.getElementById('save-btn')
+  const status = document.getElementById('save-status')
+  if (btn.disabled) return
+  btn.disabled = true
+  status.textContent = 'saving...'
+
+  const age    = document.getElementById('demo-age').value.trim()
+  const gender = document.getElementById('demo-gender').value.trim()
+
+  const total    = Object.values(phaseTime).reduce((a,b)=>a+b,0)
+  const glowTime = phaseTime['ADAPTIVE'] || 0
+  const glowPct  = total ? Math.round((glowTime/total)*100) : 0
+  const vals     = dfaHistory.filter(v=>v>0)
+  const dfaMean  = vals.length ? Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*1000)/1000 : 0
+
   const session = {
-    name:        playerName,
-    mode:        currentMode,
-    track:       selectedTrack,
-    timestamp:   new Date().toISOString(),
+    name:         playerName,
+    mode:         currentMode,
+    track:        selectedTrack,
+    timestamp:    new Date().toISOString(),
+    age:          age  ? Number(age)  : null,
+    gender:       gender || null,
     modeDuration,
-    totalPlayTime: Math.round(total * 10) / 10,
-    glowTime:    Math.round(glowTime * 10) / 10,
+    totalPlayTime: Math.round(total*10)/10,
+    glowTime:     Math.round(glowTime*10)/10,
     glowPct,
-    phaseTime:   Object.fromEntries(Object.entries(phaseTime).map(([k,v]) => [k, Math.round(v*10)/10])),
-    dfaHistory:  dfaHistory.map(v => Math.round(v*1000)/1000),
-    dfaMean:     Math.round(dfaMean*1000)/1000,
+    phaseTime:    Object.fromEntries(Object.entries(phaseTime).map(([k,v])=>[k,Math.round(v*10)/10])),
+    dfaHistory:   dfaHistory.map(v=>Math.round(v*1000)/1000),
+    dfaMean,
   }
+
+  let participantId = null
   try {
-    await fetch('/sessions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(session)
-    })
-    console.log('session saved')
-  } catch(e) { console.warn('save session failed:', e) }
+    const res  = await fetch('/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(session) })
+    const data = await res.json()
+    participantId = data.participantId
+  } catch(err) { console.warn('save failed:', err) }
+
+  const pid      = 'p' + String(participantId || Date.now()).padStart(3, '0')
+  const safeName = playerName.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+  const base     = `${pid}_${safeName}`
+
+  // download JSON
+  const blob = new Blob([JSON.stringify({...session, participantId}, null, 2)], {type:'application/json'})
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob); a.download = `${base}.json`; a.click()
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000)
+
+  // download graph PNG
+  const gc   = document.getElementById('complete-graph')
+  const imgA = document.createElement('a')
+  imgA.href = gc.toDataURL('image/png'); imgA.download = `${base}_graph.png`; imgA.click()
+
+  status.textContent = `saved · ${base}`
 }
 
 // ═══════════════════════════════════════════════
