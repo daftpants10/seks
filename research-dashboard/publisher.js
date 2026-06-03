@@ -29,7 +29,8 @@ function publish(db, updateId) {
 
     fs.writeFileSync(UPDATES_JSON, JSON.stringify(jsonData, null, 2));
 
-    const commitMsg = `research: publish update ${update.title}`;
+    const safeTitle = update.title.replace(/^#+\s*/, '').replace(/"/g, '\\"');
+    const commitMsg = `research: publish update ${safeTitle}`;
     execSync(
       `git add research/updates.json && git commit -m "${commitMsg.replace(/"/g, '\\"')}" && git push origin HEAD`,
       { cwd: REPO_ROOT, stdio: 'pipe' }

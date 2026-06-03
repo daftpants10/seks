@@ -239,7 +239,7 @@ ${entriesText}`;
 
     const text = message.content[0].text.trim();
     const lines = text.split('\n');
-    const title = lines[0].trim();
+    const title = lines[0].trim().replace(/^#+\s*/, '');
     const body = lines.slice(lines[1] === '' ? 2 : 1).join('\n').trim();
 
     res.json({ title, body });
