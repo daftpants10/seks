@@ -26,7 +26,7 @@ app.post('/api/imports', (req, res) => {
     'INSERT INTO imports (imported_at, chat_date, raw_text, title, tags) VALUES (?, ?, ?, ?, ?)'
   );
   const info = insert.run(now, chatDate || null, text, title || null, JSON.stringify([]));
-  const importId = info.lastInsertRowid;
+  const importId = Number(info.lastInsertRowid);
 
   const insertExcerpt = db.prepare(
     'INSERT INTO excerpts (import_id, content, position) VALUES (?, ?, ?)'
@@ -93,7 +93,7 @@ app.post('/api/updates', (req, res) => {
   const info = db.prepare(
     'INSERT INTO updates (created_at, title, body, tags, images) VALUES (?, ?, ?, ?, ?)'
   ).run(now, title, body, JSON.stringify(tags || []), JSON.stringify(images || []));
-  res.json({ id: info.lastInsertRowid });
+  res.json({ id: Number(info.lastInsertRowid) });
 });
 
 // PATCH /api/updates/:id — edit draft
