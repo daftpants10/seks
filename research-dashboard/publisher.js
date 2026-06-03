@@ -31,7 +31,7 @@ function publish(db, updateId) {
 
     const safeTitle = update.title.replace(/^#+\s*/, '').replace(/"/g, '\\"');
     const commitMsg = `research: publish update ${safeTitle}`;
-    execSync(`git pull --rebase origin HEAD`, { cwd: REPO_ROOT, stdio: 'pipe' });
+    execSync(`git stash && git pull --rebase origin HEAD && git stash pop`, { cwd: REPO_ROOT, stdio: 'pipe' });
     execSync(
       `git add research/updates.json && git commit -m "${commitMsg.replace(/"/g, '\\"')}" && git push origin HEAD`,
       { cwd: REPO_ROOT, stdio: 'pipe' }
