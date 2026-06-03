@@ -98,16 +98,18 @@ const entries = [
 const insertImport = db.prepare(
   'INSERT INTO imports (imported_at, chat_date, raw_text, title, tags) VALUES (?, ?, ?, ?, ?)'
 );
+const insertExcerpt = db.prepare('INSERT INTO excerpts (import_id, content, position) VALUES (?, ?, ?)');
 
 let count = 0;
 for (const entry of entries) {
-  insertImport.run(
+  const info = insertImport.run(
     new Date().toISOString(),
     entry.date,
     entry.body,
     entry.title,
     JSON.stringify(entry.tags)
   );
+  insertExcerpt.run(Number(info.lastInsertRowid), entry.body, 0);
   count++;
 }
 

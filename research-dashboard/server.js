@@ -1,3 +1,4 @@
+const Anthropic = require('@anthropic-ai/sdk');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -171,6 +172,74 @@ app.get('/api/timeline', (req, res) => {
 
   res.json(sorted);
 });
+
+// ── GENERATE DRAFT ────────────────────────────────────────────────────────────
+
+app.post('/api/generate-draft', async (req, res) => {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(400).json({ error: 'ANTHROPIC_API_KEY not set' });
+  }
+
+  const { importIds } = req.body;
+  if (!Array.isArray(importIds) || importIds.length === 0) {
+    return res.status(400).json({ error: 'importIds array is required' });
+  }
+
+  // Fetch imports and their excerpts
+  const entries = importIds.map(id => {
+    const imp = db.prepare('SELECT id, title, chat_date, raw_text, tags FROM imports WHERE id = ?').get(id);
+    if (!imp) return null;
+    const excerpts = db.prepare('SELECT content FROM excerpts WHERE import_id = ? ORDER BY position').all(id);
+    return { ...imp, excerpts };
+  }).filter(Boolean);
+
+  if (entries.length === 0) {
+    return res.status(404).json({ error: 'No valid imports found' });
+  }
+
+  // Build prompt
+  const entriesText = entries.map(e => {
+    const body = e.excerpts.length > 0
+      ? e.excerpts.map(ex => ex.content).join('
+
+')
+      : e.raw_text;
+    const date = e.chat_date || e.imported_at || '';
+    return `## ${e.title || '(untitled)'} (${date})
+${body}`;
+  }).join('
+
+');
+
+  const prompt = `You are helping a researcher share their thesis progress with friends and family.
+Write a short update (150-250 words) in first person, warm and accessible (no academic jargon),
+synthesising the following research entries. Focus on the narrative arc — what changed, what was learned, what's next.
+Start with a suggested title on the first line, then a blank line, then the body.
+
+Entries:
+${entriesText}`;
+
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const text = message.content[0].text.trim();
+    const lines = text.split('
+');
+    const title = lines[0].trim();
+    const body = lines.slice(lines[1] === '' ? 2 : 1).join('
+').trim();
+
+    res.json({ title, body });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Research dashboard running at http://localhost:${PORT}`);
