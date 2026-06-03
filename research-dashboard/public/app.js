@@ -428,6 +428,11 @@ function renderEditor(upd) {
     </div>
 
     <div class="form-row">
+      <label>Date (shown on public feed)</label>
+      <input type="date" id="ed-date" value="${(upd.post_date || upd.created_at || '').slice(0,10)}" ${isPublished ? 'readonly' : ''}>
+    </div>
+
+    <div class="form-row">
       <label>Body (markdown)</label>
       <textarea id="ed-body" style="min-height:160px" ${isPublished ? 'readonly' : ''}>${esc(upd.body)}</textarea>
       <div class="preview-area" id="ed-preview"></div>
@@ -496,15 +501,16 @@ async function saveDraft() {
   const tags = editorTagUI.getTags();
   const imagesRaw = document.getElementById('ed-images').value;
   const images = imagesRaw.split(',').map(s => s.trim()).filter(Boolean);
+  const post_date = document.getElementById('ed-date').value || null;
   const statusEl = document.getElementById('ed-status');
 
   if (!title || !body) { alert('Title and body are required.'); return; }
 
   try {
-    await api('PATCH', '/updates/' + selectedUpdateId, { title, body, tags, images });
+    await api('PATCH', '/updates/' + selectedUpdateId, { title, body, tags, images, post_date });
     // Refresh list
     updates = updates.map(u => u.id === selectedUpdateId
-      ? { ...u, title, body, tags, images }
+      ? { ...u, title, body, tags, images, post_date }
       : u
     );
     renderUpdateList();

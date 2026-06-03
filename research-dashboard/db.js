@@ -27,8 +27,15 @@ db.exec(`
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     tags TEXT DEFAULT '[]',
-    images TEXT DEFAULT '[]'
+    images TEXT DEFAULT '[]',
+    post_date TEXT
   );
+  -- migration: add post_date if it doesn't exist yet
+  CREATE TABLE IF NOT EXISTS _migrations (id TEXT PRIMARY KEY);
 `);
+
+try {
+  db.exec(`ALTER TABLE updates ADD COLUMN post_date TEXT`);
+} catch (e) { /* column already exists */ }
 
 module.exports = db;

@@ -20,7 +20,7 @@ function publish(db, updateId) {
 
     const jsonData = published.map(u => ({
       id: u.id,
-      date: u.published_at,
+      date: u.post_date || u.published_at,
       title: u.title,
       body: u.body,
       tags: JSON.parse(u.tags || '[]'),

@@ -99,7 +99,7 @@ app.post('/api/updates', (req, res) => {
 
 // PATCH /api/updates/:id — edit draft
 app.patch('/api/updates/:id', (req, res) => {
-  const { title, body, tags, images } = req.body;
+  const { title, body, tags, images, post_date } = req.body;
   const row = db.prepare('SELECT * FROM updates WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
 
@@ -107,9 +107,10 @@ app.patch('/api/updates/:id', (req, res) => {
   const newBody = body !== undefined ? body : row.body;
   const newTags = tags !== undefined ? JSON.stringify(tags) : row.tags;
   const newImages = images !== undefined ? JSON.stringify(images) : row.images;
+  const newPostDate = post_date !== undefined ? (post_date || null) : row.post_date;
 
-  db.prepare('UPDATE updates SET title = ?, body = ?, tags = ?, images = ? WHERE id = ?')
-    .run(newTitle, newBody, newTags, newImages, req.params.id);
+  db.prepare('UPDATE updates SET title = ?, body = ?, tags = ?, images = ?, post_date = ? WHERE id = ?')
+    .run(newTitle, newBody, newTags, newImages, newPostDate, req.params.id);
   res.json({ success: true });
 });
 
