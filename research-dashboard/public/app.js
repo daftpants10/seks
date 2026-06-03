@@ -46,7 +46,8 @@ tabBtns.forEach(btn => {
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     if (btn.dataset.tab === 'timeline') loadTimeline();
-    if (btn.dataset.tab === 'publish') loadUpdates();
+    if (btn.dataset.tab === 'publish') { clearSelection(); loadUpdates(); }
+    if (btn.dataset.tab === 'import') clearSelection();
   });
 });
 
@@ -174,6 +175,76 @@ saveBtn.addEventListener('click', async () => {
 
 let timelineData = [];
 let activeTimelineTag = null;
+let selectedImportIds = new Set();
+
+function updateSelectionBar() {
+  let bar = document.getElementById('selection-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'selection-bar';
+    bar.className = 'selection-bar';
+    document.body.appendChild(bar);
+  }
+  if (selectedImportIds.size === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  bar.innerHTML = `
+    <span class="sel-count">${selectedImportIds.size} entr${selectedImportIds.size === 1 ? 'y' : 'ies'} selected</span>
+    <span class="sel-clear" onclick="clearSelection()">clear</span>
+    <button class="btn-primary" id="gen-btn" onclick="generateDraft()">Generate Article Draft →</button>
+  `;
+}
+
+function clearSelection() {
+  selectedImportIds.clear();
+  document.querySelectorAll('.import-select-cb').forEach(cb => cb.checked = false);
+  updateSelectionBar();
+}
+
+window.clearSelection = clearSelection;
+
+async function generateDraft() {
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  try {
+    const data = await api('POST', '/generate-draft', { importIds: Array.from(selectedImportIds) });
+    clearSelection();
+    openNewDraft(data.title, data.body);
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Generate Article Draft →';
+    const bar = document.getElementById('selection-bar');
+    const errEl = document.createElement('span');
+    errEl.style.cssText = 'color:var(--danger);font-size:12px;';
+    errEl.textContent = e.message;
+    bar.appendChild(errEl);
+    setTimeout(() => errEl.remove(), 4000);
+  }
+}
+
+window.generateDraft = generateDraft;
+
+async function openNewDraft(title, body) {
+  // Switch to publish tab
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const publishBtn = document.querySelector('[data-tab="publish"]');
+  publishBtn.classList.add('active');
+  document.getElementById('tab-publish').classList.add('active');
+
+  await loadUpdates();
+
+  // Create the draft
+  const res = await api('POST', '/updates', { title: title || 'New Draft', body: body || '', tags: [], images: [] });
+  updates = await api('GET', '/updates');
+  renderUpdateList();
+  selectUpdate(res.id);
+}
+
+window.openNewDraft = openNewDraft;
 
 async function loadTimeline() {
   const contentEl = document.getElementById('timeline-content');
@@ -211,6 +282,8 @@ function buildTimelineTagFilters() {
 
 function renderTimeline() {
   const contentEl = document.getElementById('timeline-content');
+  contentEl.className = 'timeline-selectable';
+
   if (timelineData.length === 0) {
     contentEl.innerHTML = '<div class="loading">No imports yet. Go to Import tab to add some.</div>';
     return;
@@ -229,8 +302,11 @@ function renderTimeline() {
     imports.forEach(imp => {
       const tagsHtml = (imp.tags || []).map(t => `<span class="tag-chip" style="cursor:default">${esc(t)}</span>`).join('');
       const excerptNote = imp.excerptCount > 0 ? `${imp.excerptCount} excerpt${imp.excerptCount > 1 ? 's' : ''}` : 'no excerpts';
+      const checked = selectedImportIds.has(imp.id) ? 'checked' : '';
       html += `
         <div class="import-entry">
+          <input type="checkbox" class="import-select-cb" ${checked}
+            onchange="toggleImportSelect(${imp.id}, this.checked)">
           <div class="import-header" onclick="toggleImport(this, ${imp.id})">
             <span class="import-title">${esc(imp.title || '(untitled)')}</span>
             <span class="import-date">${fmtDate(imp.chat_date || imp.imported_at)}</span>
@@ -248,6 +324,14 @@ function renderTimeline() {
 
   contentEl.innerHTML = html || '<div class="loading">No results for this tag.</div>';
 }
+
+function toggleImportSelect(id, checked) {
+  if (checked) selectedImportIds.add(id);
+  else selectedImportIds.delete(id);
+  updateSelectionBar();
+}
+
+window.toggleImportSelect = toggleImportSelect;
 
 function fmtWeek(dateStr) {
   try {
