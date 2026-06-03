@@ -1,0 +1,177 @@
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const db = require('./db');
+const { parseChat } = require('./parser');
+const { publish } = require('./publisher');
+
+const app = express();
+const PORT = 3001;
+
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ── IMPORTS ──────────────────────────────────────────────────────────────────
+
+// POST /api/imports — parse and save
+app.post('/api/imports', (req, res) => {
+  const { text, title, chatDate } = req.body;
+  if (!text) return res.status(400).json({ error: 'text is required' });
+
+  const { excerpts, suggestedTags } = parseChat(text);
+  const now = new Date().toISOString();
+
+  const insert = db.prepare(
+    'INSERT INTO imports (imported_at, chat_date, raw_text, title, tags) VALUES (?, ?, ?, ?, ?)'
+  );
+  const info = insert.run(now, chatDate || null, text, title || null, JSON.stringify([]));
+  const importId = info.lastInsertRowid;
+
+  const insertExcerpt = db.prepare(
+    'INSERT INTO excerpts (import_id, content, position) VALUES (?, ?, ?)'
+  );
+  excerpts.forEach((content, i) => insertExcerpt.run(importId, content, i));
+
+  res.json({ id: importId, excerpts, suggestedTags });
+});
+
+// GET /api/imports — list all
+app.get('/api/imports', (req, res) => {
+  const rows = db.prepare(
+    'SELECT id, title, chat_date, tags, imported_at FROM imports ORDER BY imported_at DESC'
+  ).all();
+  // Include excerpt count
+  const withCounts = rows.map(r => {
+    const count = db.prepare('SELECT COUNT(*) as c FROM excerpts WHERE import_id = ?').get(r.id);
+    return { ...r, tags: JSON.parse(r.tags || '[]'), excerptCount: count.c };
+  });
+  res.json(withCounts);
+});
+
+// GET /api/imports/:id — one import with excerpts
+app.get('/api/imports/:id', (req, res) => {
+  const row = db.prepare('SELECT * FROM imports WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+  const excerpts = db.prepare(
+    'SELECT * FROM excerpts WHERE import_id = ? ORDER BY position'
+  ).all(req.params.id);
+  res.json({ ...row, tags: JSON.parse(row.tags || '[]'), excerpts });
+});
+
+// PATCH /api/imports/:id — update tags or title
+app.patch('/api/imports/:id', (req, res) => {
+  const { tags, title } = req.body;
+  const row = db.prepare('SELECT * FROM imports WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+
+  const newTags = tags !== undefined ? JSON.stringify(tags) : row.tags;
+  const newTitle = title !== undefined ? title : row.title;
+
+  db.prepare('UPDATE imports SET tags = ?, title = ? WHERE id = ?')
+    .run(newTags, newTitle, req.params.id);
+  res.json({ success: true });
+});
+
+// ── UPDATES ───────────────────────────────────────────────────────────────────
+
+// GET /api/updates — list all
+app.get('/api/updates', (req, res) => {
+  const rows = db.prepare('SELECT * FROM updates ORDER BY created_at DESC').all();
+  res.json(rows.map(r => ({
+    ...r,
+    tags: JSON.parse(r.tags || '[]'),
+    images: JSON.parse(r.images || '[]')
+  })));
+});
+
+// POST /api/updates — create draft
+app.post('/api/updates', (req, res) => {
+  const { title, body, tags, images } = req.body;
+  if (!title || !body) return res.status(400).json({ error: 'title and body required' });
+  const now = new Date().toISOString();
+  const info = db.prepare(
+    'INSERT INTO updates (created_at, title, body, tags, images) VALUES (?, ?, ?, ?, ?)'
+  ).run(now, title, body, JSON.stringify(tags || []), JSON.stringify(images || []));
+  res.json({ id: info.lastInsertRowid });
+});
+
+// PATCH /api/updates/:id — edit draft
+app.patch('/api/updates/:id', (req, res) => {
+  const { title, body, tags, images } = req.body;
+  const row = db.prepare('SELECT * FROM updates WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+
+  const newTitle = title !== undefined ? title : row.title;
+  const newBody = body !== undefined ? body : row.body;
+  const newTags = tags !== undefined ? JSON.stringify(tags) : row.tags;
+  const newImages = images !== undefined ? JSON.stringify(images) : row.images;
+
+  db.prepare('UPDATE updates SET title = ?, body = ?, tags = ?, images = ? WHERE id = ?')
+    .run(newTitle, newBody, newTags, newImages, req.params.id);
+  res.json({ success: true });
+});
+
+// POST /api/updates/:id/publish
+app.post('/api/updates/:id/publish', (req, res) => {
+  const row = db.prepare('SELECT * FROM updates WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+
+  const now = new Date().toISOString();
+  db.prepare('UPDATE updates SET published_at = ? WHERE id = ?').run(now, req.params.id);
+
+  const result = publish(db, req.params.id);
+  if (!result.success) {
+    // Rollback published_at
+    db.prepare('UPDATE updates SET published_at = NULL WHERE id = ?').run(req.params.id);
+    return res.status(500).json({ error: result.error });
+  }
+  res.json({ success: true, publishedAt: now });
+});
+
+// DELETE /api/updates/:id
+app.delete('/api/updates/:id', (req, res) => {
+  const row = db.prepare('SELECT * FROM updates WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+  if (row.published_at) return res.status(400).json({ error: 'Cannot delete published update' });
+  db.prepare('DELETE FROM updates WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// ── TIMELINE ──────────────────────────────────────────────────────────────────
+
+app.get('/api/timeline', (req, res) => {
+  const rows = db.prepare(
+    'SELECT id, title, chat_date, imported_at, tags FROM imports ORDER BY COALESCE(chat_date, imported_at) DESC'
+  ).all();
+
+  const weeks = {};
+  rows.forEach(r => {
+    const dateStr = r.chat_date || r.imported_at.slice(0, 10);
+    const d = new Date(dateStr);
+    // Get the Monday of that week
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d.setDate(diff));
+    const weekKey = monday.toISOString().slice(0, 10);
+
+    if (!weeks[weekKey]) weeks[weekKey] = [];
+    const excerptCount = db.prepare('SELECT COUNT(*) as c FROM excerpts WHERE import_id = ?').get(r.id);
+    weeks[weekKey].push({
+      ...r,
+      tags: JSON.parse(r.tags || '[]'),
+      excerptCount: excerptCount.c
+    });
+  });
+
+  // Convert to sorted array
+  const sorted = Object.entries(weeks)
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([weekStart, imports]) => ({ weekStart, imports }));
+
+  res.json(sorted);
+});
+
+app.listen(PORT, () => {
+  console.log(`Research dashboard running at http://localhost:${PORT}`);
+});
