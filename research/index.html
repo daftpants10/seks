@@ -279,7 +279,7 @@
     function renderImages(images) {
       if (!images || images.length === 0) return '';
       const imgs = images
-        .map(src => `<img src="${esc(src)}" alt="" loading="lazy">`)
+        .map(src => `<img src="images/${esc(src)}" alt="" loading="lazy">`)
         .join('');
       return `<div class="update-images">${imgs}</div>`;
     }
