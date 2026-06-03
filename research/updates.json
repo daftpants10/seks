@@ -1,5 +1,17 @@
 [
   {
+    "id": 6,
+    "date": "2026-04-20",
+    "title": "Finding the Sweet Spot: How Rhythm Training Might Rewire Your Nervous System",
+    "body": "I've had a major breakthrough in how I'm measuring what happens when we practice rhythmic stick work. It turns out that the tiny, invisible gaps between heartbeats tell a story about whether your nervous system is healthy and adaptable—or stressed and rigid. \n\nI switched to tracking something called DFA alpha, which reads the fractal structure of your heartbeat (Heart rate variability, to be precise). Think of it like this: a truly healthy heart doesn't beat like a metronome. Instead, it wiggles in this sweet, flexible way—the kind of adaptability that lets you respond to life's surprises. That sweet spot lands around 1.0 on the DFA alpha scale. Drop toward 0.5 and things look chaotic; climb toward 1.5 and you get rigidity.\n\nHere's where it clicked: my hypothesis is that rhythmic practice—the ⦿-⦿—trains your nervous system toward exactly that adaptive state. \n\nI'm now collaborating with Dmitry and his team at 8OS on an app called SomaSync that measures DFA alpha in real time using an Apple Watch or chest strap. We're planning two tiers: a quick proof of concept anyone can try now, then a more rigorous study with better equipment and a bigger group.\n\nThe intellectual thread finally tied together. It's about keeping time—and it's about building the nervous system's capacity to be both organized and flexible.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-03 at 14.25.16.png",
+      "Screenshot 2026-06-03 at 14.24.37.png",
+      "Screenshot 2026-06-03 at 14.24.49.png"
+    ]
+  },
+  {
     "id": 5,
     "date": "2026-05-31",
     "title": "Theory to Action: A Smarter Study Design",
