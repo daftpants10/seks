@@ -1,5 +1,16 @@
 [
   {
+    "id": 5,
+    "date": "2026-05-31",
+    "title": "Theory to Action: A Smarter Study Design",
+    "body": "When I started this project, I was planning a five-week study with washout periods and multiple heart-rate sensors—the kind of setup that looked good on paper but would've been logistically messy and hard to repeat across different groups. Over the past couple of months, that changed entirely.\n\nThe breakthrough came from rethinking the problem from the ground up. Instead of spreading measurements across weeks, I'm now capturing everything within a single ~15-minute session. Here's how: participants do three short blocks—a resting baseline, then two conditions (one with the stick, one without) while playing a biofeedback \"game\" that advances only when they hit the right heart-rate zone. It's clean, it controls for daily variation, and it gives me a real behavioral measure: how quickly they can access that zone.\n\nThe other big shift was going from multiple sensors to *one* rotating heart-rate monitor across participants. This sounds like a constraint, but it's actually freed things up—I can now test many more people across different real-world settings in the same timeframe, which makes the results more meaningful.I built the whole system from scratch (JavaScript, Web Bluetooth, live heart-rate analysis) and locked in the final design last month.\n\nNow we're ready. Pilot testing starts June 1st with five people to estimate our effect size, then I'll use that to calculate exactly how many participants I need. It's the point where planning stops and real fieldwork begins.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-05-26 at 17.24.50.png",
+      "Screenshot 2026-05-26 at 17.25.06.png"
+    ]
+  },
+  {
     "id": 4,
     "date": "2026-04-01",
     "title": "Five Weeks, One Control, Many Open Questions",
