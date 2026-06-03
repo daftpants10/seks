@@ -446,8 +446,14 @@ function renderEditor(upd) {
     </div>
 
     <div class="form-row">
-      <label>Images (filenames in research/images/, comma-separated)</label>
-      <input type="text" id="ed-images" value="${esc((upd.images || []).join(', '))}" placeholder="photo1.jpg, diagram.png" ${isPublished ? 'readonly' : ''}>
+      <label>Images</label>
+      ${!isPublished ? `
+        <div class="image-upload-area">
+          <input type="file" id="ed-image-file" accept="image/*" multiple style="display:none">
+          <button class="btn-sm" onclick="document.getElementById('ed-image-file').click()">+ Upload images</button>
+          <span id="upload-status" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+        </div>` : ''}
+      <div id="ed-image-list" class="image-list"></div>
     </div>
 
     <div class="editor-actions">
@@ -473,7 +479,60 @@ function renderEditor(upd) {
   }
   bodyEl.addEventListener('input', updatePreview);
   updatePreview();
+
+  // Image list
+  renderImageList(upd.images || []);
+
+  // File upload
+  const fileInput = document.getElementById('ed-image-file');
+  if (fileInput) {
+    fileInput.addEventListener('change', async () => {
+      if (!fileInput.files.length) return;
+      const statusEl = document.getElementById('upload-status');
+      statusEl.textContent = 'Uploading…';
+      const form = new FormData();
+      for (const f of fileInput.files) form.append('images', f);
+      try {
+        const res = await fetch('/api/images/upload', { method: 'POST', body: form });
+        const data = await res.json();
+        const upd2 = updates.find(u => u.id === selectedUpdateId);
+        const merged = [...new Set([...(upd2.images || []), ...data.files])];
+        await api('PATCH', '/updates/' + selectedUpdateId, { images: merged });
+        updates = updates.map(u => u.id === selectedUpdateId ? { ...u, images: merged } : u);
+        renderImageList(merged);
+        statusEl.textContent = `${data.files.length} file(s) uploaded`;
+        setTimeout(() => statusEl.textContent = '', 2000);
+      } catch (e) {
+        statusEl.textContent = 'Upload failed: ' + e.message;
+      }
+      fileInput.value = '';
+    });
+  }
 }
+
+function renderImageList(images) {
+  const el = document.getElementById('ed-image-list');
+  if (!el) return;
+  if (!images.length) { el.innerHTML = '<span style="color:var(--muted);font-size:12px;">No images yet.</span>'; return; }
+  el.innerHTML = images.map(f => `
+    <div class="image-thumb-row">
+      <img src="/research/images/${encodeURIComponent(f)}" alt="${esc(f)}" class="image-thumb">
+      <span class="image-name">${esc(f)}</span>
+      <span class="image-remove" onclick="removeImage('${esc(f)}')">×</span>
+    </div>
+  `).join('');
+}
+
+async function removeImage(filename) {
+  const upd = updates.find(u => u.id === selectedUpdateId);
+  if (!upd) return;
+  const newImages = (upd.images || []).filter(f => f !== filename);
+  await api('PATCH', '/updates/' + selectedUpdateId, { images: newImages });
+  updates = updates.map(u => u.id === selectedUpdateId ? { ...u, images: newImages } : u);
+  renderImageList(newImages);
+}
+
+window.removeImage = removeImage;
 
 function simpleMarkdown(text) {
   // Very basic: paragraphs, bold, italic, code
@@ -499,8 +558,7 @@ async function saveDraft() {
   const title = document.getElementById('ed-title').value.trim();
   const body = document.getElementById('ed-body').value.trim();
   const tags = editorTagUI.getTags();
-  const imagesRaw = document.getElementById('ed-images').value;
-  const images = imagesRaw.split(',').map(s => s.trim()).filter(Boolean);
+  const images = (updates.find(u => u.id === selectedUpdateId) || {}).images || [];
   const post_date = document.getElementById('ed-date').value || null;
   const statusEl = document.getElementById('ed-status');
 

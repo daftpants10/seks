@@ -2,9 +2,22 @@ const Anthropic = require('@anthropic-ai/sdk');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 const db = require('./db');
 const { parseChat } = require('./parser');
 const { publish } = require('./publisher');
+
+const IMAGES_DIR = path.join(__dirname, '..', 'research', 'images');
+if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: IMAGES_DIR,
+    filename: (req, file, cb) => cb(null, file.originalname)
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
 
 const app = express();
 const PORT = 3001;
@@ -234,6 +247,23 @@ ${entriesText}`;
   }
 });
 
+
+// ── IMAGES ────────────────────────────────────────────────────────────────────
+
+app.post('/api/images/upload', upload.array('images', 10), (req, res) => {
+  const files = req.files.map(f => f.originalname);
+  res.json({ files });
+});
+
+app.get('/api/images', (req, res) => {
+  const files = fs.existsSync(IMAGES_DIR)
+    ? fs.readdirSync(IMAGES_DIR).filter(f => /\.(jpg|jpeg|png|gif|webp)$/i.test(f))
+    : [];
+  res.json({ files });
+});
+
+// Serve the images folder publicly
+app.use('/research/images', express.static(IMAGES_DIR));
 
 app.listen(PORT, () => {
   console.log(`Research dashboard running at http://localhost:${PORT}`);

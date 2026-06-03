@@ -329,6 +329,15 @@ button:disabled { opacity: 0.4; cursor: default; }
 
 hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
+/* IMAGES */
+.image-upload-area { margin-bottom: 8px; display: flex; align-items: center; }
+.image-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.image-thumb-row { display: flex; align-items: center; gap: 10px; }
+.image-thumb { width: 60px; height: 40px; object-fit: cover; border: 1px solid var(--border); }
+.image-name { font-size: 12px; color: var(--muted); flex: 1; }
+.image-remove { cursor: pointer; color: var(--danger); font-size: 16px; padding: 0 4px; }
+.image-remove:hover { opacity: 0.7; }
+
 .symbol-accent { color: var(--accent); }
 
 /* MULTI-SELECT CHECKBOXES */
