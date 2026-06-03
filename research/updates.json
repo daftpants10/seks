@@ -1,5 +1,16 @@
 [
   {
+    "id": 4,
+    "date": "2026-04-01",
+    "title": "Five Weeks, One Control, Many Open Questions",
+    "body": "After months of iterating, I've finally locked down the core design: a five-week study where half the participants practice rhythmic movement with a metronome for the first two weeks, then rest, then do a control activity — and the other half reverses the order. I'll track heart rate variability throughout using a wearable, plus daily five-minute sessions and questionnaires before and after each phase.\n\nThe big question I'm testing is whether practicing this way actually creates more stable, regular movement patterns over time. There are some secondary questions too (like whether heart rate improves), but the design is now clear enough to run.\n\nWhat surprised me most during this push was surfacing all the things I *don't* know yet. like whether the control condition should be sitting still, moving without rhythm, or something else entirely. Each choice tells a different story about what the practice actually does. I also flagged that a one-week break between phases might not be long enough for the body to fully \"reset,\" which could muddy the results.\n\nOn a personal note, my main supervisor took a professorship at Medical School Berlin, so Dr. B is stepping in as primary supervisor. It's a smooth transition, and it's also given me clear feedback: the proposal had gotten too complicated. Time to simplify, nail down the details that matter, and get moving.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-03 at 14.15.20.png",
+      "2025-01-31 13.08.58.jpg"
+    ]
+  },
+  {
     "id": 3,
     "date": "2026-02-01",
     "title": "Lab to Life: Why I'm Taking My Thesis Outside",
