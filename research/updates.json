@@ -2,7 +2,7 @@
   {
     "id": 3,
     "date": "2026-02-01",
-    "title": "# From Lab to Life: Why I'm Taking My Thesis Outside",
+    "title": "From Lab to Life: Why I'm Taking My Thesis Outside",
     "body": "When I presented my original plan at the colloquium in January, the faculty gently redirected me. My designed lab experiment was sound, but they asked: *Can you actually build this? Will it get ethical approval? And who will it help?* That question changed everything.\n\nI'd been focused on proving a quick, controlled effect. Instead, I've pivoted to something bigger: understanding whether coordinating breath and movement is a *learnable skill* that people can develop over weeks and months of real practice — outside a lab, in their actual lives.\n\nThe shift unlocked a new approach. Rather than measuring acute responses, I'm now tracking how people's heart-rate variability (a marker of nervous system flexibility) evolves as they practice. My collaborators and I built Loob, a simple motion tracker that works with just a webcam, and we're partnering with 8OS, a peer project whose HRV software aligns perfectly with the physiology I'm investigating.\n\n\nI'm moving to running two tiers: a proof-of-concept starting this month with just Apple Watches, and a larger study if funding comes through. For the first time, this feels like something that could actually work — and matter.",
     "tags": [],
     "images": [
