@@ -244,10 +244,10 @@ ${entriesText}`;
 
     res.json({ title, body });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error('generate-draft error:', e);
+    res.status(500).json({ error: e.message || String(e) });
   }
 });
-
 
 // ── IMAGES ────────────────────────────────────────────────────────────────────
 
