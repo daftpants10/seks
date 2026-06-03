@@ -109,7 +109,8 @@ parseBtn.addEventListener('click', async () => {
   importStatus.style.display = 'none';
 
   try {
-    const data = await api('POST', '/imports', { text, title, chatDate });
+    const project = document.getElementById('import-project').value || 'stick';
+    const data = await api('POST', '/imports', { text, title, chatDate, project });
     pendingImportId = data.id;
 
     // Tag UI
@@ -403,6 +404,7 @@ function renderUpdateList() {
       <div class="upd-title">${esc(u.title)}</div>
       <div class="upd-meta">${fmtDate(u.created_at)}</div>
       <span class="upd-status ${u.published_at ? 'published' : 'draft'}">${u.published_at ? 'published' : 'draft'}</span>
+      <span class="project-badge ${esc(u.project || 'stick')}">${esc(u.project || 'stick')}</span>
     </div>
   `).join('');
 }
@@ -421,10 +423,20 @@ function renderEditor(upd) {
   const panel = document.getElementById('editor-panel');
   const isPublished = !!upd.published_at;
 
+  const proj = upd.project || 'stick';
   panel.innerHTML = `
     <div class="form-row">
       <label>Title</label>
       <input type="text" id="ed-title" value="${esc(upd.title)}" ${isPublished ? 'readonly' : ''}>
+    </div>
+
+    <div class="form-row">
+      <label>Project</label>
+      <select id="ed-project" ${isPublished ? 'disabled' : ''}>
+        <option value="stick" ${proj === 'stick' ? 'selected' : ''}>⦿-⦿ stick / game</option>
+        <option value="loob" ${proj === 'loob' ? 'selected' : ''}>loob</option>
+        <option value="time-compass" ${proj === 'time-compass' ? 'selected' : ''}>time compass</option>
+      </select>
     </div>
 
     <div class="form-row">
@@ -560,15 +572,16 @@ async function saveDraft() {
   const tags = editorTagUI.getTags();
   const images = (updates.find(u => u.id === selectedUpdateId) || {}).images || [];
   const post_date = document.getElementById('ed-date').value || null;
+  const project = document.getElementById('ed-project') ? document.getElementById('ed-project').value : 'stick';
   const statusEl = document.getElementById('ed-status');
 
   if (!title || !body) { alert('Title and body are required.'); return; }
 
   try {
-    await api('PATCH', '/updates/' + selectedUpdateId, { title, body, tags, images, post_date });
+    await api('PATCH', '/updates/' + selectedUpdateId, { title, body, tags, images, post_date, project });
     // Refresh list
     updates = updates.map(u => u.id === selectedUpdateId
-      ? { ...u, title, body, tags, images, post_date }
+      ? { ...u, title, body, tags, images, post_date, project }
       : u
     );
     renderUpdateList();

@@ -37,5 +37,7 @@ db.exec(`
 try {
   db.exec(`ALTER TABLE updates ADD COLUMN post_date TEXT`);
 } catch (e) { /* column already exists */ }
+try { db.exec(`ALTER TABLE updates ADD COLUMN project TEXT DEFAULT 'stick'`); } catch (e) {}
+try { db.exec(`ALTER TABLE imports ADD COLUMN project TEXT DEFAULT 'stick'`); } catch (e) {}
 
 module.exports = db;

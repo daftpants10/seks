@@ -24,7 +24,8 @@ function publish(db, updateId) {
       title: u.title,
       body: u.body,
       tags: JSON.parse(u.tags || '[]'),
-      images: JSON.parse(u.images || '[]')
+      images: JSON.parse(u.images || '[]'),
+      project: u.project || 'stick'
     }));
 
     const safeTitle = update.title.replace(/^#+\s*/, '').replace(/"/g, '\\"');
