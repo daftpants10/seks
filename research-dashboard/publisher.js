@@ -27,15 +27,20 @@ function publish(db, updateId) {
       images: JSON.parse(u.images || '[]')
     }));
 
-    fs.writeFileSync(UPDATES_JSON, JSON.stringify(jsonData, null, 2));
-
     const safeTitle = update.title.replace(/^#+\s*/, '').replace(/"/g, '\\"');
     const commitMsg = `research: publish update ${safeTitle}`;
-    execSync(`git stash && git pull --rebase origin HEAD && git stash pop`, { cwd: REPO_ROOT, stdio: 'pipe' });
-    execSync(
-      `git add research/updates.json && git commit -m "${commitMsg.replace(/"/g, '\\"')}" && git push origin HEAD`,
-      { cwd: REPO_ROOT, stdio: 'pipe' }
-    );
+    // Push any pending local commits first, then write and push the update
+    try { execSync(`git push origin HEAD`, { cwd: REPO_ROOT, stdio: 'pipe' }); } catch (_) {}
+    execSync(`git stash`, { cwd: REPO_ROOT, stdio: 'pipe' });
+    try { execSync(`git pull --rebase origin HEAD`, { cwd: REPO_ROOT, stdio: 'pipe' }); } catch (_) {}
+    execSync(`git stash pop || true`, { cwd: REPO_ROOT, stdio: 'pipe' });
+
+    fs.writeFileSync(UPDATES_JSON, JSON.stringify(jsonData, null, 2));
+    execSync(`git add research/updates.json`, { cwd: REPO_ROOT, stdio: 'pipe' });
+    try {
+      execSync(`git commit -m "${commitMsg.replace(/"/g, '\\"')}"`, { cwd: REPO_ROOT, stdio: 'pipe' });
+    } catch (_) {} // nothing to commit is fine
+    execSync(`git push origin HEAD`, { cwd: REPO_ROOT, stdio: 'pipe' });
 
     return { success: true };
   } catch (err) {
