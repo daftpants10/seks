@@ -1,3 +1,4 @@
+require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
 const express = require('express');
 const cors = require('cors');
