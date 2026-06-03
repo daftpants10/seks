@@ -29,17 +29,15 @@ function publish(db, updateId) {
 
     const safeTitle = update.title.replace(/^#+\s*/, '').replace(/"/g, '\\"');
     const commitMsg = `research: publish update ${safeTitle}`;
-    // Push any pending local commits first, then write and push the update
-    try { execSync(`git push origin HEAD`, { cwd: REPO_ROOT, stdio: 'pipe' }); } catch (_) {}
-    execSync(`git stash`, { cwd: REPO_ROOT, stdio: 'pipe' });
-    try { execSync(`git pull --rebase origin HEAD`, { cwd: REPO_ROOT, stdio: 'pipe' }); } catch (_) {}
-    execSync(`git stash pop || true`, { cwd: REPO_ROOT, stdio: 'pipe' });
-
+    // Sync with remote, write update, commit and push
+    const branch = execSync(`git rev-parse --abbrev-ref HEAD`, { cwd: REPO_ROOT }).toString().trim();
+    execSync(`git fetch origin`, { cwd: REPO_ROOT, stdio: 'pipe' });
+    execSync(`git reset --hard origin/${branch}`, { cwd: REPO_ROOT, stdio: 'pipe' });
     fs.writeFileSync(UPDATES_JSON, JSON.stringify(jsonData, null, 2));
     execSync(`git add research/updates.json`, { cwd: REPO_ROOT, stdio: 'pipe' });
     try {
       execSync(`git commit -m "${commitMsg.replace(/"/g, '\\"')}"`, { cwd: REPO_ROOT, stdio: 'pipe' });
-    } catch (_) {} // nothing to commit is fine
+    } catch (_) {} // nothing new to commit is fine
     execSync(`git push origin HEAD`, { cwd: REPO_ROOT, stdio: 'pipe' });
 
     return { success: true };
