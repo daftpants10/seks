@@ -30,7 +30,7 @@
     header {
       border-bottom: 2px solid var(--text);
       padding-bottom: 24px;
-      margin-bottom: 48px;
+      margin-bottom: 40px;
     }
 
     .header-symbol {
@@ -51,6 +51,79 @@
       color: var(--muted);
     }
 
+    /* PROJECT CARDS */
+    .project-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .project-card {
+      flex: 1;
+      min-width: 180px;
+      border: 1px solid var(--border);
+      border-top-width: 3px;
+      padding: 16px;
+      cursor: default;
+      background: var(--bg);
+    }
+
+    .project-card.stick { border-top-color: #111; }
+    .project-card.loob { border-top-color: #5a7a6a; }
+    .project-card.time-compass { border-top-color: #6a5a7a; }
+
+    .project-card-title {
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .project-card-subtitle {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .project-card-desc {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #444;
+      font-family: Georgia, serif;
+    }
+
+    /* PROJECT FILTER TABS */
+    .project-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    .project-filter-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      padding: 4px 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: all 0.15s;
+    }
+
+    .project-filter-btn:hover { border-color: var(--text); color: var(--text); }
+    .project-filter-btn.active { border-color: var(--text); color: var(--bg); background: var(--text); }
+
+    /* TAG FILTERS */
     .filters {
       display: flex;
       flex-wrap: wrap;
@@ -88,14 +161,33 @@
 
     .update:last-child { border-bottom: none; }
 
+    .update-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
     .update-date {
       font-family: 'Courier New', monospace;
       font-size: 11px;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      margin-bottom: 10px;
     }
+
+    .update-project-badge {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      padding: 1px 6px;
+      border: 1px solid;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .update-project-badge.stick { border-color: #555; color: #555; }
+    .update-project-badge.loob { border-color: #5a7a6a; color: #5a7a6a; }
+    .update-project-badge.time-compass { border-color: #6a5a7a; color: #6a5a7a; }
 
     .update-title {
       font-size: 22px;
@@ -165,6 +257,7 @@
     @media (max-width: 500px) {
       body { padding: 24px 16px 60px; }
       .update-title { font-size: 18px; }
+      .project-cards { flex-direction: column; }
     }
   </style>
 </head>
@@ -173,6 +266,33 @@
     <span class="header-symbol">⦿-⦿</span>
     <h1>Research Updates</h1>
   </header>
+
+  <!-- Project cards -->
+  <div class="project-cards">
+    <div class="project-card stick">
+      <div class="project-card-title">⦿-⦿</div>
+      <div class="project-card-subtitle">biometric feedback game</div>
+      <div class="project-card-desc">a 50cm stick + fractal HRV biofeedback. get into flow. unlock music.</div>
+    </div>
+    <div class="project-card loob">
+      <div class="project-card-title">loob</div>
+      <div class="project-card-subtitle">somatic journaling</div>
+      <div class="project-card-desc">a collective interface for psychedelic integration and somatic reflection.</div>
+    </div>
+    <div class="project-card time-compass">
+      <div class="project-card-title">time compass</div>
+      <div class="project-card-subtitle">music discovery</div>
+      <div class="project-card-desc">a new way to find patterns and meaning in music.</div>
+    </div>
+  </div>
+
+  <!-- Project filter tabs -->
+  <div class="project-filters" id="project-filters">
+    <button class="project-filter-btn active" data-project="">All</button>
+    <button class="project-filter-btn" data-project="stick">⦿-⦿</button>
+    <button class="project-filter-btn" data-project="loob">loob</button>
+    <button class="project-filter-btn" data-project="time-compass">time compass</button>
+  </div>
 
   <div class="filters" id="filters"></div>
 
@@ -186,6 +306,7 @@
   <script>
     let allUpdates = [];
     let activeTag = null;
+    let activeProject = null;
 
     async function init() {
       try {
@@ -194,6 +315,15 @@
       } catch (e) {
         allUpdates = [];
       }
+      // Set up project filter tabs
+      document.querySelectorAll('.project-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.project-filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeProject = btn.dataset.project || null;
+          renderFeed();
+        });
+      });
       renderFilters();
       renderFeed();
     }
@@ -211,7 +341,7 @@
 
       const allBtn = document.createElement('button');
       allBtn.className = 'filter-btn active';
-      allBtn.textContent = 'All';
+      allBtn.textContent = 'All tags';
       allBtn.onclick = () => { activeTag = null; setActiveFilter(allBtn); renderFeed(); };
       filtersEl.appendChild(allBtn);
 
@@ -231,9 +361,14 @@
 
     function renderFeed() {
       const feedEl = document.getElementById('feed');
-      const updates = activeTag
-        ? allUpdates.filter(u => (u.tags || []).includes(activeTag))
-        : allUpdates;
+      let updates = allUpdates;
+
+      if (activeProject) {
+        updates = updates.filter(u => (u.project || 'stick') === activeProject);
+      }
+      if (activeTag) {
+        updates = updates.filter(u => (u.tags || []).includes(activeTag));
+      }
 
       if (updates.length === 0) {
         feedEl.innerHTML = `
@@ -253,9 +388,14 @@
         const bodyHtml = renderBody(u.body || '');
         const tagsHtml = (u.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('');
         const imagesHtml = renderImages(u.images || []);
+        const proj = u.project || 'stick';
+        const projLabel = proj === 'stick' ? '⦿-⦿' : proj;
 
         article.innerHTML = `
-          <div class="update-date">${date}</div>
+          <div class="update-meta-row">
+            <span class="update-date">${date}</span>
+            <span class="update-project-badge ${esc(proj)}">${esc(projLabel)}</span>
+          </div>
           <h2 class="update-title">${esc(u.title)}</h2>
           <div class="update-body">${bodyHtml}</div>
           ${imagesHtml}

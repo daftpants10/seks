@@ -370,3 +370,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 .selection-bar .sel-count { color: var(--accent); font-size: 13px; flex: 1; }
 .selection-bar .sel-clear { color: var(--muted); font-size: 12px; cursor: pointer; text-decoration: underline; }
 .selection-bar .sel-clear:hover { color: var(--text); }
+
+/* PROJECT BADGES */
+.project-badge { font-size: 10px; font-family: monospace; padding: 1px 6px; border: 1px solid; text-transform: uppercase; letter-spacing: 0.08em; }
+.project-badge.stick { border-color: #555; color: #555; }
+.project-badge.loob { border-color: #5a7a6a; color: #5a7a6a; }
+.project-badge.time-compass { border-color: #6a5a7a; color: #6a5a7a; }

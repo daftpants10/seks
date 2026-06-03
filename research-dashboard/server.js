@@ -31,16 +31,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // POST /api/imports — parse and save
 app.post('/api/imports', (req, res) => {
-  const { text, title, chatDate } = req.body;
+  const { text, title, chatDate, project } = req.body;
   if (!text) return res.status(400).json({ error: 'text is required' });
 
   const { excerpts, suggestedTags } = parseChat(text);
   const now = new Date().toISOString();
 
   const insert = db.prepare(
-    'INSERT INTO imports (imported_at, chat_date, raw_text, title, tags) VALUES (?, ?, ?, ?, ?)'
+    'INSERT INTO imports (imported_at, chat_date, raw_text, title, tags, project) VALUES (?, ?, ?, ?, ?, ?)'
   );
-  const info = insert.run(now, chatDate || null, text, title || null, JSON.stringify([]));
+  const info = insert.run(now, chatDate || null, text, title || null, JSON.stringify([]), project || 'stick');
   const importId = Number(info.lastInsertRowid);
 
   const insertExcerpt = db.prepare(
@@ -54,7 +54,7 @@ app.post('/api/imports', (req, res) => {
 // GET /api/imports — list all
 app.get('/api/imports', (req, res) => {
   const rows = db.prepare(
-    'SELECT id, title, chat_date, tags, imported_at FROM imports ORDER BY imported_at DESC'
+    'SELECT id, title, chat_date, tags, imported_at, project FROM imports ORDER BY imported_at DESC'
   ).all();
   // Include excerpt count
   const withCounts = rows.map(r => {
@@ -74,17 +74,18 @@ app.get('/api/imports/:id', (req, res) => {
   res.json({ ...row, tags: JSON.parse(row.tags || '[]'), excerpts });
 });
 
-// PATCH /api/imports/:id — update tags or title
+// PATCH /api/imports/:id — update tags, title, or project
 app.patch('/api/imports/:id', (req, res) => {
-  const { tags, title } = req.body;
+  const { tags, title, project } = req.body;
   const row = db.prepare('SELECT * FROM imports WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
 
   const newTags = tags !== undefined ? JSON.stringify(tags) : row.tags;
   const newTitle = title !== undefined ? title : row.title;
+  const newProject = project !== undefined ? project : row.project;
 
-  db.prepare('UPDATE imports SET tags = ?, title = ? WHERE id = ?')
-    .run(newTags, newTitle, req.params.id);
+  db.prepare('UPDATE imports SET tags = ?, title = ?, project = ? WHERE id = ?')
+    .run(newTags, newTitle, newProject, req.params.id);
   res.json({ success: true });
 });
 
@@ -102,18 +103,18 @@ app.get('/api/updates', (req, res) => {
 
 // POST /api/updates — create draft
 app.post('/api/updates', (req, res) => {
-  const { title, body, tags, images } = req.body;
+  const { title, body, tags, images, project } = req.body;
   if (!title || !body) return res.status(400).json({ error: 'title and body required' });
   const now = new Date().toISOString();
   const info = db.prepare(
-    'INSERT INTO updates (created_at, title, body, tags, images) VALUES (?, ?, ?, ?, ?)'
-  ).run(now, title, body, JSON.stringify(tags || []), JSON.stringify(images || []));
+    'INSERT INTO updates (created_at, title, body, tags, images, project) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(now, title, body, JSON.stringify(tags || []), JSON.stringify(images || []), project || 'stick');
   res.json({ id: Number(info.lastInsertRowid) });
 });
 
 // PATCH /api/updates/:id — edit draft
 app.patch('/api/updates/:id', (req, res) => {
-  const { title, body, tags, images, post_date } = req.body;
+  const { title, body, tags, images, post_date, project } = req.body;
   const row = db.prepare('SELECT * FROM updates WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
 
@@ -122,9 +123,10 @@ app.patch('/api/updates/:id', (req, res) => {
   const newTags = tags !== undefined ? JSON.stringify(tags) : row.tags;
   const newImages = images !== undefined ? JSON.stringify(images) : row.images;
   const newPostDate = post_date !== undefined ? (post_date || null) : row.post_date;
+  const newProject = project !== undefined ? project : row.project;
 
-  db.prepare('UPDATE updates SET title = ?, body = ?, tags = ?, images = ?, post_date = ? WHERE id = ?')
-    .run(newTitle, newBody, newTags, newImages, newPostDate, req.params.id);
+  db.prepare('UPDATE updates SET title = ?, body = ?, tags = ?, images = ?, post_date = ?, project = ? WHERE id = ?')
+    .run(newTitle, newBody, newTags, newImages, newPostDate, newProject, req.params.id);
   res.json({ success: true });
 });
 

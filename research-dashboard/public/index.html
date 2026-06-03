@@ -36,6 +36,15 @@
       <textarea id="import-text" style="min-height:200px" placeholder="Paste Claude chat here. Use ⦿-⦿ markers to flag excerpts."></textarea>
     </div>
 
+    <div class="form-row">
+      <label>Project</label>
+      <select id="import-project">
+        <option value="stick">⦿-⦿ stick / game</option>
+        <option value="loob">loob</option>
+        <option value="time-compass">time compass</option>
+      </select>
+    </div>
+
     <button class="btn-primary" id="import-parse-btn">Parse &amp; Preview</button>
 
     <div id="import-preview" style="display:none; margin-top:24px;">
