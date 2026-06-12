@@ -1,5 +1,17 @@
 [
   {
+    "id": 9,
+    "date": "2023-10-10",
+    "title": "Finding the Question I've Been Asking All Along",
+    "body": "Four years ago, I started studying how people listen to music across different cultures—first in Abu Dhabi and Ethiopia, then through coursework, then in informal conversations with friends. It wasn't until June 2023 that I realized something striking: I'd been asking the same core question the whole time, just in different ways. How does where you come from shape how you connect with music?\n\nThe answer kept pointing to the same insight: we don't listen randomly. We listen along patterns carved by our cultural roots, our childhoods, the sonic world we grew up in. Those patterns ripple forward through our entire lives, across genres and decades.\n\nThat's when I found the name for what I'd been searching for: **Time Compass**. Not a music recommendation algorithm, but something more personal—a tool that uses your listening history as a map back to your origins and forward to what will resonate with you.\n\nHere's how it works: you feed it your Spotify history, your rated tracks, anything timestamped. The system finds the patterns—not just genre clusters, but temporal ones. What shaped your taste at 15? At 22? From there, it generates a compass: your musical genesis point and the threads radiating outward from it. It can surface music you've never heard that belongs to your story, and give you language for who you actually are as a listener.\n\nThe concept feels solid. The technical shape is still forming. But the direction is clear.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-12 at 12.40.35.png",
+      "Screenshot 2026-06-12 at 12.40.48.png"
+    ],
+    "project": "time-compass"
+  },
+  {
     "id": 8,
     "date": "2020-05-05",
     "title": "How We Inherit the Way We Listen",
