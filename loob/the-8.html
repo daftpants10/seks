@@ -510,7 +510,7 @@ function setPQ(field, val) {
 }
 let sessionStartTime = null, sessionEndTime = null, firstGlowTime = null
 let signalMode = 'dfa', rmssdValue = null
-const dfaHistory = [], dfaLog = [], rmssdHistory = [], phaseTime = {}, rrHistory = []
+const dfaHistory = [], dfaLog = [], rmssdHistory = [], phaseTime = {}, rrHistory = [], somaLog = []
 ZONES.forEach(z => phaseTime[z.name] = 0)
 
 // ═══════════════════════════════════════════════
@@ -617,7 +617,7 @@ function resetSession() {
   songProgress = 0; outOfZoneSec = 0; audioPaused = true; completeFired = false
   ZONES.forEach(z => phaseTime[z.name] = 0)
   dfaHistory.length = 0; dfaLog.length = 0; rmssdHistory.length = 0
-  rrHistory.splice(0)
+  rrHistory.splice(0); somaLog.length = 0
   restartTrackSource()
 }
 
@@ -964,7 +964,8 @@ async function saveAndDownload(e) {
     dfaHistory:        dfaHistory.map(v=>Math.round(v*1000)/1000),
     dfaMean,
     rmssdHistory,
-    rrHistory,
+    h10_rrHistory:     rrHistory,
+    somaSync_log:      somaLog,
   }
 
   let savedId = participantId
@@ -1013,7 +1014,11 @@ function connectWS() {
   const host = window.location.hostname || 'localhost'
   ws = new WebSocket(`ws://${host}:${window.location.port||3000}`)
   ws.onopen  = () => { wsConnected=true; mockMode=false; clearTimeout(wsFallback); const el=document.getElementById('ws-dot'); el.textContent='● live'; el.style.color='#00ff88'; document.getElementById('mock-tag').style.display='none' }
-  ws.onmessage = e => { const v=parseSoma(e.data); if(v&&v>0.2&&v<2.0&&!h10Active) dfaAlpha=v }
+  ws.onmessage = e => {
+    const t = Date.now()
+    try { const d = JSON.parse(e.data); somaLog.push({ t, ...d }) } catch { somaLog.push({ t, raw: e.data }) }
+    const v = parseSoma(e.data); if(v&&v>0.2&&v<2.0&&!h10Active) dfaAlpha=v
+  }
   ws.onclose = () => { wsConnected=false; document.getElementById('ws-dot').textContent='○ no signal'; document.getElementById('ws-dot').style.color='#444'; if(!h10Active)enableMock(); setTimeout(connectWS,4000) }
   ws.onerror = () => ws.close()
 }
