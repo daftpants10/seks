@@ -238,7 +238,37 @@
       letter-spacing: 0.06em;
     }
 
-    .empty-state {
+    /* SORT CONTROLS */
+    .sort-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+
+    .sort-label {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .sort-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      padding: 4px 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: all 0.15s;
+    }
+
+    .sort-btn:hover { border-color: var(--text); color: var(--text); }
+    .sort-btn.active { border-color: var(--text); color: var(--bg); background: var(--text); }
       padding: 60px 0;
       text-align: center;
       color: var(--muted);
@@ -294,6 +324,12 @@
     <button class="project-filter-btn" data-project="time-compass">time compass</button>
   </div>
 
+  <div class="sort-controls">
+    <span class="sort-label">Sort:</span>
+    <button class="sort-btn active" id="sort-newest" onclick="setSort('newest')">Newest first</button>
+    <button class="sort-btn" id="sort-oldest" onclick="setSort('oldest')">Oldest first</button>
+  </div>
+
   <div class="filters" id="filters"></div>
 
   <div class="feed" id="feed">
@@ -307,6 +343,16 @@
     let allUpdates = [];
     let activeTag = null;
     let activeProject = null;
+    let sortOrder = 'newest';
+
+    function setSort(order) {
+      sortOrder = order;
+      document.getElementById('sort-newest').classList.toggle('active', order === 'newest');
+      document.getElementById('sort-oldest').classList.toggle('active', order === 'oldest');
+      renderFeed();
+    }
+
+    window.setSort = setSort;
 
     async function init() {
       try {
@@ -369,6 +415,12 @@
       if (activeTag) {
         updates = updates.filter(u => (u.tags || []).includes(activeTag));
       }
+
+      updates = [...updates].sort((a, b) => {
+        const da = new Date(a.date || 0);
+        const db = new Date(b.date || 0);
+        return sortOrder === 'newest' ? db - da : da - db;
+      });
 
       if (updates.length === 0) {
         feedEl.innerHTML = `
