@@ -1071,17 +1071,19 @@ function tick() {
         let targetGain = 0
         if (!hasReal) {
           targetGain = 0
-        } else if (isGlow) {
-          targetGain = 0.9
-        } else if (outOfZoneSec < modeGrace) {
-          // approaching or grace period — whisper preview based on proximity
-          const dist = useRMSSD
-            ? Math.max(0, RMSSD_GLOW - rmssdValue) / RMSSD_GLOW
-            : (dfaAlpha >= DFA_HIGH ? dfaAlpha - DFA_HIGH : Math.max(0, DFA_LOW - dfaAlpha))
-          const proximity = Math.max(0, 1 - dist / 0.3)
-          targetGain = 0.14 * proximity
+        } else if (outOfZoneSec >= modeGrace) {
+          targetGain = 0  // grace expired — silence
+        } else {
+          // continuous distance-based volume: full in adaptive zone, fades out toward extremes
+          if (useRMSSD) {
+            const dist = Math.max(0, RMSSD_GLOW - rmssdValue)
+            targetGain = Math.max(0.05, 0.9 * Math.exp(-dist / 18))
+          } else {
+            const dist = isGlow ? 0 : (dfaAlpha < DFA_LOW ? DFA_LOW - dfaAlpha : dfaAlpha - DFA_HIGH)
+            targetGain = Math.max(0.05, 0.9 * Math.exp(-dist * 2.5))
+          }
         }
-        masterGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, isGlow ? 0.8 : 0.4)
+        masterGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, isGlow ? 0.8 : 0.3)
       }
 
       if (!completeFired) {
