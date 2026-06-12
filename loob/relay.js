@@ -28,6 +28,7 @@ const CSV_HEADERS = [
   'session_date','session_start','session_end','total_duration_s',
   'time_to_first_glow_s',
   'age','sex','activity_level','movement_exp','medications',
+  'flow_arts','flow_years','flow_hours_per_week',
   'stress','sleep_hours','caffeine_hours_ago',
   'glow_time_s','glow_pct','dfa_mean',
   'chaos_s','tension_s','adaptive_s','stable_s','rigid_s'
@@ -49,6 +50,9 @@ function appendCSV(participantId, s) {
     b.activityLevel ?? '',
     b.movementExp ?? '',
     b.medications ?? '',
+    `"${(b.flowArts||'').replace(/"/g,'""')}"`,
+    b.flowYears ?? '',
+    b.flowHoursPerWeek ?? '',
     b.stress ?? '',
     b.sleepHours ?? '',
     b.caffeineHoursAgo ?? '',

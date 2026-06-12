@@ -194,6 +194,15 @@
       <option value="yes">yes</option>
     </select>
 
+    <div class="ms-label">flow arts practiced (e.g. poi, staff, hooping, juggling)</div>
+    <input id="cs-flow-arts" class="cs-input" type="text" placeholder="—" autocomplete="off" spellcheck="false">
+
+    <div class="ms-label">years practicing flow arts</div>
+    <input id="cs-flow-years" class="cs-input" type="number" min="0" max="80" step="0.5" placeholder="—">
+
+    <div class="ms-label">hours per week practicing flow arts</div>
+    <input id="cs-flow-hours" class="cs-input" type="number" min="0" max="168" step="0.5" placeholder="—">
+
     <div class="ms-label" style="margin-top:28px">stress level today (1 = calm · 5 = high)</div>
     <input id="cs-stress" class="cs-input" type="number" min="1" max="5" placeholder="—">
 
@@ -766,6 +775,9 @@ async function beginConsent(e) {
     activityLevel:    document.getElementById('cs-activity').value || null,
     movementExp:      document.getElementById('cs-movement').value || null,
     medications:      document.getElementById('cs-meds').value     || null,
+    flowArts:         document.getElementById('cs-flow-arts').value.trim()  || null,
+    flowYears:        document.getElementById('cs-flow-years').value   ? Number(document.getElementById('cs-flow-years').value)   : null,
+    flowHoursPerWeek: document.getElementById('cs-flow-hours').value   ? Number(document.getElementById('cs-flow-hours').value)   : null,
     stress:           document.getElementById('cs-stress').value   ? Number(document.getElementById('cs-stress').value)   : null,
     sleepHours:       document.getElementById('cs-sleep').value    ? Number(document.getElementById('cs-sleep').value)    : null,
     caffeineHoursAgo: document.getElementById('cs-caffeine').value ? Number(document.getElementById('cs-caffeine').value) : null,
