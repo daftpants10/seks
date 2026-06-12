@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⦿-⦿ Research Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <span class="symbol">⦿-⦿</span>
+    <h1>Research Dashboard</h1>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="import">Import</button>
+    <button class="tab-btn" data-tab="timeline">Timeline</button>
+    <button class="tab-btn" data-tab="publish">Publish</button>
+  </nav>
+
+  <!-- ── TAB: IMPORT ─────────────────────────────────────────────────────── -->
+  <div class="tab-panel active" id="tab-import">
+    <div class="form-row-2">
+      <div>
+        <label>Title</label>
+        <input type="text" id="import-title" placeholder="e.g. Session — study design pivot">
+      </div>
+      <div>
+        <label>Chat Date</label>
+        <input type="date" id="import-date">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Raw Chat Text</label>
+      <textarea id="import-text" style="min-height:200px" placeholder="Paste Claude chat here. Use ⦿-⦿ markers to flag excerpts."></textarea>
+    </div>
+
+    <div class="form-row">
+      <label>Project</label>
+      <select id="import-project">
+        <option value="stick">⦿-⦿ stick / game</option>
+        <option value="loob">loob</option>
+        <option value="time-compass">time compass</option>
+      </select>
+    </div>
+
+    <button class="btn-primary" id="import-parse-btn">Parse &amp; Preview</button>
+
+    <div id="import-preview" style="display:none; margin-top:24px;">
+      <hr>
+      <div style="margin-bottom:16px;">
+        <label>Suggested Tags — click to remove, type to add</label>
+        <div class="tag-area" id="import-tags">
+          <input class="tag-input" id="import-tag-input" placeholder="add tag…" autocomplete="off">
+        </div>
+      </div>
+
+      <div id="excerpt-preview"></div>
+
+      <button class="btn-primary" id="import-save-btn" style="margin-top:16px;">Save Import</button>
+      <span id="import-status"></span>
+    </div>
+  </div>
+
+  <!-- ── TAB: TIMELINE ──────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-timeline">
+    <div class="tag-filters" id="timeline-tag-filters"></div>
+    <div id="timeline-content">
+      <div class="loading">Loading imports…</div>
+    </div>
+  </div>
+
+  <!-- ── TAB: PUBLISH ───────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-publish">
+    <div class="publish-layout">
+      <!-- Left: list -->
+      <div class="update-list-panel">
+        <button class="btn-primary" id="new-draft-btn" style="width:100%; margin-bottom:14px;">+ New Draft</button>
+        <div id="update-list">
+          <div class="loading">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Right: editor -->
+      <div class="editor-panel" id="editor-panel">
+        <div style="color:var(--muted); font-size:13px; padding-top:40px; text-align:center;">
+          Select a draft or create a new one.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
