@@ -624,9 +624,10 @@ async function initAudio() {
     masterGain = audioCtx.createGain()
     masterGain.gain.value = 0
     masterGain.connect(audioCtx.destination)
-    if (audioCtx.state === 'suspended') audioCtx.resume()
-    startAmbientDrone()
   }
+  // Always await resume — context starts suspended on Safari/iOS
+  if (audioCtx.state !== 'running') await audioCtx.resume()
+  if (!ambientGain) startAmbientDrone()
   if (trackArrayBuffer) {
     try {
       decodedTrack = await audioCtx.decodeAudioData(trackArrayBuffer.slice(0))
@@ -652,7 +653,6 @@ function startTrackSource() {
   trackLoaded = true
   audioPaused = true
   masterGain.gain.value = 0
-  if (audioCtx.state === 'suspended') audioCtx.resume()
   startAmbientDrone()
 }
 
