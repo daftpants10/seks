@@ -427,12 +427,12 @@ function renderEditor(upd) {
   panel.innerHTML = `
     <div class="form-row">
       <label>Title</label>
-      <input type="text" id="ed-title" value="${esc(upd.title)}" ${isPublished ? 'readonly' : ''}>
+      <input type="text" id="ed-title" value="${esc(upd.title)}">
     </div>
 
     <div class="form-row">
       <label>Project</label>
-      <select id="ed-project" ${isPublished ? 'disabled' : ''}>
+      <select id="ed-project">
         <option value="stick" ${proj === 'stick' ? 'selected' : ''}>⦿-⦿ stick / game</option>
         <option value="loob" ${proj === 'loob' ? 'selected' : ''}>loob</option>
         <option value="time-compass" ${proj === 'time-compass' ? 'selected' : ''}>time compass</option>
@@ -441,37 +441,40 @@ function renderEditor(upd) {
 
     <div class="form-row">
       <label>Date (shown on public feed)</label>
-      <input type="date" id="ed-date" value="${(upd.post_date || upd.created_at || '').slice(0,10)}" ${isPublished ? 'readonly' : ''}>
+      <input type="date" id="ed-date" value="${(upd.post_date || upd.created_at || '').slice(0,10)}">
     </div>
 
     <div class="form-row">
       <label>Body (markdown)</label>
-      <textarea id="ed-body" style="min-height:160px" ${isPublished ? 'readonly' : ''}>${esc(upd.body)}</textarea>
+      <textarea id="ed-body" style="min-height:160px">${esc(upd.body)}</textarea>
       <div class="preview-area" id="ed-preview"></div>
     </div>
 
     <div class="form-row">
       <label>Tags</label>
       <div class="tag-area" id="ed-tags">
-        <input class="tag-input" id="ed-tag-input" placeholder="add tag…" ${isPublished ? 'disabled' : ''}>
+        <input class="tag-input" id="ed-tag-input" placeholder="add tag…">
       </div>
     </div>
 
     <div class="form-row">
       <label>Images</label>
-      ${!isPublished ? `
-        <div class="image-upload-area">
-          <input type="file" id="ed-image-file" accept="image/*" multiple style="display:none">
-          <button class="btn-sm" onclick="document.getElementById('ed-image-file').click()">+ Upload images</button>
-          <span id="upload-status" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
-        </div>` : ''}
+      <div class="image-upload-area">
+        <input type="file" id="ed-image-file" accept="image/*" multiple style="display:none">
+        <button class="btn-sm" onclick="document.getElementById('ed-image-file').click()">+ Upload images</button>
+        <span id="upload-status" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+      </div>
       <div id="ed-image-list" class="image-list"></div>
     </div>
 
     <div class="editor-actions">
-      ${!isPublished ? `<button class="btn-primary" onclick="saveDraft()">Save Draft</button>` : ''}
-      ${!isPublished ? `<button class="btn-success" onclick="publishUpdate()">Publish</button>` : '<span style="color:var(--success);font-size:13px;">✓ Published</span>'}
-      ${!isPublished ? `<button class="btn-danger btn-sm" onclick="deleteDraft()">Delete Draft</button>` : `<button class="btn-sm" onclick="unpublishUpdate()">Unpublish</button>`}
+      ${isPublished
+        ? `<button class="btn-primary" onclick="saveAndRepublish()">Save &amp; Re-publish</button>
+           <button class="btn-sm" onclick="unpublishUpdate()">Unpublish</button>`
+        : `<button class="btn-primary" onclick="saveDraft()">Save Draft</button>
+           <button class="btn-success" onclick="publishUpdate()">Publish</button>
+           <button class="btn-danger btn-sm" onclick="deleteDraft()">Delete Draft</button>`
+      }
     </div>
     <div id="ed-status"></div>
   `;
@@ -652,6 +655,24 @@ async function unpublishUpdate() {
 }
 
 window.unpublishUpdate = unpublishUpdate;
+
+async function saveAndRepublish() {
+  if (!selectedUpdateId) return;
+  const statusEl = document.getElementById('ed-status');
+  await saveDraft();
+  try {
+    await api('POST', '/updates/' + selectedUpdateId + '/publish');
+    updates = await api('GET', '/updates');
+    renderUpdateList();
+    const upd = updates.find(u => u.id === selectedUpdateId);
+    if (upd) renderEditor(upd);
+    showStatus(statusEl, '✓ Saved and re-published to GitHub.', 'success');
+  } catch (e) {
+    showStatus(statusEl, '✗ ' + e.message, 'error');
+  }
+}
+
+window.saveAndRepublish = saveAndRepublish;
 
 document.getElementById('new-draft-btn').addEventListener('click', async () => {
   const title = prompt('Draft title:');
