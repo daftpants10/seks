@@ -1,5 +1,14 @@
 [
   {
+    "id": 11,
+    "date": "2026-05-05",
+    "title": "Music and Body in the Feedback Loop",
+    "body": "These past two weeks locked down the final pieces of the study and made the experience feel whole. I started with a practical problem: short music tracks were breaking sessions mid-measurement because the audio would end before the glow window finished. I switched the whole timing system to run on accumulated heart rate data instead of track length, so any song loops cleanly now. That removed a real fragility that could have scrambled the data.\n\nThen I brought the body into the picture. I added a skeleton overlay powered by MediaPipe that colors itself to match the current zone: red in chaos, orange in tension, green in glow, blue in stable, purple in rigid. It layers subtly under the pyramid so the biofeedback stays primary, but now participants see their own movement quality alongside their heart data. That closes a perceptual loop that feels essential to the instrument.\n\nI also built a track picker so facilitators can assign different music to different participants without touching code, which matters because music is now a variable we're testing. Each session records which track was used alongside the heart rate data.\n\nThe biggest shift came last week: we locked the pilot-then-power plan. Instead of guessing a sample size upfront, I'll run 5 people to estimate the effect size between conditions, then use G*Power to set the real N. Data collection starts June 1. That's when we move from designing to executing: a within-subjects crossover with one heart rate sensor rotating across 30 community participants, fractal heart rate as the primary measure, and fifteen-minute sessions that capture music, movement, and biofeedback all at once.",
+    "tags": [],
+    "images": [],
+    "project": "stick"
+  },
+  {
     "id": 10,
     "date": "2026-04-10",
     "title": "Time Compass: From Abstract Idea to Interactive Demo",
