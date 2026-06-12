@@ -30,22 +30,7 @@
     #about li strong { color:#fff; font-weight:600; }
     #about-tap { font-size:11px; color:#444; letter-spacing:0.2em; text-align:center; }
 
-    #mode-select { }
-    #mode-inner  { max-width:440px; width:90%; }
     .ms-label    { font-size:10px; letter-spacing:0.2em; color:#444; margin-bottom:12px; text-transform:uppercase; }
-    #name-input  { width:100%; background:none; border:none; border-bottom:1px solid #2a2a2a; color:#fff; font-family:inherit; font-size:clamp(20px,3vw,28px); padding:8px 0 12px; outline:none; letter-spacing:0.02em; }
-    #name-input::placeholder { color:#2a2a2a; }
-    .mode-buttons{ display:flex; gap:12px; margin-top:10px; }
-    .mode-btn    { flex:1; background:none; border:1px solid #2a2a2a; color:#fff; font-family:inherit; padding:22px 18px; cursor:pointer; text-align:left; border-radius:4px; transition:border-color 0.25s, opacity 0.25s; }
-    .mode-btn:hover { border-color:#00ff88; }
-    .mode-btn:disabled { opacity:0.25; cursor:default; pointer-events:none; }
-    .mb-title    { font-size:clamp(16px,2.5vw,22px); font-weight:700; letter-spacing:-0.01em; }
-    .mb-desc     { font-size:11px; color:#555; margin-top:8px; letter-spacing:0.08em; line-height:1.5; }
-    .track-grid  { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
-    .track-btn   { background:none; border:1px solid #222; color:#555; font-family:inherit; font-size:clamp(16px,2.5vw,22px); font-weight:700; padding:14px 0; cursor:pointer; border-radius:3px; transition:border-color 0.2s, color 0.2s; }
-    .track-btn:hover { border-color:#555; color:#aaa; }
-    .track-btn.selected { border-color:#00ff88; color:#00ff88; }
-    #track-status { font-size:10px; color:#555; letter-spacing:0.12em; min-height:16px; margin-bottom:4px; }
 
     /* ── HUD ──────────────────────────────────────── */
     #top { position:fixed; top:0; left:0; right:0; padding:22px 28px 80px; background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent); z-index:20; display:flex; align-items:flex-start; justify-content:space-between; }
@@ -156,9 +141,8 @@
   <div id="about-inner">
     <h2>the 8</h2>
     <ul>
-      <li><strong>move freely</strong> — stand in front of the screen. pick up the stick. let your body lead.</li>
-      <li><strong>glow</strong> — adaptive zone. your movement has fractal self-similarity. the track mines.</li>
-      <li><strong>flow</strong> — outside the zone. music stops after the grace period. change your movement. find your way back.</li>
+      <li><strong>stand in front of the screen</strong> — move freely. let your body lead.</li>
+      <li><strong>flow state</strong> — when your movement finds its rhythm, the music plays. if it stops, change something and find your way back.</li>
     </ul>
     <div id="about-tap">tap to continue</div>
   </div>
@@ -244,34 +228,14 @@
   </div>
 </div>
 
-<!-- Screen 3: track + name + mode -->
-<div id="mode-select" class="overlay">
-  <div id="mode-inner">
-    <div class="ms-label">choose track</div>
-    <div class="track-grid">
-      <button class="track-btn" onclick="selectTrack(1)">1</button>
-      <button class="track-btn" onclick="selectTrack(2)">2</button>
-      <button class="track-btn" onclick="selectTrack(3)">3</button>
-      <button class="track-btn" onclick="selectTrack(4)">4</button>
-      <button class="track-btn" onclick="selectTrack(5)">5</button>
-      <button class="track-btn" onclick="selectTrack(6)">6</button>
-      <button class="track-btn" onclick="selectTrack(7)">7</button>
-      <button class="track-btn" onclick="selectTrack(8)">8</button>
-    </div>
-    <div id="track-status"></div>
-    <div class="ms-label" style="margin-top:24px">your name</div>
-    <input id="name-input" type="text" placeholder="enter name" autocomplete="off" spellcheck="false">
-    <div class="ms-label" style="margin-top:28px">choose mode</div>
-    <div class="mode-buttons">
-      <button class="mode-btn" id="btn-simple" onclick="selectMode('simple')" disabled>
-        <div class="mb-title">simple</div>
-        <div class="mb-desc">1 minute<br>15s grace period</div>
-      </button>
-      <button class="mode-btn" id="btn-full" onclick="selectMode('full')" disabled>
-        <div class="mb-title">full</div>
-        <div class="mb-desc">full track<br>30s grace period</div>
-      </button>
-    </div>
+<!-- Screen 3: trial intro -->
+<div id="trial-screen" class="overlay">
+  <div id="trial-inner" onclick="event.stopPropagation()" style="max-width:400px;width:90%;text-align:center;">
+    <div id="trial-counter" style="font-size:10px;letter-spacing:0.25em;color:#444;margin-bottom:32px;text-transform:uppercase;">trial 1 of 6</div>
+    <div id="trial-track-name" style="font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;">ambient</div>
+    <div id="trial-condition" style="font-size:14px;letter-spacing:0.18em;color:#555;margin-bottom:40px;text-transform:uppercase;"></div>
+    <div id="trial-load-status" style="font-size:10px;letter-spacing:0.15em;color:#555;margin-bottom:20px;min-height:14px;"></div>
+    <button id="trial-start-btn" onclick="startCurrentTrial(event)" disabled style="background:none;border:1px solid #00ff88;color:#00ff88;font-family:inherit;font-size:11px;letter-spacing:0.22em;padding:16px 48px;cursor:pointer;border-radius:3px;text-transform:uppercase;transition:opacity 0.2s;">begin trial</button>
   </div>
 </div>
 
@@ -324,7 +288,7 @@
     <!-- post-questionnaire -->
     <div id="post-q" onclick="event.stopPropagation()">
       <div class="pq-item">
-        <div class="pq-q">how difficult did you find this game?</div>
+        <div class="pq-q">how difficult did you find this trial?</div>
         <div class="pq-row">
           <span class="pq-hint">very easy</span>
           <div class="pq-btns" id="pq-difficulty">
@@ -364,7 +328,7 @@
       <a id="csv-btn" href="/participants.csv" download="participants.csv">↓ download spreadsheet (all participants)</a>
     </div>
 
-    <div id="complete-tap">tap anywhere to play again</div>
+    <div id="complete-tap">tap anywhere for next trial</div>
 
     <div id="complete-about">
 
@@ -394,7 +358,7 @@
           DFA alpha 1 (Detrended Fluctuation Analysis, short-range scaling exponent) captures this
           by analysing the pattern of fluctuations in a physiological signal
           across many time windows simultaneously. When those fluctuations scale like pink noise,
-          the autonomic nervous system is in a self-organising, adaptive state. That is the zone. That is the glow.
+          the autonomic nervous system is in a self-organising, adaptive state. That is the zone. That is the flow.
         </p>
       </div>
 
@@ -413,7 +377,7 @@
       <div class="ca-section">
         <div class="ca-label">what your score says about you</div>
         <ul class="ca-list">
-          <li><strong style="color:#00ff88">0.75–1.0 (glow)</strong> adaptive zone. Parasympathetic dominance, autonomic resilience, flow state. Your system is organising complexity in real time.</li>
+          <li><strong style="color:#00ff88">0.75–1.0 (flow)</strong> adaptive zone. Parasympathetic dominance, autonomic resilience, flow state. Your system is organising complexity in real time.</li>
           <li><strong style="color:#ff8800">0.5–0.75 (tension)</strong> physiological load is rising. Common during moderate exercise or stress. The fractal structure grows less coherent.</li>
           <li><strong style="color:#ff2200">below 0.5 (chaos)</strong> high load or fragmentation. Seen near exhaustion or in acute stress. The river is turbulent.</li>
           <li><strong style="color:#0088ff">above 1.0 (stable/rigid)</strong> over-correlated. Often seen at deep rest or in states of reduced autonomic complexity. The river has slowed considerably.</li>
@@ -474,7 +438,7 @@ const DFA_LOW = 0.75, DFA_HIGH = 1.25
 const HISTORY_SECS = 60, HISTORY_RATE = 4
 let SONG_DURATION = 240
 
-const RMSSD_GLOW = 45
+const RMSSD_FLOW = 45
 const RMSSD_MAX  = 90
 const RMSSD_ZONES = [
   { label:'low',       min:0,  max:20, color:'#ff2200' },
@@ -491,15 +455,26 @@ const ZONES = [
 ]
 const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0]
 
+const TRIALS = [
+  { id:1, label:'ambient',   trackN:1,    condition:'with stick',    hasAudio:true,  duration:180, grace:20 },
+  { id:2, label:'ambient',   trackN:1,    condition:'without stick', hasAudio:true,  duration:180, grace:20 },
+  { id:3, label:'bass',      trackN:2,    condition:'with stick',    hasAudio:true,  duration:180, grace:20 },
+  { id:4, label:'bass',      trackN:2,    condition:'without stick', hasAudio:true,  duration:180, grace:20 },
+  { id:5, label:'own music', trackN:null, condition:'with stick',    hasAudio:false, duration:180, grace:20 },
+  { id:6, label:'own music', trackN:null, condition:'without stick', hasAudio:false, duration:180, grace:20 },
+]
+let currentTrialIdx = 0, trialResults = []
+
 // ═══════════════════════════════════════════════
 // State
 // ═══════════════════════════════════════════════
 let started = false, dfaAlpha = null, currentZone = ZONES[2]
-let selectedTrack = null, trackFetching = false
+let trackFetching = false
 let outOfZoneSec = 0, songProgress = 0, lastTick = null
 let mockMode = false, mockT = 0, wsConnected = false
 let audioPaused = true, lastHistorySample = 0
-let currentMode = null, playerName = '', modeDuration = 240, modeGrace = 30
+let currentTrial = null
+let modeDuration = 180, modeGrace = 20
 let completeFired = false
 let participantId = null, participantBaseline = {}
 let postQ = { difficulty: null, feedback: null, description: '' }
@@ -508,7 +483,7 @@ function setPQ(field, val) {
   postQ[field] = val
   document.querySelectorAll(`#pq-${field} button`).forEach((b, i) => b.classList.toggle('sel', i + 1 === val))
 }
-let sessionStartTime = null, sessionEndTime = null, firstGlowTime = null
+let sessionStartTime = null, sessionEndTime = null, firstFlowTime = null
 let signalMode = 'dfa', rmssdValue = null
 const dfaHistory = [], dfaLog = [], rmssdHistory = [], phaseTime = {}, rrHistory = [], somaLog = []
 ZONES.forEach(z => phaseTime[z.name] = 0)
@@ -529,96 +504,133 @@ document.getElementById('about').addEventListener('click', () => {
 })
 
 document.getElementById('complete').addEventListener('click', () => {
-  participantId = null; participantBaseline = {}
-  sessionStartTime = null; sessionEndTime = null; firstGlowTime = null
-  rrHistory.splice(0)
-  resetSession()
   document.getElementById('complete').style.display = 'none'
-  document.getElementById('name-input').value = ''
-  document.getElementById('consent-screen').style.display = 'flex'
-  // re-enable mode buttons if a track is still loaded
-  if (trackArrayBuffer) {
-    document.getElementById('btn-simple').disabled = false
-    document.getElementById('btn-full').disabled   = false
+  resetSession()
+  // reset per-trial logs
+  dfaLog.length = 0; rmssdHistory.length = 0; rrHistory.splice(0); somaLog.length = 0
+
+  if (currentTrialIdx + 1 < TRIALS.length) {
+    // next trial
+    showTrialScreen(currentTrialIdx + 1)
+    document.getElementById('trial-screen').style.display = 'flex'
+  } else {
+    // all done — go back to consent for next participant
+    participantId = null; participantBaseline = {}
+    sessionStartTime = null; sessionEndTime = null; firstFlowTime = null
+    currentTrialIdx = 0; trialResults = []
+    document.getElementById('consent-screen').style.display = 'flex'
   }
 })
 
-// Stop mode-select div from reacting to clicks on its children (input / buttons)
-document.getElementById('mode-select').addEventListener('click', e => e.stopPropagation())
+// ═══════════════════════════════════════════════
+// Trial system
+// ═══════════════════════════════════════════════
+function showTrialScreen(idx) {
+  currentTrialIdx = idx
+  const t = TRIALS[idx]
+  currentTrial = t
+  document.getElementById('trial-counter').textContent = `trial ${idx + 1} of ${TRIALS.length}`
+  document.getElementById('trial-track-name').textContent = t.label
+  document.getElementById('trial-condition').textContent = t.condition
+  document.getElementById('trial-start-btn').disabled = true
 
-let previewCtx = null, previewSrc = null, previewGain = null
+  if (!t.hasAudio) {
+    document.getElementById('trial-load-status').textContent = 'no audio — participant uses own music'
+    document.getElementById('trial-start-btn').disabled = false
+    trackArrayBuffer = null; decodedTrack = null
+    return
+  }
 
-function stopPreview() {
-  if (previewSrc) { try { previewSrc.stop() } catch {} previewSrc = null }
-  if (previewGain) { try { previewGain.disconnect() } catch {} previewGain = null }
-}
-
-async function playPreview(buf) {
-  stopPreview()
-  if (!previewCtx) return
-  if (previewCtx.state !== 'running') await previewCtx.resume()
-  try {
-    const decoded = await previewCtx.decodeAudioData(buf.slice(0))
-    const src  = previewCtx.createBufferSource()
-    const gain = previewCtx.createGain()
-    src.buffer = decoded
-    gain.gain.value = 0.75
-    src.connect(gain); gain.connect(previewCtx.destination)
-    const offset = Math.min(30, decoded.duration * 0.08)
-    src.start(0, offset, 5)
-    gain.gain.setTargetAtTime(0, previewCtx.currentTime + 4, 0.4)
-    previewSrc = src; previewGain = gain
-    src.onended = () => { previewSrc = null; document.getElementById('track-status').textContent = document.getElementById('track-status').textContent.replace(' ▶ preview', '') }
-  } catch(e) { console.warn('preview failed:', e) }
-}
-
-function selectTrack(n) {
-  selectedTrack = n
-  document.querySelectorAll('.track-btn').forEach((b, i) => b.classList.toggle('selected', i + 1 === n))
-  // Create preview context immediately inside user gesture so Safari allows audio
-  stopPreview()
-  if (!previewCtx || previewCtx.state === 'closed') previewCtx = new (window.AudioContext||window.webkitAudioContext)()
-  previewCtx.resume()
-  const st = document.getElementById('track-status')
-  st.textContent = `loading seks_track_${n}…`
+  document.getElementById('trial-load-status').textContent = `loading ${t.label} track…`
   trackArrayBuffer = null; decodedTrack = null; trackFetching = true
-  document.getElementById('btn-simple').disabled = true
-  document.getElementById('btn-full').disabled   = true
-  fetch(`/track?n=${n}`)
+  fetch(`/track?n=${t.trackN}`)
     .then(r => { if (!r.ok) throw 0; return r.arrayBuffer() })
     .then(b => {
       trackArrayBuffer = b; trackFetching = false
-      st.textContent = `seks_track_${n} · ready  ▶ preview`
-      document.getElementById('btn-simple').disabled = false
-      document.getElementById('btn-full').disabled   = false
-      playPreview(b)
+      document.getElementById('trial-load-status').textContent = `${t.label} · ready`
+      document.getElementById('trial-start-btn').disabled = false
     })
     .catch(() => {
       trackFetching = false
-      st.textContent = `track ${n} · file not found`
+      document.getElementById('trial-load-status').textContent = `track not found — check seks_track_${t.trackN}.mp3`
     })
 }
 
-function selectMode(mode) {
-  if (!selectedTrack || trackFetching || !trackArrayBuffer) return
-  currentMode = mode
-  playerName = document.getElementById('name-input').value.trim() || 'anonymous'
-  modeDuration = mode === 'simple' ? 60 : SONG_DURATION
-  modeGrace    = mode === 'simple' ? 15 : 30
+function startCurrentTrial(e) {
+  e.stopPropagation()
+  if (!currentTrial) return
+  modeDuration = currentTrial.duration
+  modeGrace = currentTrial.grace
   completeFired = false
   sessionStartTime = new Date().toISOString()
-  sessionEndTime   = null
-  firstGlowTime    = null
-  document.getElementById('mode-select').style.display = 'none'
-  initAudio().catch(e => console.warn('Audio:', e))
+  sessionEndTime = null
+  firstFlowTime = null
+  document.getElementById('trial-screen').style.display = 'none'
+  initAudio().catch(err => console.warn('Audio:', err))
 }
 
 function resetSession() {
   songProgress = 0; outOfZoneSec = 0; audioPaused = true; completeFired = false
   ZONES.forEach(z => phaseTime[z.name] = 0)
-  dfaHistory.length = 0; dfaLog.length = 0; rmssdHistory.length = 0
-  rrHistory.splice(0); somaLog.length = 0
+  dfaHistory.length = 0
   restartTrackSource()
+}
+
+// ═══════════════════════════════════════════════
+// Consent
+// ═══════════════════════════════════════════════
+async function beginConsent(e) {
+  e.stopPropagation()
+  const name    = document.getElementById('cs-name').value.trim()
+  const dob     = document.getElementById('cs-dob').value
+  const consent = document.getElementById('cs-consent').checked
+  const errEl   = document.getElementById('cs-error')
+  if (!name)    { errEl.textContent = 'name required'; return }
+  if (!dob)     { errEl.textContent = 'date of birth required'; return }
+  if (!consent) { errEl.textContent = 'consent required to participate'; return }
+  errEl.textContent = 'registering...'
+
+  const age = dob ? Math.floor((Date.now() - new Date(dob)) / (365.25*24*3600*1000)) : null
+
+  participantBaseline = {
+    age,
+    sex:              document.getElementById('cs-sex').value      || null,
+    activityLevel:    document.getElementById('cs-activity').value || null,
+    movementExp:      document.getElementById('cs-movement').value || null,
+    medications:      document.getElementById('cs-meds').value     || null,
+    flowToy:          document.getElementById('cs-toy').value.trim()        || null,
+    flowArts:         document.getElementById('cs-flow-arts').value.trim()  || null,
+    flowYears:        document.getElementById('cs-flow-years').value   ? Number(document.getElementById('cs-flow-years').value)   : null,
+    flowHoursPerWeek: document.getElementById('cs-flow-hours').value   ? Number(document.getElementById('cs-flow-hours').value)   : null,
+    stress:           document.getElementById('cs-stress').value   ? Number(document.getElementById('cs-stress').value)   : null,
+    sleepHours:       document.getElementById('cs-sleep').value    ? Number(document.getElementById('cs-sleep').value)    : null,
+    caffeineHoursAgo: document.getElementById('cs-caffeine').value ? Number(document.getElementById('cs-caffeine').value) : null,
+  }
+
+  try {
+    const r = await fetch('/consent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, dob,
+        email:         document.getElementById('cs-email').value.trim() || null,
+        sex:           participantBaseline.sex,
+        activityLevel: participantBaseline.activityLevel,
+        movementExp:   participantBaseline.movementExp,
+        medications:   participantBaseline.medications,
+        consentAt:     new Date().toISOString(),
+      })
+    })
+    const data = await r.json()
+    participantId = data.participantId
+  } catch { participantId = null }
+
+  participantId = participantId || `offline_${Date.now()}`
+  errEl.textContent = ''
+  document.getElementById('consent-screen').style.display = 'none'
+  currentTrialIdx = 0; trialResults = []
+  showTrialScreen(0)
+  document.getElementById('trial-screen').style.display = 'flex'
 }
 
 // ═══════════════════════════════════════════════
@@ -657,17 +669,15 @@ async function initAudio() {
   }
   // Always await resume — context starts suspended on Safari/iOS
   if (audioCtx.state !== 'running') await audioCtx.resume()
-  stopPreview(); if (previewCtx) { try { previewCtx.close() } catch {} previewCtx = null }
   if (trackArrayBuffer) {
     try {
       decodedTrack = await audioCtx.decodeAudioData(trackArrayBuffer.slice(0))
       SONG_DURATION = decodedTrack.duration
-      if (currentMode === 'full') modeDuration = decodedTrack.duration
       startTrackSource()
       return
     } catch(e) { console.warn('Decode failed:', e) }
   }
-  // Fallback metronome (no track file) — drone already running, master gain stays at 0 until glow
+  // Fallback metronome (no track file)
   metroSource = audioCtx.createBufferSource()
   metroSource.buffer = buildMetronome(audioCtx)
   metroSource.loop = true; metroSource.connect(masterGain); metroSource.start()
@@ -689,7 +699,6 @@ function restartTrackSource() {
   if (!audioCtx || !decodedTrack) return
   startTrackSource()
 }
-
 
 function pauseAudio() {
   if (audioPaused || !audioCtx) return
@@ -728,12 +737,12 @@ function hex2rgba(hex, a) {
   return `rgba(${r},${g},${b},${a})`
 }
 
-function renderPyramid(progress, isGlow, color) {
+function renderPyramid(progress, isFlow, color) {
   const W = pyCanvas.width, H = pyCanvas.height
   pyCtx.clearRect(0, 0, W, H)
 
-  pyAngle += isGlow ? 0.003 : 0.009
-  const wobble = isGlow ? 0 : Math.sin(Date.now()*0.0022)*0.06
+  pyAngle += isFlow ? 0.003 : 0.009
+  const wobble = isFlow ? 0 : Math.sin(Date.now()*0.0022)*0.06
   const s = Math.min(W,H)*0.20, cx = W/2, cy = H*0.44, fov = 4.5
 
   const raw = [[0,-1,0],[-1,1,-1],[1,1,-1],[1,1,1],[-1,1,1]]
@@ -767,7 +776,7 @@ function renderPyramid(progress, isGlow, color) {
     pyCtx.fill(); pyCtx.stroke()
   }
 
-  const wireOpacity = isGlow ? 0.92 + Math.sin(Date.now()*0.003)*0.08 : 0.72
+  const wireOpacity = isFlow ? 0.92 + Math.sin(Date.now()*0.003)*0.08 : 0.72
   pyCtx.strokeStyle = hex2rgba(color, wireOpacity)
   pyCtx.lineWidth   = 2.5*devicePixelRatio
   const edges = [[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]]
@@ -823,11 +832,15 @@ function showComplete() {
   comp.style.display = 'flex'
 
   const total    = Object.values(phaseTime).reduce((a,b)=>a+b,0)
-  const glowTime = phaseTime['ADAPTIVE'] || 0
-  const glowPct  = total ? Math.round((glowTime/total)*100) : 0
+  const flowTime = phaseTime['ADAPTIVE'] || 0
+  const flowPct  = total ? Math.round((flowTime/total)*100) : 0
+
+  const vals = dfaHistory.filter(v=>v>0)
+  const dfaMean = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(3) : '—'
+  const dfaMeanNum = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0
 
   document.getElementById('complete-meta').textContent =
-    `${playerName}  ·  ${currentMode} mode  ·  ${Math.round(total)}s played`
+    `trial ${currentTrialIdx + 1} of ${TRIALS.length}  ·  ${currentTrial ? currentTrial.label : ''}  ·  ${currentTrial ? currentTrial.condition : ''}  ·  ${Math.round(total)}s`
 
   // Graph
   const gc = document.getElementById('complete-graph')
@@ -865,67 +878,36 @@ function showComplete() {
   })
 
   // Stats
-  const vals = dfaHistory.filter(v=>v>0)
-  const dfaMean = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(3) : '—'
   document.getElementById('complete-stats').innerHTML =
-    `glow &nbsp;<span>${glowTime.toFixed(0)}s (${glowPct}%)</span><br>` +
-    `flow &nbsp;<span>${(total-glowTime).toFixed(0)}s</span><br>` +
+    `flow &nbsp;<span>${flowTime.toFixed(0)}s (${flowPct}%)</span><br>` +
+    `not flow &nbsp;<span>${(total - flowTime).toFixed(0)}s</span><br>` +
     `α mean &nbsp;<span>${dfaMean}</span>`
+
+  // Update tap text
+  const tapEl = document.getElementById('complete-tap')
+  tapEl.textContent = (currentTrialIdx + 1 < TRIALS.length) ? 'tap anywhere for next trial' : 'tap anywhere to finish'
 
   document.getElementById('save-status').textContent = ''
   document.getElementById('save-btn').disabled = false
-}
 
-async function beginConsent(e) {
-  e.stopPropagation()
-  const name    = document.getElementById('cs-name').value.trim()
-  const dob     = document.getElementById('cs-dob').value
-  const consent = document.getElementById('cs-consent').checked
-  const errEl   = document.getElementById('cs-error')
-  if (!name)    { errEl.textContent = 'name required'; return }
-  if (!dob)     { errEl.textContent = 'date of birth required'; return }
-  if (!consent) { errEl.textContent = 'consent required to participate'; return }
-  errEl.textContent = 'registering...'
-
-  const age = dob ? Math.floor((Date.now() - new Date(dob)) / (365.25*24*3600*1000)) : null
-
-  participantBaseline = {
-    age,
-    sex:              document.getElementById('cs-sex').value      || null,
-    activityLevel:    document.getElementById('cs-activity').value || null,
-    movementExp:      document.getElementById('cs-movement').value || null,
-    medications:      document.getElementById('cs-meds').value     || null,
-    flowToy:          document.getElementById('cs-toy').value.trim()        || null,
-    flowArts:         document.getElementById('cs-flow-arts').value.trim()  || null,
-    flowYears:        document.getElementById('cs-flow-years').value   ? Number(document.getElementById('cs-flow-years').value)   : null,
-    flowHoursPerWeek: document.getElementById('cs-flow-hours').value   ? Number(document.getElementById('cs-flow-hours').value)   : null,
-    stress:           document.getElementById('cs-stress').value   ? Number(document.getElementById('cs-stress').value)   : null,
-    sleepHours:       document.getElementById('cs-sleep').value    ? Number(document.getElementById('cs-sleep').value)    : null,
-    caffeineHoursAgo: document.getElementById('cs-caffeine').value ? Number(document.getElementById('cs-caffeine').value) : null,
-  }
-
-  try {
-    const r = await fetch('/consent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name, dob,
-        email:         document.getElementById('cs-email').value.trim() || null,
-        sex:           participantBaseline.sex,
-        activityLevel: participantBaseline.activityLevel,
-        movementExp:   participantBaseline.movementExp,
-        medications:   participantBaseline.medications,
-        consentAt:     new Date().toISOString(),
-      })
-    })
-    const data = await r.json()
-    participantId = data.participantId
-  } catch { participantId = null }
-
-  playerName = participantId ? `p${String(participantId).padStart(3,'0')}` : 'p_offline'
-  errEl.textContent = ''
-  document.getElementById('consent-screen').style.display = 'none'
-  document.getElementById('mode-select').style.display = 'flex'
+  // Push trial result
+  trialResults.push({
+    trial: currentTrial,
+    trialIdx: currentTrialIdx + 1,
+    sessionStart: sessionStartTime,
+    sessionEnd: sessionEndTime,
+    totalDurationS: Math.round(total * 10) / 10,
+    timeToFirstFlowS: firstFlowTime !== null ? Math.round(firstFlowTime * 10) / 10 : null,
+    flowTime: Math.round(flowTime * 10) / 10,
+    flowPct: flowPct,
+    dfaMean: dfaMeanNum,
+    phaseTime: { ...phaseTime },
+    dfaLog: [...dfaLog],
+    rmssdHistory: [...rmssdHistory],
+    h10_rrHistory: [...rrHistory],
+    somaSync_log: [...somaLog],
+    postQ: { ...postQ },
+  })
 }
 
 async function saveAndDownload(e) {
@@ -937,35 +919,44 @@ async function saveAndDownload(e) {
   status.textContent = 'saving...'
 
   const total    = Object.values(phaseTime).reduce((a,b)=>a+b,0)
-  const glowTime = phaseTime['ADAPTIVE'] || 0
-  const glowPct  = total ? Math.round((glowTime/total)*100) : 0
+  const flowTime = phaseTime['ADAPTIVE'] || 0
+  const flowPct  = total ? Math.round((flowTime/total)*100) : 0
   const vals     = dfaHistory.filter(v=>v>0)
   const dfaMean  = vals.length ? Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*1000)/1000 : 0
 
   postQ.description = (document.getElementById('pq-desc')?.value || '').trim()
+  // update last trial result postQ
+  if (trialResults.length > 0) {
+    trialResults[trialResults.length - 1].postQ = { ...postQ }
+  }
 
   const session = {
     participantId,
-    mode:              currentMode,
+    baseline: participantBaseline,
+    trials: trialResults,
+    // current trial data for CSV compat:
+    trial_id: currentTrial?.id ?? null,
+    trial_label: currentTrial?.label ?? null,
+    condition: currentTrial?.condition ?? null,
+    track: currentTrial?.trackN ?? null,
     signalMode,
-    track:             selectedTrack,
-    sessionDate:       sessionStartTime ? sessionStartTime.slice(0,10) : new Date().toISOString().slice(0,10),
-    sessionStart:      sessionStartTime,
-    sessionEnd:        sessionEndTime,
-    totalDurationS:    Math.round(total*10)/10,
-    timeToFirstGlowS:  firstGlowTime !== null ? Math.round(firstGlowTime*10)/10 : null,
-    baseline:          participantBaseline,
-    postQ:             { ...postQ },
+    sessionDate: sessionStartTime ? sessionStartTime.slice(0,10) : new Date().toISOString().slice(0,10),
+    sessionStart: sessionStartTime,
+    sessionEnd: sessionEndTime,
+    totalDurationS: Math.round(total*10)/10,
+    timeToFirstFlowS: firstFlowTime !== null ? Math.round(firstFlowTime*10)/10 : null,
+    postQ: { ...postQ },
     modeDuration,
-    glowTime:          Math.round(glowTime*10)/10,
-    glowPct,
-    phaseTime:         Object.fromEntries(Object.entries(phaseTime).map(([k,v])=>[k,Math.round(v*10)/10])),
+    flowTime: Math.round(flowTime*10)/10,
+    flowPct,
+    phaseTime: Object.fromEntries(Object.entries(phaseTime).map(([k,v])=>[k,Math.round(v*10)/10])),
     dfaLog,
-    dfaHistory:        dfaHistory.map(v=>Math.round(v*1000)/1000),
+    dfaHistory: dfaHistory.map(v=>Math.round(v*1000)/1000),
     dfaMean,
     rmssdHistory,
-    h10_rrHistory:     rrHistory,
-    somaSync_log:      somaLog,
+    h10_rrHistory: rrHistory,
+    somaSync_log: somaLog,
+    savedAt: new Date().toISOString(),
   }
 
   let savedId = participantId
@@ -976,7 +967,7 @@ async function saveAndDownload(e) {
   } catch(err) { console.warn('save failed:', err) }
 
   const pid  = 'p' + String(savedId || Date.now()).padStart(3,'0')
-  const base = `${pid}_${session.sessionDate}`
+  const base = `${pid}_${session.sessionDate}_t${currentTrialIdx + 1}`
 
   function triggerDownload(href, filename) {
     const a = document.createElement('a')
@@ -1113,13 +1104,13 @@ function tick() {
   const now = Date.now(), dt = lastTick ? Math.min((now-lastTick)/1000, 0.1) : 0.016
   lastTick = now
 
-  if (started && currentMode) {
+  if (started && currentTrial) {
     if (mockMode) dfaAlpha = mockDFA(dt)
 
     // pick active signal
     const useRMSSD  = signalMode === 'rmssd' && rmssdValue !== null
     const activeVal = useRMSSD ? rmssdValue : dfaAlpha
-    const isGlow    = useRMSSD ? rmssdValue >= RMSSD_GLOW
+    const isFlow    = useRMSSD ? rmssdValue >= RMSSD_FLOW
                                : (dfaAlpha !== null && dfaAlpha >= DFA_LOW && dfaAlpha < DFA_HIGH)
 
     if (activeVal != null) {
@@ -1137,11 +1128,11 @@ function tick() {
         phaseTime[rz.label.toUpperCase()] = (phaseTime[rz.label.toUpperCase()] || 0) + dt
       }
 
-      // Gate: real signal only; glow plays, flow counts down then stops
+      // Gate: real signal only; flow plays, not-flow counts down then stops
       const hasReal = useRMSSD ? h10Active : !mockMode
       if (hasReal) {
-        if (isGlow) {
-          if (!firstGlowTime) firstGlowTime = songProgress
+        if (isFlow) {
+          if (!firstFlowTime) firstFlowTime = songProgress
           outOfZoneSec = 0
           if (audioPaused) resumeAudio()
         } else {
@@ -1158,17 +1149,17 @@ function tick() {
         if (!hasReal) {
           targetGain = 0
         } else if (outOfZoneSec >= modeGrace) {
-          targetGain = 0  // grace expired — stop music until they re-enter glow
+          targetGain = 0  // grace expired — stop music until they re-enter flow
         } else {
           if (useRMSSD) {
-            const dist = Math.max(0, RMSSD_GLOW - rmssdValue)
+            const dist = Math.max(0, RMSSD_FLOW - rmssdValue)
             targetGain = Math.max(0.05, 0.9 * Math.exp(-dist / 18))
           } else {
-            const dist = isGlow ? 0 : (dfaAlpha < DFA_LOW ? DFA_LOW - dfaAlpha : dfaAlpha - DFA_HIGH)
+            const dist = isFlow ? 0 : (dfaAlpha < DFA_LOW ? DFA_LOW - dfaAlpha : dfaAlpha - DFA_HIGH)
             targetGain = Math.max(0.05, 0.9 * Math.exp(-dist * 2.5))
           }
         }
-        masterGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, isGlow ? 0.8 : 0.3)
+        masterGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, isFlow ? 0.8 : 0.3)
       }
 
       if (!completeFired) {
@@ -1196,7 +1187,7 @@ function tick() {
         const hints = { TENSION:'relax · re-cycle', REGULAR:'move more · vary rhythm', RECOVERING:'slow down · soften joints' }
         document.getElementById('zone-hint').textContent = hints[currentZone.name] || ''
         const distEl = document.getElementById('zone-dist')
-        if (isGlow) {
+        if (isFlow) {
           distEl.textContent = ''
         } else if (dfaAlpha >= DFA_HIGH) {
           distEl.textContent = `${(dfaAlpha - DFA_HIGH).toFixed(2)} above zone`
@@ -1205,23 +1196,23 @@ function tick() {
         }
       } else {
         drawRMSSDBar(rmssdValue)
-        document.getElementById('zone-hint').textContent = rmssdValue < RMSSD_GLOW ? 'relax · breathe slower' : ''
+        document.getElementById('zone-hint').textContent = rmssdValue < RMSSD_FLOW ? 'relax · breathe slower' : ''
         const distEl = document.getElementById('zone-dist')
-        distEl.textContent = isGlow ? '' : `${Math.round(RMSSD_GLOW - rmssdValue)}ms to glow`
+        distEl.textContent = isFlow ? '' : `${Math.round(RMSSD_FLOW - rmssdValue)}ms to flow`
       }
-      document.getElementById('zone-word').textContent = isGlow ? 'glow' : 'flow'
+      document.getElementById('zone-word').textContent = isFlow ? 'flow' : '—'
       const st = document.getElementById('play-state')
       if (!hasReal)                               { st.textContent='○ connect h10';              st.style.color='#444' }
-      else if (audioPaused && outOfZoneSec >= modeGrace) { st.textContent='■ stopped · find glow';  st.style.color='#ff2200' }
-      else if (audioPaused)                       { st.textContent='○ enter glow to start';    st.style.color='#555' }
+      else if (audioPaused && outOfZoneSec >= modeGrace) { st.textContent='■ stopped · find flow';  st.style.color='#ff2200' }
+      else if (audioPaused)                       { st.textContent='○ enter flow to start';    st.style.color='#555' }
       else if (outOfZoneSec > 0)                  { st.textContent=`◌ ${Math.round(modeGrace-outOfZoneSec)}s`; st.style.color='#ff8800' }
-      else                                        { st.textContent='▶ playing';                st.style.color='#00ff88' }
+      else                                        { st.textContent='▶ flowing';                st.style.color='#00ff88' }
 
       const pct = Math.min(1, songProgress/modeDuration)
       document.getElementById('prog-fill').style.width = (pct*100).toFixed(1)+'%'
       document.getElementById('song-pct').textContent  = Math.floor(pct*100)+'%'
       drawWF(); drawPhaseBar()
-      renderPyramid(pct, isGlow, col)
+      renderPyramid(pct, isFlow, col)
     } else {
       renderPyramid(songProgress/modeDuration, false, '#444')
       // H10 connected but DFA still calibrating — play at minimum so audio isn't silent
@@ -1274,12 +1265,12 @@ function drawDFABar(val) {
   ctx.roundRect(0, barY, W, barH, barH/2)
   ctx.fill()
 
-  // glow zone highlight
-  const glowX1 = (DFA_LOW / DFA_BAR_MAX) * W
-  const glowX2 = (DFA_HIGH / DFA_BAR_MAX) * W
+  // flow zone highlight
+  const flowX1 = (DFA_LOW / DFA_BAR_MAX) * W
+  const flowX2 = (DFA_HIGH / DFA_BAR_MAX) * W
   ctx.strokeStyle = 'rgba(255,255,255,0.4)'
   ctx.lineWidth = dpr
-  ctx.strokeRect(glowX1, barY - dpr, glowX2 - glowX1, barH + 2*dpr)
+  ctx.strokeRect(flowX1, barY - dpr, flowX2 - flowX1, barH + 2*dpr)
 
   // tick labels
   const ticks = [
