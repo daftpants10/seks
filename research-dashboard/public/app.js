@@ -427,12 +427,12 @@ function renderEditor(upd) {
   panel.innerHTML = `
     <div class="form-row">
       <label>Title</label>
-      <input type="text" id="ed-title" value="${esc(upd.title)}">
+      <input type="text" id="ed-title" value="${esc(upd.title)}" ${isPublished ? 'readonly' : ''}>
     </div>
 
     <div class="form-row">
       <label>Project</label>
-      <select id="ed-project">
+      <select id="ed-project" ${isPublished ? 'disabled' : ''}>
         <option value="stick" ${proj === 'stick' ? 'selected' : ''}>⦿-⦿ stick / game</option>
         <option value="loob" ${proj === 'loob' ? 'selected' : ''}>loob</option>
         <option value="time-compass" ${proj === 'time-compass' ? 'selected' : ''}>time compass</option>
@@ -441,19 +441,19 @@ function renderEditor(upd) {
 
     <div class="form-row">
       <label>Date (shown on public feed)</label>
-      <input type="date" id="ed-date" value="${(upd.post_date || upd.created_at || '').slice(0,10)}">
+      <input type="date" id="ed-date" value="${(upd.post_date || upd.created_at || '').slice(0,10)}" ${isPublished ? 'readonly' : ''}>
     </div>
 
     <div class="form-row">
       <label>Body (markdown)</label>
-      <textarea id="ed-body" style="min-height:160px">${esc(upd.body)}</textarea>
+      <textarea id="ed-body" style="min-height:160px" ${isPublished ? 'readonly' : ''}>${esc(upd.body)}</textarea>
       <div class="preview-area" id="ed-preview"></div>
     </div>
 
     <div class="form-row">
       <label>Tags</label>
       <div class="tag-area" id="ed-tags">
-        <input class="tag-input" id="ed-tag-input" placeholder="add tag…">
+        <input class="tag-input" id="ed-tag-input" placeholder="add tag…" ${isPublished ? 'disabled' : ''}>
       </div>
     </div>
 
@@ -469,7 +469,7 @@ function renderEditor(upd) {
 
     <div class="editor-actions">
       ${isPublished
-        ? `<button class="btn-primary" onclick="saveAndRepublish()">Save &amp; Re-publish</button>
+        ? `<button class="btn-sm" onclick="enablePublishedEdit(${upd.id})">Edit</button>
            <button class="btn-sm" onclick="unpublishUpdate()">Unpublish</button>`
         : `<button class="btn-primary" onclick="saveDraft()">Save Draft</button>
            <button class="btn-success" onclick="publishUpdate()">Publish</button>
@@ -673,6 +673,21 @@ async function saveAndRepublish() {
 }
 
 window.saveAndRepublish = saveAndRepublish;
+
+function enablePublishedEdit() {
+  document.getElementById('ed-title').removeAttribute('readonly');
+  document.getElementById('ed-date').removeAttribute('readonly');
+  document.getElementById('ed-body').removeAttribute('readonly');
+  document.getElementById('ed-project').removeAttribute('disabled');
+  document.getElementById('ed-tag-input').removeAttribute('disabled');
+  const actionsEl = document.querySelector('.editor-actions');
+  actionsEl.innerHTML = `
+    <button class="btn-primary" onclick="saveAndRepublish()">Save &amp; Re-publish</button>
+    <button class="btn-sm" onclick="unpublishUpdate()">Unpublish</button>
+  `;
+}
+
+window.enablePublishedEdit = enablePublishedEdit;
 
 document.getElementById('new-draft-btn').addEventListener('click', async () => {
   const title = prompt('Draft title:');
