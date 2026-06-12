@@ -147,6 +147,14 @@ app.post('/api/updates/:id/publish', (req, res) => {
   res.json({ success: true, publishedAt: now });
 });
 
+// POST /api/updates/:id/unpublish
+app.post('/api/updates/:id/unpublish', (req, res) => {
+  const row = db.prepare('SELECT * FROM updates WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+  db.prepare('UPDATE updates SET published_at = NULL WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
 // DELETE /api/updates/:id
 app.delete('/api/updates/:id', (req, res) => {
   const row = db.prepare('SELECT * FROM updates WHERE id = ?').get(req.params.id);

@@ -471,7 +471,7 @@ function renderEditor(upd) {
     <div class="editor-actions">
       ${!isPublished ? `<button class="btn-primary" onclick="saveDraft()">Save Draft</button>` : ''}
       ${!isPublished ? `<button class="btn-success" onclick="publishUpdate()">Publish</button>` : '<span style="color:var(--success);font-size:13px;">✓ Published</span>'}
-      ${!isPublished ? `<button class="btn-danger btn-sm" onclick="deleteDraft()">Delete Draft</button>` : ''}
+      ${!isPublished ? `<button class="btn-danger btn-sm" onclick="deleteDraft()">Delete Draft</button>` : `<button class="btn-sm" onclick="unpublishUpdate()">Unpublish</button>`}
     </div>
     <div id="ed-status"></div>
   `;
@@ -634,6 +634,24 @@ async function deleteDraft() {
 }
 
 window.deleteDraft = deleteDraft;
+
+async function unpublishUpdate() {
+  if (!selectedUpdateId) return;
+  if (!confirm('Unpublish this update? It will become an editable draft again.')) return;
+  const statusEl = document.getElementById('ed-status');
+  try {
+    await api('POST', '/updates/' + selectedUpdateId + '/unpublish');
+    updates = await api('GET', '/updates');
+    renderUpdateList();
+    const upd = updates.find(u => u.id === selectedUpdateId);
+    if (upd) renderEditor(upd);
+    showStatus(statusEl, '✓ Unpublished. You can now edit and re-publish.', 'success');
+  } catch (e) {
+    showStatus(statusEl, '✗ ' + e.message, 'error');
+  }
+}
+
+window.unpublishUpdate = unpublishUpdate;
 
 document.getElementById('new-draft-btn').addEventListener('click', async () => {
   const title = prompt('Draft title:');
