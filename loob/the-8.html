@@ -103,6 +103,19 @@
     #pose-cv  { position:fixed; inset:0; width:100%; height:100%; transform:scaleX(-1); z-index:16; pointer-events:none; display:none; }
     #pose-btn { margin-top:8px; background:none; border:1px solid #333; color:#555; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; transition:border-color 0.2s, color 0.2s; }
     #pose-btn.active { border-color:#00ff88; color:#00ff88; }
+
+    /* consent screen */
+    #consent-screen { overflow-y:auto; align-items:flex-start; }
+    #consent-inner  { max-width:520px; width:100%; margin:0 auto; padding:44px 0 60px; }
+    .consent-info   { font-size:12px; color:#555; line-height:1.8; letter-spacing:0.03em; margin-bottom:32px; }
+    .cs-input       { width:100%; background:none; border:none; border-bottom:1px solid #1e1e1e; color:#fff; font-family:inherit; font-size:20px; padding:6px 0 10px; outline:none; margin-bottom:22px; display:block; }
+    .cs-input::placeholder { color:#222; }
+    .cs-select      { width:100%; background:#000; border:none; border-bottom:1px solid #1e1e1e; color:#fff; font-family:inherit; font-size:18px; padding:6px 0 10px; outline:none; margin-bottom:22px; display:block; appearance:none; }
+    .consent-check  { display:flex; gap:12px; align-items:flex-start; margin:28px 0 24px; cursor:pointer; }
+    .consent-check input { margin-top:3px; accent-color:#00ff88; flex-shrink:0; width:16px; height:16px; }
+    .consent-check span { font-size:12px; color:#555; line-height:1.7; letter-spacing:0.03em; }
+    .cs-begin-btn   { background:none; border:1px solid #00ff88; color:#00ff88; font-family:inherit; font-size:11px; letter-spacing:0.22em; padding:16px 0; cursor:pointer; border-radius:3px; width:100%; text-transform:uppercase; }
+    #cs-error       { font-size:10px; color:#ff4444; letter-spacing:0.12em; margin-top:12px; min-height:14px; }
   </style>
 </head>
 <body>
@@ -129,6 +142,74 @@
       <li><strong>flow</strong> — outside the zone. music stops after the grace period. change your movement. find your way back.</li>
     </ul>
     <div id="about-tap">tap to continue</div>
+  </div>
+</div>
+
+<!-- Screen 2b: consent + demographics -->
+<div id="consent-screen" class="overlay">
+  <div id="consent-inner">
+    <div class="ms-label" style="margin-bottom:18px;font-size:12px;letter-spacing:0.25em">the 8 — research study</div>
+    <p class="consent-info">You are invited to participate in a study on biometric movement and autonomic regulation. Your heart rate variability will be measured using a Polar H10 sensor. All data is stored locally and anonymised. You may stop at any time.</p>
+
+    <div class="ms-label">full name</div>
+    <input id="cs-name" class="cs-input" type="text" placeholder="—" autocomplete="off" spellcheck="false">
+
+    <div class="ms-label">date of birth</div>
+    <input id="cs-dob" class="cs-input" type="date">
+
+    <div class="ms-label">email</div>
+    <input id="cs-email" class="cs-input" type="email" placeholder="—" autocomplete="off">
+
+    <div class="ms-label">sex</div>
+    <select id="cs-sex" class="cs-select">
+      <option value="">—</option>
+      <option value="male">male</option>
+      <option value="female">female</option>
+      <option value="other">other</option>
+      <option value="prefer_not">prefer not to say</option>
+    </select>
+
+    <div class="ms-label">physical activity level</div>
+    <select id="cs-activity" class="cs-select">
+      <option value="">—</option>
+      <option value="sedentary">sedentary</option>
+      <option value="light">light (1–2x per week)</option>
+      <option value="moderate">moderate (3–4x per week)</option>
+      <option value="active">active (5+ per week)</option>
+    </select>
+
+    <div class="ms-label">movement or dance experience</div>
+    <select id="cs-movement" class="cs-select">
+      <option value="">—</option>
+      <option value="none">none</option>
+      <option value="some">some</option>
+      <option value="regular">regular practice</option>
+      <option value="professional">professional</option>
+    </select>
+
+    <div class="ms-label">medications affecting heart rate</div>
+    <select id="cs-meds" class="cs-select">
+      <option value="">—</option>
+      <option value="no">no</option>
+      <option value="yes">yes</option>
+    </select>
+
+    <div class="ms-label" style="margin-top:28px">stress level today (1 = calm · 5 = high)</div>
+    <input id="cs-stress" class="cs-input" type="number" min="1" max="5" placeholder="—">
+
+    <div class="ms-label">sleep last night (hours)</div>
+    <input id="cs-sleep" class="cs-input" type="number" min="0" max="24" step="0.5" placeholder="—">
+
+    <div class="ms-label">last caffeine (hours ago)</div>
+    <input id="cs-caffeine" class="cs-input" type="number" min="0" max="48" step="0.5" placeholder="—">
+
+    <label class="consent-check">
+      <input type="checkbox" id="cs-consent">
+      <span>I have read the above information and give informed consent to participate in this research study.</span>
+    </label>
+
+    <button class="cs-begin-btn" onclick="beginConsent(event)">begin</button>
+    <div id="cs-error"></div>
   </div>
 </div>
 
@@ -200,12 +281,8 @@
     <div id="cz-list"></div>
     <div id="complete-stats"></div>
 
-    <!-- demographics + save -->
-    <div id="demo-form" onclick="event.stopPropagation()">
-      <div class="demo-label">age</div>
-      <input class="demo-input" id="demo-age" type="number" min="1" max="120" placeholder="—" autocomplete="off">
-      <div class="demo-label">gender</div>
-      <input class="demo-input" id="demo-gender" type="text" placeholder="—" autocomplete="off">
+    <!-- save section -->
+    <div id="save-section" onclick="event.stopPropagation()" style="margin-top:28px;border-top:1px solid #111;padding-top:24px;">
       <button id="save-btn" onclick="saveAndDownload(event)">save + download</button>
       <div id="save-status"></div>
     </div>
@@ -339,7 +416,9 @@ let mockMode = false, mockT = 0, wsConnected = false
 let audioPaused = true, lastHistorySample = 0
 let currentMode = null, playerName = '', modeDuration = 240, modeGrace = 30
 let completeFired = false
-const dfaHistory = [], phaseTime = {}
+let participantId = null, participantBaseline = {}
+let sessionStartTime = null, sessionEndTime = null, firstGlowTime = null
+const dfaHistory = [], phaseTime = {}, rrHistory = []
 ZONES.forEach(z => phaseTime[z.name] = 0)
 
 // ═══════════════════════════════════════════════
@@ -354,16 +433,17 @@ document.getElementById('start').addEventListener('click', () => {
 
 document.getElementById('about').addEventListener('click', () => {
   document.getElementById('about').style.display = 'none'
-  document.getElementById('mode-select').style.display = 'flex'
-  document.getElementById('name-input').focus()
+  document.getElementById('consent-screen').style.display = 'flex'
 })
 
 document.getElementById('complete').addEventListener('click', () => {
+  participantId = null; participantBaseline = {}
+  sessionStartTime = null; sessionEndTime = null; firstGlowTime = null
+  rrHistory.splice(0)
   resetSession()
   document.getElementById('complete').style.display = 'none'
-  document.getElementById('mode-select').style.display = 'flex'
   document.getElementById('name-input').value = ''
-  document.getElementById('name-input').focus()
+  document.getElementById('consent-screen').style.display = 'flex'
   // re-enable mode buttons if a track is still loaded
   if (trackArrayBuffer) {
     document.getElementById('btn-simple').disabled = false
@@ -403,6 +483,9 @@ function selectMode(mode) {
   modeDuration = mode === 'simple' ? 60 : SONG_DURATION
   modeGrace    = mode === 'simple' ? 15 : 30
   completeFired = false
+  sessionStartTime = new Date().toISOString()
+  sessionEndTime   = null
+  firstGlowTime    = null
   document.getElementById('mode-select').style.display = 'none'
   initAudio().catch(e => console.warn('Audio:', e))
 }
@@ -411,6 +494,7 @@ function resetSession() {
   songProgress = 0; outOfZoneSec = 0; audioPaused = true; completeFired = false
   ZONES.forEach(z => phaseTime[z.name] = 0)
   dfaHistory.length = 0
+  rrHistory.splice(0)
   restartTrackSource()
 }
 
@@ -603,6 +687,7 @@ function drawPhaseBar() {
 // ═══════════════════════════════════════════════
 function showComplete() {
   completeFired = true
+  sessionEndTime = new Date().toISOString()
   if (!audioPaused) pauseAudio()
 
   const comp = document.getElementById('complete')
@@ -658,11 +743,56 @@ function showComplete() {
     `flow &nbsp;<span>${(total-glowTime).toFixed(0)}s</span><br>` +
     `α mean &nbsp;<span>${dfaMean}</span>`
 
-  // reset demo form
-  document.getElementById('demo-age').value    = ''
-  document.getElementById('demo-gender').value = ''
   document.getElementById('save-status').textContent = ''
   document.getElementById('save-btn').disabled = false
+}
+
+async function beginConsent(e) {
+  e.stopPropagation()
+  const name    = document.getElementById('cs-name').value.trim()
+  const dob     = document.getElementById('cs-dob').value
+  const consent = document.getElementById('cs-consent').checked
+  const errEl   = document.getElementById('cs-error')
+  if (!name)    { errEl.textContent = 'name required'; return }
+  if (!dob)     { errEl.textContent = 'date of birth required'; return }
+  if (!consent) { errEl.textContent = 'consent required to participate'; return }
+  errEl.textContent = 'registering...'
+
+  const age = dob ? Math.floor((Date.now() - new Date(dob)) / (365.25*24*3600*1000)) : null
+
+  participantBaseline = {
+    age,
+    sex:              document.getElementById('cs-sex').value      || null,
+    activityLevel:    document.getElementById('cs-activity').value || null,
+    movementExp:      document.getElementById('cs-movement').value || null,
+    medications:      document.getElementById('cs-meds').value     || null,
+    stress:           document.getElementById('cs-stress').value   ? Number(document.getElementById('cs-stress').value)   : null,
+    sleepHours:       document.getElementById('cs-sleep').value    ? Number(document.getElementById('cs-sleep').value)    : null,
+    caffeineHoursAgo: document.getElementById('cs-caffeine').value ? Number(document.getElementById('cs-caffeine').value) : null,
+  }
+
+  try {
+    const r = await fetch('/consent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, dob,
+        email:         document.getElementById('cs-email').value.trim() || null,
+        sex:           participantBaseline.sex,
+        activityLevel: participantBaseline.activityLevel,
+        movementExp:   participantBaseline.movementExp,
+        medications:   participantBaseline.medications,
+        consentAt:     new Date().toISOString(),
+      })
+    })
+    const data = await r.json()
+    participantId = data.participantId
+  } catch { participantId = null }
+
+  playerName = participantId ? `p${String(participantId).padStart(3,'0')}` : 'p_offline'
+  errEl.textContent = ''
+  document.getElementById('consent-screen').style.display = 'none'
+  document.getElementById('mode-select').style.display = 'flex'
 }
 
 async function saveAndDownload(e) {
@@ -673,9 +803,6 @@ async function saveAndDownload(e) {
   btn.disabled = true
   status.textContent = 'saving...'
 
-  const age    = document.getElementById('demo-age').value.trim()
-  const gender = document.getElementById('demo-gender').value.trim()
-
   const total    = Object.values(phaseTime).reduce((a,b)=>a+b,0)
   const glowTime = phaseTime['ADAPTIVE'] || 0
   const glowPct  = total ? Math.round((glowTime/total)*100) : 0
@@ -683,39 +810,39 @@ async function saveAndDownload(e) {
   const dfaMean  = vals.length ? Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*1000)/1000 : 0
 
   const session = {
-    name:         playerName,
-    mode:         currentMode,
-    track:        selectedTrack,
-    timestamp:    new Date().toISOString(),
-    age:          age  ? Number(age)  : null,
-    gender:       gender || null,
+    participantId,
+    mode:              currentMode,
+    track:             selectedTrack,
+    sessionDate:       sessionStartTime ? sessionStartTime.slice(0,10) : new Date().toISOString().slice(0,10),
+    sessionStart:      sessionStartTime,
+    sessionEnd:        sessionEndTime,
+    totalDurationS:    Math.round(total*10)/10,
+    timeToFirstGlowS:  firstGlowTime !== null ? Math.round(firstGlowTime*10)/10 : null,
+    baseline:          participantBaseline,
     modeDuration,
-    totalPlayTime: Math.round(total*10)/10,
-    glowTime:     Math.round(glowTime*10)/10,
+    glowTime:          Math.round(glowTime*10)/10,
     glowPct,
-    phaseTime:    Object.fromEntries(Object.entries(phaseTime).map(([k,v])=>[k,Math.round(v*10)/10])),
-    dfaHistory:   dfaHistory.map(v=>Math.round(v*1000)/1000),
+    phaseTime:         Object.fromEntries(Object.entries(phaseTime).map(([k,v])=>[k,Math.round(v*10)/10])),
+    dfaHistory:        dfaHistory.map(v=>Math.round(v*1000)/1000),
     dfaMean,
+    rrHistory,
   }
 
-  let participantId = null
+  let savedId = participantId
   try {
     const res  = await fetch('/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(session) })
     const data = await res.json()
-    participantId = data.participantId
+    savedId = data.participantId ?? savedId
   } catch(err) { console.warn('save failed:', err) }
 
-  const pid      = 'p' + String(participantId || Date.now()).padStart(3, '0')
-  const safeName = playerName.replace(/[^a-z0-9]/gi, '_').toLowerCase()
-  const base     = `${pid}_${safeName}`
+  const pid  = 'p' + String(savedId || Date.now()).padStart(3,'0')
+  const base = `${pid}_${session.sessionDate}`
 
-  // download JSON
-  const blob = new Blob([JSON.stringify({...session, participantId}, null, 2)], {type:'application/json'})
+  const blob = new Blob([JSON.stringify(session, null, 2)], {type:'application/json'})
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob); a.download = `${base}.json`; a.click()
   setTimeout(() => URL.revokeObjectURL(a.href), 10000)
 
-  // download graph PNG
   const gc   = document.getElementById('complete-graph')
   const imgA = document.createElement('a')
   imgA.href = gc.toDataURL('image/png'); imgA.download = `${base}_graph.png`; imgA.click()
@@ -790,10 +917,12 @@ function parseHR(event) {
   const d=event.target.value, flags=d.getUint8(0), is16=flags&1, hasRR=(flags>>4)&1
   if(!hasRR) return
   let offset=is16?3:2
+  const rrBatch = []
   while(offset+1<d.byteLength){
     const ms=(d.getUint16(offset,true)/1024)*1000; offset+=2
-    if(ms>300&&ms<2000){rrBuffer.push(ms);if(rrBuffer.length>512)rrBuffer.shift();rrNew++}
+    if(ms>300&&ms<2000){rrBuffer.push(ms);if(rrBuffer.length>512)rrBuffer.shift();rrNew++;rrBatch.push(Math.round(ms))}
   }
+  if(rrBatch.length) rrHistory.push({ t: Date.now(), rr: rrBatch })
   if(rrNew>=8){
     rrNew=0
     const alpha=computeDFA(rrBuffer)
@@ -846,6 +975,7 @@ function tick() {
       const hasReal = !mockMode
       if (hasReal) {
         if (isGlow) {
+          if (!firstGlowTime) firstGlowTime = songProgress
           outOfZoneSec = 0
           if (audioPaused) resumeAudio()
         } else {

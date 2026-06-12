@@ -21,25 +21,45 @@ const SOMA_PORT = 8765
 const HTML_FILE    = path.join(__dirname, 'the-8.html')
 const SESSION_FILE = path.join(__dirname, 'sessions.json')
 const CSV_FILE     = path.join(__dirname, 'participants.csv')
+const IDENTITY_FILE = path.join(__dirname, 'identity_map.json')
 
-const CSV_HEADERS = 'participant_id,name,track,mode,timestamp,age,gender,total_play_time_s,glow_time_s,glow_pct,dfa_mean,tension_s,adaptive_s,stable_s\n'
+const CSV_HEADERS = [
+  'participant_id','mode','track',
+  'session_date','session_start','session_end','total_duration_s',
+  'time_to_first_glow_s',
+  'age','sex','activity_level','movement_exp','medications',
+  'stress','sleep_hours','caffeine_hours_ago',
+  'glow_time_s','glow_pct','dfa_mean',
+  'chaos_s','tension_s','adaptive_s','stable_s','rigid_s'
+].join(',') + '\n'
 
 function appendCSV(participantId, s) {
+  const b = s.baseline || {}
   const row = [
     participantId,
-    `"${(s.name||'').replace(/"/g,'""')}"`,
-    s.track ?? '',
     s.mode ?? '',
-    s.timestamp ?? '',
-    s.age ?? '',
-    `"${(s.gender||'').replace(/"/g,'""')}"`,
-    s.totalPlayTime ?? '',
+    s.track ?? '',
+    s.sessionDate ?? '',
+    s.sessionStart ?? '',
+    s.sessionEnd ?? '',
+    s.totalDurationS ?? s.totalPlayTime ?? '',
+    s.timeToFirstGlowS ?? '',
+    b.age ?? '',
+    b.sex ?? '',
+    b.activityLevel ?? '',
+    b.movementExp ?? '',
+    b.medications ?? '',
+    b.stress ?? '',
+    b.sleepHours ?? '',
+    b.caffeineHoursAgo ?? '',
     s.glowTime ?? '',
     s.glowPct ?? '',
     s.dfaMean ?? '',
-    s.phaseTime?.TENSION   ?? '',
-    s.phaseTime?.ADAPTIVE  ?? '',
-    s.phaseTime?.STABLE    ?? '',
+    s.phaseTime?.CHAOS    ?? '',
+    s.phaseTime?.TENSION  ?? '',
+    s.phaseTime?.ADAPTIVE ?? '',
+    s.phaseTime?.STABLE   ?? '',
+    s.phaseTime?.RIGID    ?? '',
   ].join(',') + '\n'
   if (!fs.existsSync(CSV_FILE)) fs.writeFileSync(CSV_FILE, CSV_HEADERS)
   fs.appendFileSync(CSV_FILE, row)
@@ -92,6 +112,23 @@ const httpServer = http.createServer((req, res) => {
       fs.createReadStream(filePath).pipe(res)
     }
     console.log(`🎵 serving: ${track}`)
+  } else if (urlPath === '/consent' && req.method === 'POST') {
+    let body = ''
+    req.on('data', d => body += d.toString())
+    req.on('end', () => {
+      try {
+        const identity = JSON.parse(body)
+        let map = []
+        try { map = JSON.parse(fs.readFileSync(IDENTITY_FILE, 'utf8')) } catch {}
+        const participantId = map.length + 1
+        map.push({ participantId, ...identity })
+        fs.writeFileSync(IDENTITY_FILE, JSON.stringify(map, null, 2))
+        console.log(`\n👤 p${String(participantId).padStart(3,'0')} · ${identity.name}`)
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: true, participantId }))
+      } catch { res.writeHead(400); res.end('bad request') }
+    })
+
   } else if (urlPath === '/sessions' && req.method === 'GET') {
     try {
       const data = fs.existsSync(SESSION_FILE) ? fs.readFileSync(SESSION_FILE, 'utf8') : '[]'
@@ -107,11 +144,11 @@ const httpServer = http.createServer((req, res) => {
         const session = JSON.parse(body)
         let sessions = []
         try { sessions = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf8')) } catch {}
-        const participantId = sessions.length + 1
+        const participantId = session.participantId ?? (sessions.length + 1)
         sessions.push({ ...session, participantId, savedAt: new Date().toISOString() })
         fs.writeFileSync(SESSION_FILE, JSON.stringify(sessions, null, 2))
         appendCSV(participantId, session)
-        console.log(`\n💾 p${String(participantId).padStart(3,'0')} · ${session.name} · ${session.mode} · glow ${session.glowTime}s / ${session.totalPlayTime}s`)
+        console.log(`\n💾 p${String(participantId).padStart(3,'0')} · ${session.mode} · glow ${session.glowTime}s · first glow ${session.timeToFirstGlowS}s`)
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({ ok: true, count: sessions.length, participantId }))
       } catch { res.writeHead(400); res.end('bad request') }
