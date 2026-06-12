@@ -101,8 +101,14 @@
     .ca-credits     { font-size:11px; color:#333; letter-spacing:0.08em; line-height:2; margin-top:32px; padding-top:20px; border-top:1px solid #111; }
 
     #pose-cv  { position:fixed; inset:0; width:100%; height:100%; transform:scaleX(-1); z-index:16; pointer-events:none; display:none; }
-    #pose-btn { margin-top:8px; background:none; border:1px solid #333; color:#555; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; transition:border-color 0.2s, color 0.2s; }
+    #pose-btn    { margin-top:8px; background:none; border:1px solid #333; color:#555; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; transition:border-color 0.2s, color 0.2s; }
     #pose-btn.active { border-color:#00ff88; color:#00ff88; }
+    #rmssd-btn   { margin-top:6px; background:none; border:1px solid #333; color:#555; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; transition:border-color 0.2s, color 0.2s; }
+    #rmssd-btn.active { border-color:#ffcc00; color:#ffcc00; }
+    #rmssd-bar-wrap { margin-top:8px; display:none; }
+    #rmssd-val  { font-size:clamp(40px,7vw,80px); font-weight:700; line-height:1; letter-spacing:-0.04em; }
+    #rmssd-unit { font-size:12px; letter-spacing:0.1em; color:#555; margin-top:2px; }
+    #rmssd-canvas { display:block; width:100%; height:36px; margin-top:6px; border-radius:4px; overflow:hidden; }
 
     /* consent screen */
     #consent-screen { overflow-y:auto; align-items:flex-start; }
@@ -259,6 +265,11 @@
     <div id="alpha-num">—</div>
     <div id="zone-word">—</div>
     <div id="zone-hint"></div>
+    <div id="rmssd-bar-wrap">
+      <div id="rmssd-val" style="color:#ffcc00">—</div>
+      <div id="rmssd-unit">ms RMSSD</div>
+      <canvas id="rmssd-canvas" height="72"></canvas>
+    </div>
     <div id="play-state">○ waiting</div>
   </div>
   <div id="top-right">
@@ -267,6 +278,7 @@
     <button id="h10-btn" onclick="connectH10()">⬡ CONNECT H10</button>
     <div id="h10-status"></div>
     <button id="pose-btn" onclick="togglePose()">◈ BODY</button>
+    <button id="rmssd-btn" onclick="toggleRMSSD()">◈ RMSSD</button>
   </div>
 </div>
 
@@ -406,6 +418,15 @@ const DFA_LOW = 0.75, DFA_HIGH = 1.0
 const HISTORY_SECS = 60, HISTORY_RATE = 4
 let SONG_DURATION = 240
 
+const RMSSD_GLOW = 45
+const RMSSD_MAX  = 90
+const RMSSD_ZONES = [
+  { label:'low',       min:0,  max:20, color:'#ff2200' },
+  { label:'moderate',  min:20, max:45, color:'#ffcc00' },
+  { label:'good',      min:45, max:65, color:'#00ff88' },
+  { label:'excellent', min:65, max:200,color:'#0088ff' },
+]
+
 const ZONES = [
   { name:'CHAOS',    min:0,    max:0.5,  color:'#ff2200' },
   { name:'TENSION',  min:0.5,  max:0.75, color:'#ff8800' },
@@ -427,6 +448,7 @@ let currentMode = null, playerName = '', modeDuration = 240, modeGrace = 30
 let completeFired = false
 let participantId = null, participantBaseline = {}
 let sessionStartTime = null, sessionEndTime = null, firstGlowTime = null
+let signalMode = 'dfa', rmssdValue = null
 const dfaHistory = [], phaseTime = {}, rrHistory = []
 ZONES.forEach(z => phaseTime[z.name] = 0)
 
@@ -824,6 +846,7 @@ async function saveAndDownload(e) {
   const session = {
     participantId,
     mode:              currentMode,
+    signalMode,
     track:             selectedTrack,
     sessionDate:       sessionStartTime ? sessionStartTime.slice(0,10) : new Date().toISOString().slice(0,10),
     sessionStart:      sessionStartTime,
@@ -937,6 +960,7 @@ function parseHR(event) {
   if(rrBatch.length) rrHistory.push({ t: Date.now(), rr: rrBatch })
   if(rrNew>=8){
     rrNew=0
+    rmssdValue = computeRMSSD(rrBuffer.slice(-64))
     const alpha=computeDFA(rrBuffer)
     if(alpha!==null){
       dfaAlpha=Math.max(0.3,Math.min(1.8,alpha)); h10Active=true; mockMode=false
@@ -973,17 +997,28 @@ function tick() {
 
   if (started && currentMode) {
     if (mockMode) dfaAlpha = mockDFA(dt)
-    if (dfaAlpha != null) {
-      if (now-lastHistorySample > 1000/HISTORY_RATE) {
-        dfaHistory.push(dfaAlpha)
-        if (dfaHistory.length > HISTORY_SECS*HISTORY_RATE) dfaHistory.shift()
-        lastHistorySample = now
-      }
-      currentZone = getZone(dfaAlpha)
-      const isGlow = dfaAlpha >= DFA_LOW && dfaAlpha < DFA_HIGH
-      phaseTime[currentZone.name] += dt
 
-      // Gate: real signal only (not mock); glow plays, flow counts down 30/15s then stops
+    // pick active signal
+    const useRMSSD  = signalMode === 'rmssd' && rmssdValue !== null
+    const activeVal = useRMSSD ? rmssdValue : dfaAlpha
+    const isGlow    = useRMSSD ? rmssdValue >= RMSSD_GLOW
+                               : (dfaAlpha !== null && dfaAlpha >= DFA_LOW && dfaAlpha < DFA_HIGH)
+
+    if (activeVal != null) {
+      if (!useRMSSD) {
+        if (now-lastHistorySample > 1000/HISTORY_RATE) {
+          dfaHistory.push(dfaAlpha)
+          if (dfaHistory.length > HISTORY_SECS*HISTORY_RATE) dfaHistory.shift()
+          lastHistorySample = now
+        }
+        currentZone = getZone(dfaAlpha)
+        phaseTime[currentZone.name] += dt
+      } else {
+        const rz = RMSSD_ZONES.find(z => rmssdValue >= z.min && rmssdValue < z.max) ?? RMSSD_ZONES[RMSSD_ZONES.length-1]
+        phaseTime[rz.label.toUpperCase()] = (phaseTime[rz.label.toUpperCase()] || 0) + dt
+      }
+
+      // Gate: real signal only; glow plays, flow counts down then stops
       const hasReal = !mockMode
       if (hasReal) {
         if (isGlow) {
@@ -1003,15 +1038,22 @@ function tick() {
         if (songProgress >= modeDuration) { showComplete(); return }
       }
 
-      const col = currentZone.color
+      const col = useRMSSD
+        ? (RMSSD_ZONES.find(z => rmssdValue >= z.min && rmssdValue < z.max) ?? RMSSD_ZONES[RMSSD_ZONES.length-1]).color
+        : currentZone.color
       document.documentElement.style.setProperty('--zone', col)
       document.documentElement.style.setProperty('--zone-dim', col+'20')
-      document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(3)
+      if (!useRMSSD) {
+        document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(3)
+        const hint = currentZone.name === 'STABLE' ? 'breathe deeper' : currentZone.name === 'TENSION' ? 'move faster' : ''
+        document.getElementById('zone-hint').textContent = hint
+      } else {
+        drawRMSSDBar(rmssdValue)
+        document.getElementById('zone-hint').textContent = rmssdValue < RMSSD_GLOW ? 'relax · breathe slower' : ''
+      }
       document.getElementById('zone-word').textContent = isGlow ? 'glow' : 'flow'
-      const hint = currentZone.name === 'STABLE' ? 'breathe deeper' : currentZone.name === 'TENSION' ? 'move faster' : ''
-      document.getElementById('zone-hint').textContent = hint
       const st = document.getElementById('play-state')
-      if (!hasReal)                               { st.textContent='○ connect somasync';        st.style.color='#444' }
+      if (!hasReal)                               { st.textContent='○ connect h10';              st.style.color='#444' }
       else if (audioPaused && outOfZoneSec >= modeGrace) { st.textContent='■ stopped · find glow';  st.style.color='#ff2200' }
       else if (audioPaused)                       { st.textContent='○ enter glow to start';    st.style.color='#555' }
       else if (outOfZoneSec > 0)                  { st.textContent=`◌ ${Math.round(modeGrace-outOfZoneSec)}s`; st.style.color='#ff8800' }
@@ -1036,6 +1078,84 @@ function tick() {
 wsFallback = setTimeout(() => { if (!wsConnected) enableMock() }, 6000)
 connectWS()
 requestAnimationFrame(tick)
+
+// ═══════════════════════════════════════════════
+// RMSSD mode
+// ═══════════════════════════════════════════════
+function computeRMSSD(rr) {
+  if (rr.length < 2) return null
+  let sum = 0
+  for (let i = 1; i < rr.length; i++) sum += (rr[i] - rr[i-1]) ** 2
+  return Math.sqrt(sum / (rr.length - 1))
+}
+
+function toggleRMSSD() {
+  signalMode = signalMode === 'rmssd' ? 'dfa' : 'rmssd'
+  const btn = document.getElementById('rmssd-btn')
+  btn.classList.toggle('active', signalMode === 'rmssd')
+  btn.textContent = signalMode === 'rmssd' ? '◈ RMSSD ON' : '◈ RMSSD'
+  document.getElementById('rmssd-bar-wrap').style.display = signalMode === 'rmssd' ? 'block' : 'none'
+  document.getElementById('alpha-num').style.display      = signalMode === 'rmssd' ? 'none'  : 'block'
+}
+
+function drawRMSSDBar(val) {
+  const cv  = document.getElementById('rmssd-canvas')
+  const dpr = window.devicePixelRatio || 1
+  cv.width  = cv.offsetWidth * dpr
+  cv.height = 72 * dpr
+  const ctx = cv.getContext('2d')
+  const W = cv.width, H = cv.height
+  const barH = Math.round(H * 0.42), barY = Math.round(H * 0.3)
+
+  // gradient bar
+  const grad = ctx.createLinearGradient(0, 0, W, 0)
+  grad.addColorStop(0,    '#ff2200')
+  grad.addColorStop(0.22, '#ff8800')
+  grad.addColorStop(0.38, '#ffcc00')
+  grad.addColorStop(0.55, '#00ff88')
+  grad.addColorStop(0.78, '#0088ff')
+  grad.addColorStop(1,    '#0044dd')
+  ctx.fillStyle = grad
+  ctx.beginPath()
+  const r = barH / 2
+  ctx.roundRect(0, barY, W, barH, r)
+  ctx.fill()
+
+  // zone tick marks + labels
+  const ticks = [{ v:20, label:'low' }, { v:45, label:'moderate' }, { v:65, label:'good' }, { v:RMSSD_MAX, label:'excellent' }]
+  ctx.font = `${9 * dpr}px ui-monospace, monospace`
+  ctx.textAlign = 'center'
+  ticks.forEach(({ v, label }) => {
+    const x = Math.min(v, RMSSD_MAX) / RMSSD_MAX * W
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)'
+    ctx.lineWidth = dpr
+    ctx.beginPath(); ctx.moveTo(x, barY + barH * 0.2); ctx.lineTo(x, barY + barH * 0.8); ctx.stroke()
+    ctx.fillStyle = 'rgba(255,255,255,0.45)'
+    ctx.fillText(label, x, barY + barH + 11 * dpr)
+  })
+
+  // needle
+  if (val === null) return
+  const nx = Math.min(Math.max(val, 0), RMSSD_MAX) / RMSSD_MAX * W
+  const triH = 8 * dpr, triW = 6 * dpr
+  ctx.fillStyle = '#fff'
+  ctx.beginPath()
+  ctx.moveTo(nx - triW/2, barY - 2*dpr)
+  ctx.lineTo(nx + triW/2, barY - 2*dpr)
+  ctx.lineTo(nx, barY + triH)
+  ctx.closePath()
+  ctx.fill()
+
+  // needle line
+  ctx.strokeStyle = '#fff'
+  ctx.lineWidth = dpr
+  ctx.beginPath(); ctx.moveTo(nx, barY); ctx.lineTo(nx, barY + barH); ctx.stroke()
+
+  // update value display
+  const rz = RMSSD_ZONES.find(z => val >= z.min && val < z.max) ?? RMSSD_ZONES[RMSSD_ZONES.length-1]
+  document.getElementById('rmssd-val').textContent = Math.round(val)
+  document.getElementById('rmssd-val').style.color = rz.color
+}
 
 // ═══════════════════════════════════════════════
 // MediaPipe Pose — toggle overlay
