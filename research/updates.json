@@ -1,5 +1,14 @@
 [
   {
+    "id": 7,
+    "date": "2018-02-01",
+    "title": "How Context, Why Context",
+    "body": "My journey into studying listening started in a psychology course at NYU Abu Dhabi. Professor Niobe Way took our class to Addis Ababa, Ethiopia for a week of fieldwork, where we interviewed students at the Medhen Social Center. For my final paper, I ended up studying something I lived myself: how multilingual people associate different languages with different emotions. I am bilingual in English and Malayalam, and I had always felt the pull to switch languages when my feelings changed. I wanted to understand why.\n\nWhat I found was that the emotional meaning of a language comes from your origin point, your home environment, your school, your cultural context. A 17-year-old I interviewed, Y, associated his childhood language Sudaminya with trust and loss after leaving his village at age 8. A 14-year-old, M, told me she speaks her mother's language Guaringya when she is happy, because her mother is the reason she learned it at all. She also said something that stayed with me: before she learned Guaringya, her grandmother could only tell her shortened versions of old stories through translation. Once she learned the language herself, she could finally draw the full picture in her mind.\n\nThat image became the seed of Time Compass. If the full story requires the original language, then the full listening experience requires access to your own origin. The way you hear music is shaped by everything that formed you before you ever chose a song. I wanted to build something that could help people trace that thread.",
+    "tags": [],
+    "images": [],
+    "project": "time-compass"
+  },
+  {
     "id": 6,
     "date": "2026-04-20",
     "title": "Finding the Sweet Spot: How Rhythm Training Might Rewire Your Nervous System",
@@ -9,7 +18,8 @@
       "Screenshot 2026-06-03 at 14.25.16.png",
       "Screenshot 2026-06-03 at 14.24.37.png",
       "Screenshot 2026-06-03 at 14.24.49.png"
-    ]
+    ],
+    "project": "stick"
   },
   {
     "id": 5,
@@ -20,7 +30,8 @@
     "images": [
       "Screenshot 2026-05-26 at 17.24.50.png",
       "Screenshot 2026-05-26 at 17.25.06.png"
-    ]
+    ],
+    "project": "stick"
   },
   {
     "id": 4,
@@ -31,7 +42,8 @@
     "images": [
       "Screenshot 2026-06-03 at 14.15.20.png",
       "2025-01-31 13.08.58.jpg"
-    ]
+    ],
+    "project": "stick"
   },
   {
     "id": 3,
@@ -42,7 +54,8 @@
     "images": [
       "photo_2025-01-31 13.10.19.jpeg",
       "Screenshot 2026-06-03 at 14.07.14.png"
-    ]
+    ],
+    "project": "stick"
   },
   {
     "id": 1,
@@ -53,7 +66,8 @@
     "images": [
       "Stick (8 of 10).jpg",
       "seksmoments3.jpg"
-    ]
+    ],
+    "project": "stick"
   },
   {
     "id": 2,
@@ -64,6 +78,7 @@
     "images": [
       "photo_2025-01-31 13.10.29.jpeg",
       "photo_2025-01-31 13.10.28.jpeg"
-    ]
+    ],
+    "project": "stick"
   }
 ]
