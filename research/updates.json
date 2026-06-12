@@ -1,0 +1,110 @@
+[
+  {
+    "id": 10,
+    "date": "2026-04-10",
+    "title": "Time Compass: From Abstract Idea to Interactive Demo",
+    "body": "I've built a complete website that turns one of our core ideas into something you can actually see and click through. The concept is that moving through music could work like moving through space, and I needed to show what that feels like rather than just talk about it.\n\nThe site has four full-screen sections. The first pulls you in with a rotating compass. The second shows a wandering dot on a color wheel, like what a dancer might see on a heads-up display. The third displays a static map with multiple tracks positioned as blips, showing how a DJ could navigate between songs. The fourth explains the whole workflow in plain language.\n\nEverything runs smoothly at 60 frames per second using canvas animations. I used sine and cosine functions to create organic movement, alpha fading to render trails, and radial gradients for soft glows. The design is consistent throughout: Georgia serif for reading, Courier monospace for technical labels, and a palette of black, white, and gold accents.\n\nWhat matters here is that this artifact sits outside the main codebase. By building it as a standalone HTML file, I've separated the idea from the implementation. Someone can now encounter this concept on its own terms, without needing to understand the code underneath. It joins our other externalized work, like the cheat codes and sekstapes, as a way of showing how the system actually thinks.\n\nNext I'm building outward from this proof of concept.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-12 at 17.46.11.png",
+      "Screenshot 2026-06-12 at 17.46.29.png"
+    ],
+    "project": "time-compass"
+  },
+  {
+    "id": 9,
+    "date": "2026-03-01",
+    "title": "The Regenerative Dancefloor",
+    "body": "Over the past two months, I've been pulling together the public face of a system I've been building around the o-o stick game, movement, and music. The work started as scattered research and has become something I can actually show people.\n\nThe breakthrough came in recognizing that everything connects: the eight cheat codes (movement prompts), the eight sekstapes (sonic environments), the eight case studies in dancefloor design, and the spaces themselves all map onto each other. Once I saw that pattern, I rewrote almost everything to make it visible.\n\nI built a portfolio site called Experience Design Studios. It's eight pages, each one showing a different approach to \"listening to your body together.\" Each page has its code, its corresponding music embedded live, a room description, and visual references. The whole thing runs on a single principle: we shape spaces, and spaces shape us back.\n\nThen I got serious about the language. I removed every defensive phrase, every \"not this, but that\" construction. I swapped \"parties\" for \"activations\" to signal that these are functional gatherings, not just social events. I cut the scaffolding that explained things and let the material speak.\n\nThe work split into two tracks: one path became an art installation at Tryp Expo, the other a fourteen-day study at FU Berlin tracking what happens to people's nervous systems inside these regenerative dancefloors. I drew that fork, mapped the feedback loop, and put the timeline in front of it.\n\nWhat's next is running both experiments and watching what the data tells me about how movement, sound, and space actually change how we feel.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-12 at 17.39.48.png"
+    ],
+    "project": "loob"
+  },
+  {
+    "id": 8,
+    "date": "2026-04-01",
+    "title": "Time Compass: Making Music Navigation Visible",
+    "body": "I've just finished building Time Compass, a website that shows what it actually looks like to navigate music as movement through space. This is a core idea in the EDS dancefloor system, and it needed to become something real and shareable rather than staying locked in code.\n\nThe site has four full-screen sections that walk someone through the concept. The first shows a rotating compass animation. The second simulates what a dancer might see on a heads-up display: a dot wandering around a color wheel with a trail behind it. The third displays a static map with multiple tracks positioned in space and your location marked. The fourth explains the whole workflow in plain language.\n\nEvery animation runs smoothly at 60 frames per second using canvas rendering. I built navigation that lets you jump between sections by clicking dots on the side of the screen. The design scales down beautifully on mobile devices, and I used a simple color system: black, white, dim gray, and gold.\n\nWhat matters most is that this gives the idea shape. Someone can now see and interact with how the system thinks about music space. It sits alongside other work like the cheat codes and sekstapes as another way to pull the system's logic out into the open where people can actually encounter it.\n\nNext I'm going to test this with actual dancers and DJs to see if the interface clicks for them, and then integrate these ideas back into the live system.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-12 at 17.37.18.png",
+      "Screenshot 2026-06-12 at 17.37.13.png"
+    ],
+    "project": "time-compass"
+  },
+  {
+    "id": 2,
+    "date": "2026-05-31",
+    "title": "Theory to Action: A Smarter Study Design",
+    "body": "When I started this project, I was planning a five-week study with washout periods and multiple heart-rate sensors—the kind of setup that looked good on paper but would've been logistically messy and hard to repeat across different groups. Over the past couple of months, that changed entirely.\n\nThe breakthrough came from rethinking the problem from the ground up. Instead of spreading measurements across weeks, I'm now capturing everything within a single ~15-minute session. Here's how: participants do three short blocks—a resting baseline, then two conditions (one with the stick, one without) while playing a biofeedback \"game\" that advances only when they hit the right heart-rate zone. It's clean, it controls for daily variation, and it gives me a real behavioral measure: how quickly they can access that zone.\n\nThe other big shift was going from multiple sensors to *one* rotating heart-rate monitor across participants. This sounds like a constraint, but it's actually freed things up—I can now test many more people across different real-world settings in the same timeframe, which makes the results more meaningful.I built the whole system from scratch (JavaScript, Web Bluetooth, live heart-rate analysis) and locked in the final design last month.\n\nNow we're ready. Pilot testing starts June 1st with five people to estimate our effect size, then I'll use that to calculate exactly how many participants I need. It's the point where planning stops and real fieldwork begins.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-05-26 at 17.24.50.png",
+      "Screenshot 2026-05-26 at 17.25.06.png"
+    ],
+    "project": "stick"
+  },
+  {
+    "id": 1,
+    "date": "2026-04-20",
+    "title": "Finding the Sweet Spot: How Rhythm Training Might Rewire Your Nervous System",
+    "body": "I've had a major breakthrough in how I'm measuring what happens when we practice rhythmic stick work. It turns out that the tiny, invisible gaps between heartbeats tell a story about whether your nervous system is healthy and adaptable—or stressed and rigid. \n\nI switched to tracking something called DFA alpha, which reads the fractal structure of your heartbeat (Heart rate variability, to be precise). Think of it like this: a truly healthy heart doesn't beat like a metronome. Instead, it wiggles in this sweet, flexible way—the kind of adaptability that lets you respond to life's surprises. That sweet spot lands around 1.0 on the DFA alpha scale. Drop toward 0.5 and things look chaotic; climb toward 1.5 and you get rigidity.\n\nHere's where it clicked: my hypothesis is that rhythmic practice—the ⦿-⦿—trains your nervous system toward exactly that adaptive state. \n\nI'm now collaborating with Dmitry and his team at 8OS on an app called SomaSync that measures DFA alpha in real time using an Apple Watch or chest strap. We're planning two tiers: a quick proof of concept anyone can try now, then a more rigorous study with better equipment and a bigger group.\n\nThe intellectual thread finally tied together. It's about keeping time—and it's about building the nervous system's capacity to be both organized and flexible.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-03 at 14.25.16.png",
+      "Screenshot 2026-06-03 at 14.24.37.png",
+      "Screenshot 2026-06-03 at 14.24.49.png"
+    ],
+    "project": "stick"
+  },
+  {
+    "id": 3,
+    "date": "2026-04-01",
+    "title": "Five Weeks, One Control, Many Open Questions",
+    "body": "After months of iterating, I've finally locked down the core design: a five-week study where half the participants practice rhythmic movement with a metronome for the first two weeks, then rest, then do a control activity — and the other half reverses the order. I'll track heart rate variability throughout using a wearable, plus daily five-minute sessions and questionnaires before and after each phase.\n\nThe big question I'm testing is whether practicing this way actually creates more stable, regular movement patterns over time. There are some secondary questions too (like whether heart rate improves), but the design is now clear enough to run.\n\nWhat surprised me most during this push was surfacing all the things I *don't* know yet. like whether the control condition should be sitting still, moving without rhythm, or something else entirely. Each choice tells a different story about what the practice actually does. I also flagged that a one-week break between phases might not be long enough for the body to fully \"reset,\" which could muddy the results.\n\nOn a personal note, my main supervisor took a professorship at Medical School Berlin, so Dr. B is stepping in as primary supervisor. It's a smooth transition, and it's also given me clear feedback: the proposal had gotten too complicated. Time to simplify, nail down the details that matter, and get moving.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-03 at 14.15.20.png",
+      "2025-01-31 13.08.58.jpg"
+    ],
+    "project": "stick"
+  },
+  {
+    "id": 4,
+    "date": "2026-02-01",
+    "title": "Lab to Life: Why I'm Taking My Thesis Outside",
+    "body": "When I presented my original plan at the colloquium in January, the faculty gently redirected me. My designed lab experiment was sound, but they asked: *Can you actually build this? Will it get ethical approval? And who will it help?* That question changed everything.\n\nI'd been focused on proving a quick, controlled effect. Instead, I've pivoted to something bigger: understanding whether coordinating breath and movement is a *learnable skill* that people can develop over weeks and months of real practice — outside a lab, in their actual lives.\n\nThe shift unlocked a new approach. Rather than measuring acute responses, I'm now tracking how people's heart-rate variability (a marker of nervous system flexibility) evolves as they practice. My collaborators and I built Loob, a simple motion tracker that works with just a webcam, and we're partnering with 8OS, a peer project whose HRV software aligns perfectly with the physiology I'm investigating.\n\n\nI'm moving to running two tiers: a proof-of-concept starting this month with just Apple Watches, and a larger study if funding comes through. For the first time, this feels like something that could actually work — and matter.",
+    "tags": [],
+    "images": [
+      "photo_2025-01-31 13.10.19.jpeg",
+      "Screenshot 2026-06-03 at 14.07.14.png"
+    ],
+    "project": "stick"
+  },
+  {
+    "id": 6,
+    "date": "2025-12-01",
+    "title": "From Fidgeting to Breathing: How a Spinning Stick Became a Window into Physiology",
+    "body": "When I started this project, I was looking into e-motions; trying to understand how rhythmic fidgeting might calm us down. But somewhere along the way, my research found its heartbeat.\n\nThe turning point came when I discovered **locomotor–respiratory coupling (LRC)**: the scientific principle that rhythmic movement and breathing naturally synchronise. It's well-documented for walking and cycling, but nobody had tested it with something simple—like spinning a stick. That became my question: can a gentle, rhythmic movement entrain your breathing without needing to work hard physically?\n\nThis reframe felt like finding the missing puzzle piece. Instead of measuring emotions (which are slippery), I'm now measuring heart-rate variability and respiratory patterns during and after spinning—clean, quantifiable signals that reveal what's actually happening in your body.\n\nMy design crystallised: a controlled lab study with about ten people, each doing four conditions (spinning with sound, spinning in silence, sitting still with sound, sitting still in silence). I'm tracking physiological recovery—how well their nervous system settles afterwards.\n\nThe real test comes in January. I'm presenting this at a research colloquium, then launching the first experiments by spring. What excites me most isn't the fidgeting anymore,it's proving that something so simple can genuinely shift how our bodies work.",
+    "tags": [],
+    "images": [
+      "photo_2025-01-31 13.10.29.jpeg",
+      "photo_2025-01-31 13.10.28.jpeg"
+    ],
+    "project": "stick"
+  },
+  {
+    "id": 5,
+    "date": "2025-07-01",
+    "title": "From Brain to Hearts: How my Thesis Found Its Rhythm",
+    "body": "When I (re)started this journey in July 2025, I was deep in neuroscience papers trying to build a theory about how a particular brain receptor might explain altered states of consciousness. It felt ambitious and distant from anything I could actually test—and I was running out of time. My visa expires at the end of September, and my degree depends on it.\n\nThen something unexpected happened. I found a way to integrate my underground research into my thesis work in cognitive neuroscience: the ⦿-⦿. It's simple, tactile, and there's already a community of about 33 people using it informally. That opened a door.\n\nMy focus shifted from abstract brain chemistry to something I could measure: what happens to people's hearts when they move with rhythm? Specifically, I'm now asking whether spinning the ⦿-⦿ in time with music can synchronize someone's heart rate and breathing in measurable ways. It sounds niche, but it touches on something real—how our bodies entrain to external rhythms.\n\nThe design began coming into focus: I'll test whether the stick helps people sync their physiology to music, whether it matters if they're moving *with* or *against* their natural rhythm, and whether I can capture these changes using affordable heart-rate sensors.\n\nI have a willing participant pool right here in Berlin. The hypothesis object has shifted from emotion to physiology, from theory to data. And honestly? That feels like progress.",
+    "tags": [],
+    "images": [
+      "Stick (8 of 10).jpg",
+      "seksmoments3.jpg"
+    ],
+    "project": "stick"
+  }
+]
