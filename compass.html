@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Compass</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black:    #060608;
+      --white:    #f0ede8;
+      --dim:      #888078;
+      --accent:   #c8a96e;
+      --panel-w:  272px;
+      --header-h: 50px;
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Courier New', monospace;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      height: var(--header-h);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 18px;
+      border-bottom: 1px solid #111118;
+      z-index: 50;
+    }
+
+    #menu-btn {
+      background: none;
+      border: none;
+      color: var(--dim);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 5px;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+    #menu-btn:hover, #menu-btn.open { color: var(--white); }
+
+    .hdr-title {
+      font-family: 'Georgia', serif;
+      font-size: 16px;
+      font-weight: 400;
+      flex-shrink: 0;
+    }
+    .hdr-title em { font-style: italic; color: var(--accent); }
+
+    #preset-bar {
+      display: flex;
+      gap: 5px;
+      margin-left: auto;
+    }
+
+    #path-btn {
+      background: none;
+      border: 1px solid #2a2a36;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 5px 13px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.18s;
+      margin-left: 8px;
+    }
+    #path-btn:hover { border-color: #f0ede8; color: var(--white); }
+    #path-btn.active { border-color: var(--white); color: var(--white); background: rgba(240,237,232,0.07); }
+
+    /* ── Path slider panel ── */
+    #path-panel {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      align-items: center;
+      gap: 14px;
+      background: #0d0d12;
+      border: 1px solid #22222c;
+      border-radius: 4px;
+      padding: 10px 18px;
+      z-index: 90;
+      white-space: nowrap;
+    }
+    #path-panel.show { display: flex; }
+    .pp-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); }
+    #path-slider { width: 90px; accent-color: var(--white); cursor: pointer; }
+    #path-count { font-size: 10px; color: var(--white); min-width: 40px; letter-spacing: 0.05em; }
+    #path-clear {
+      background: none; border: none;
+      color: #333342; font-family: 'Courier New', monospace;
+      font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+      cursor: pointer; padding: 0; transition: color 0.15s;
+    }
+    #path-clear:hover { color: var(--dim); }
+
+    .preset-btn {
+      background: none;
+      border: 1px solid #1e1e26;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 5px 11px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.18s;
+    }
+    .preset-btn:hover { border-color: #3a3a48; color: var(--white); }
+    .preset-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(200,169,110,0.06);
+    }
+
+    /* ── Main area ── */
+    #main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Side panel ── */
+    #side-panel {
+      width: 0;
+      flex-shrink: 0;
+      background: #07070b;
+      border-right: 1px solid #111118;
+      overflow: hidden;
+      transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    #side-panel.open { width: var(--panel-w); }
+
+    .panel-inner { width: var(--panel-w); display: flex; flex-direction: column; height: 100%; }
+
+    .panel-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid #111118;
+      flex-shrink: 0;
+    }
+
+    .panel-label {
+      font-size: 8px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 10px;
+    }
+
+    /* Sort */
+    #sort-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+    .sort-btn {
+      background: none;
+      border: 1px solid #1a1a22;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 9px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    .sort-btn:hover { border-color: #2e2e3a; color: var(--white); }
+    .sort-btn.active { border-color: rgba(200,169,110,0.5); color: var(--accent); }
+
+    #dir-btn {
+      background: none;
+      border: none;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      cursor: pointer;
+      margin-left: auto;
+      padding: 4px 0;
+      transition: color 0.15s;
+    }
+    #dir-btn:hover { color: var(--white); }
+
+    /* Style chips */
+    #style-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .chip {
+      background: none;
+      border: 1px solid #1a1a22;
+      color: var(--dim);
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .chip:hover { border-color: #2e2e3a; color: var(--white); }
+    .chip.on { border-color: rgba(200,169,110,0.45); color: var(--accent); }
+
+    /* ── Palette wheel ── */
+    #palette-section { text-align: center; }
+    #color-wheel { cursor: crosshair; display: block; margin: 4px auto 0; }
+    #palette-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 0 2px;
+    }
+    .pal-chip { display: flex; align-items: center; gap: 8px; }
+    .pal-swatch {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .pal-name { font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); flex: 1; }
+    .pal-count { font-size: 8px; color: #333342; flex-shrink: 0; }
+
+    /* Track list */
+    #track-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+    #track-list::-webkit-scrollbar { width: 2px; }
+    #track-list::-webkit-scrollbar-thumb { background: #1e1e26; }
+
+    .ti {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 16px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .ti:hover { background: rgba(240,237,232,0.03); }
+    .ti.anchor { background: rgba(200,169,110,0.07); }
+
+    .ti-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    .ti-body { flex: 1; min-width: 0; }
+    .ti-title {
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      font-size: 10px;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.35;
+    }
+    .ti-meta {
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ti-year {
+      font-size: 9px;
+      color: #333342;
+      flex-shrink: 0;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Canvas ── */
+    #canvas-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #compass { cursor: crosshair; display: block; }
+
+    /* ── Tooltip ── */
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: #0d0d12;
+      border: 1px solid #22222c;
+      border-radius: 4px;
+      padding: 12px 14px;
+      width: 194px;
+      opacity: 0;
+      transition: opacity 0.12s;
+      z-index: 100;
+    }
+    #tooltip.show { opacity: 1; }
+    .tt-cover { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; margin-bottom: 10px; border-radius: 2px; background: #111118; }
+    .tt-artist { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+    .tt-title { font-family: 'Georgia', serif; font-size: 13px; font-style: italic; color: var(--white); line-height: 1.4; margin-bottom: 8px; }
+    .tt-meta { font-size: 10px; color: var(--dim); line-height: 1.9; }
+    .gdot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+    /* ── Hint bar ── */
+    #hint {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+    }
+    #hint.show { opacity: 1; }
+
+    /* ── Path strip ── */
+    #path-strip {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 88px;
+      background: #07070b;
+      border-top: 1px solid #111118;
+      display: none;
+      z-index: 80;
+    }
+    #path-strip.show { display: flex; }
+
+    #ps-controls {
+      flex-shrink: 0;
+      width: 130px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 16px;
+      border-right: 1px solid #111118;
+    }
+    .ps-ctrl-label {
+      font-size: 8px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    #ps-slider { width: 100%; accent-color: var(--white); cursor: pointer; }
+    #ps-stop-count { font-size: 9px; color: var(--white); letter-spacing: 0.05em; }
+
+    #ps-cards {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 14px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    #ps-cards::-webkit-scrollbar { display: none; }
+
+    .pc {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 3px;
+      transition: background 0.12s;
+    }
+    .pc:hover { background: rgba(240,237,232,0.04); }
+
+    .pc-cover {
+      width: 46px; height: 46px;
+      border-radius: 2px;
+      object-fit: cover;
+      background: #111118;
+      flex-shrink: 0;
+    }
+    .pc.origin .pc-cover { box-shadow: 0 0 0 1.5px #c8a96e; }
+    .pc.dest   .pc-cover { box-shadow: 0 0 0 1.5px rgba(240,237,232,0.6); }
+    .pc.waypoint .pc-cover { box-shadow: 0 0 0 1px rgba(240,237,232,0.25); }
+
+    .pc-info { min-width: 0; }
+    .pc-title {
+      font-family: 'Georgia', serif;
+      font-style: italic;
+      font-size: 9px;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 88px;
+      line-height: 1.35;
+    }
+    .pc-year  { font-size: 8px; color: var(--dim); letter-spacing: 0.05em; }
+    .pc-style { font-size: 8px; letter-spacing: 0.04em; }
+
+    .pc-arrow {
+      color: #222230;
+      font-size: 12px;
+      margin: 0 6px;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    #ps-journey {
+      position: absolute;
+      top: 6px; left: 148px;
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      color: #2a2a38;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: calc(100% - 180px);
+    }
+
+    /* ── Stats ── */
+    #stats {
+      position: fixed;
+      bottom: 20px;
+      right: 22px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: #2a2a36;
+      text-align: right;
+      line-height: 2;
+    }
+
+    /* ── Upload overlay ── */
+    #upload-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--black);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 200;
+    }
+    .ov-p { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+    .ov-btn { display: inline-block; padding: 10px 28px; border: 1px solid rgba(200,169,110,0.35); color: var(--accent); font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; cursor: pointer; transition: border-color 0.2s; }
+    .ov-btn:hover { border-color: var(--accent); }
+    .ov-hint { font-size: 9px; letter-spacing: 0.1em; color: rgba(136,128,120,0.4); }
+    #file-input { display: none; }
+    .ov-steps {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: rgba(136,128,120,0.5);
+      line-height: 2.2;
+      text-align: center;
+    }
+    .ov-steps a { color: rgba(200,169,110,0.6); text-decoration: none; }
+    .ov-steps a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<header>
+  <button id="menu-btn">≡</button>
+  <span class="hdr-title">Time <em>Compass</em></span>
+  <div id="preset-bar">
+    <button class="preset-btn" data-preset="synchronicity">Sync ±7</button>
+    <button class="preset-btn" data-preset="space">Space</button>
+    <button class="preset-btn" data-preset="year">Year</button>
+    <button class="preset-btn" data-preset="style">Style</button>
+  </div>
+  <button id="path-btn">Path</button>
+</header>
+
+<div id="main">
+  <div id="side-panel">
+    <div class="panel-inner">
+
+      <div class="panel-section">
+        <div class="panel-label">Sort</div>
+        <div id="sort-row">
+          <button class="sort-btn active" data-key="year">Year</button>
+          <button class="sort-btn" data-key="style">Style</button>
+          <button class="sort-btn" data-key="label">Label</button>
+          <button class="sort-btn" data-key="title">Title</button>
+          <button id="dir-btn">↑</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">Filter Style</div>
+        <div id="style-chips"></div>
+      </div>
+
+      <div class="panel-section" id="palette-section" style="display:none">
+        <div class="panel-label">Palette — drag to repaint</div>
+        <canvas id="color-wheel" width="220" height="220"></canvas>
+        <div id="palette-chips"></div>
+      </div>
+
+      <div id="track-list"></div>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="compass"></canvas>
+  </div>
+</div>
+
+<div id="path-strip">
+  <div id="ps-controls">
+    <span class="ps-ctrl-label">Stops</span>
+    <input type="range" id="ps-slider" min="1" max="5" value="1" />
+    <span id="ps-stop-count">1 stop</span>
+  </div>
+  <div id="ps-cards"></div>
+  <div id="ps-journey"></div>
+</div>
+
+<div id="hint"></div>
+<div id="tooltip">
+  <img class="tt-cover" src="" alt="" />
+  <div class="tt-artist"></div>
+  <div class="tt-title"></div>
+  <div class="tt-meta"></div>
+</div>
+<div id="stats"></div>
+
+<div id="upload-overlay">
+  <p class="ov-p">Time Compass</p>
+  <label class="ov-btn" for="file-input">Upload Collection</label>
+  <input type="file" id="file-input" accept=".json,.csv" />
+  <div class="ov-steps">
+    Accepts <strong style="color:rgba(240,237,232,0.4)">Discogs CSV</strong> or <strong style="color:rgba(240,237,232,0.4)">collection.json</strong><br>
+    CSV: <a href="https://www.discogs.com/settings/export" target="_blank" rel="noopener">discogs.com/settings/export</a> → Export Collection<br>
+    JSON: clone repo, add token to .env, run <code style="color:rgba(240,237,232,0.3)">npm run fetch</code>
+  </div>
+</div>
+
+<script>
+// ── Style → hue ──────────────────────────────────────────────────────────────
+const STYLE_HUE = {
+  'Techno':             240,
+  'Dub Techno':         250,
+  'Deep Techno':        245,
+  'Acid Techno':        232,
+  'Minimal':            210,
+  'House':              195,
+  'Deep House':         185,
+  'Tech House':         200,
+  'Progressive House':  175,
+  'Ambient':            165,
+  'Drone':              155,
+  'Experimental':       160,
+  'Italo-Disco':        320,
+  'Disco':              315,
+  'Pop Rock':           350,
+  'Rock':                 5,
+  'Funk':                28,
+  'Soul':                32,
+  'Jazz':                42,
+  'Hip Hop':            280,
+  'Breaks':             205,
+  'Drum n Bass':        192,
+  'Industrial':           0,
+  'EBM':                 10,
+  'New Wave':           305,
+  'Synth-pop':          290,
+  'Electro':            220,
+};
+
+const SPACE_WORDS = [
+  'orbital','galactic','nebula','lune','atlas','capsule','hyperion',
+  'cosmos','stellar','cosmic','astro','lunar','solar','void','nova',
+  'eclipse','zenith','meteor','pulsar','space',
+];
+
+function rawStyleHue(s) {
+  if (STYLE_HUE[s] !== undefined) return STYLE_HUE[s];
+  for (const [k, h] of Object.entries(STYLE_HUE)) {
+    if (s.toLowerCase().includes(k.toLowerCase())) return h;
+  }
+  return 45;
+}
+
+function styleHue(styles, label) {
+  if (S._colorByLabel) {
+    if (!label) return 45;
+    if (customHues[label] !== undefined) return customHues[label];
+    // Deterministic hue from label string
+    let h = 0;
+    for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) % 360;
+    return h;
+  }
+  if (!styles?.length) return 45;
+  const s = styles[0];
+  return customHues[s] ?? rawStyleHue(s);
+}
+
+function rng(n) {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// ── Style position spectrum (Y axis in sound space) ──────────────────────────
+const STYLE_POS = {
+  'Ambient': 0, 'Drone': 0.05, 'Experimental': 0.1,
+  'Minimal': 0.2, 'Dub Techno': 0.25, 'Techno': 0.3,
+  'Deep Techno': 0.32, 'Acid Techno': 0.35, 'Electro': 0.4,
+  'Tech House': 0.42, 'House': 0.45, 'Deep House': 0.5,
+  'Progressive House': 0.55, 'Breaks': 0.6, 'Drum n Bass': 0.65,
+  'Disco': 0.7, 'Italo-Disco': 0.72, 'Funk': 0.78,
+  'Soul': 0.8, 'Hip Hop': 0.82, 'Jazz': 0.86,
+  'New Wave': 0.88, 'Rock': 0.9, 'Pop Rock': 0.92,
+  'Industrial': 0.95, 'EBM': 0.97,
+};
+
+function trackPos(track) {
+  const years = S.spiralTracks.map(t => t.year).filter(y => y > 0);
+  const minY = Math.min(...years), maxY = Math.max(...years);
+  const x = ((track.year || minY) - minY) / (maxY - minY || 1);
+  const s = track.styles?.[0];
+  let y = STYLE_POS[s] ?? 0.5;
+  if (y === undefined) {
+    for (const [k, v] of Object.entries(STYLE_POS)) {
+      if (s?.toLowerCase().includes(k.toLowerCase())) { y = v; break; }
+    }
+  }
+  return { x, y: y ?? 0.5 };
+}
+
+// ── Color palette ─────────────────────────────────────────────────────────────
+const customHues   = {};   // style → hue override (0–360)
+let paletteStyles  = [];   // top-4 styles
+let paletteCounts  = {};   // style → count
+let dragPaletteStyle = null;
+
+const WHEEL_SIZE = 220;
+const OUTER_R    = WHEEL_SIZE / 2 - 8;
+const INNER_R    = OUTER_R - 28;
+const MID_R      = (OUTER_R + INNER_R) / 2;
+
+// ── State ────────────────────────────────────────────────────────────────────
+const S = {
+  collection:     [],
+  spiralTracks:   [],
+  listTracks:     [],
+  dots:           [],   // { x, y, track }
+  activePreset:   null,
+  anchorTrack:    null,
+  selectedStyles: new Set(),
+  sortKey:        'year',
+  sortDir:        'asc',
+  hoveredDot:     null,
+  // path
+  pathMode:       false,
+  pathOrigin:     null,
+  pathDest:       null,
+  pathStops:      1,
+  pathWaypoints:  [],   // intermediate tracks (auto or manually dragged)
+  dragWpIdx:      null, // index into pathWaypoints being dragged
+  snapDot:        null, // candidate dot during drag
+};
+
+// ── DOM ──────────────────────────────────────────────────────────────────────
+const canvas     = document.getElementById('compass');
+const ctx        = canvas.getContext('2d');
+const tooltip    = document.getElementById('tooltip');
+const overlay    = document.getElementById('upload-overlay');
+const sidePanel  = document.getElementById('side-panel');
+const canvasWrap = document.getElementById('canvas-wrap');
+const trackList  = document.getElementById('track-list');
+const styleChips = document.getElementById('style-chips');
+const hintEl     = document.getElementById('hint');
+const statsEl    = document.getElementById('stats');
+
+// ── Spiral layout ─────────────────────────────────────────────────────────────
+const LOOPS  = 3;
+const MIN_R  = 58;
+
+function sizeCanvas() {
+  const r = canvasWrap.getBoundingClientRect();
+  const s = Math.min(r.width, r.height) - 16;
+  canvas.width  = s;
+  canvas.height = s;
+}
+
+function maxR() { return canvas.width / 2 - 48; }
+
+function buildSpiral() {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const n  = S.spiralTracks.length;
+  if (!n) { S.dots = []; return; }
+
+  S.dots = S.spiralTracks.map((track, i) => {
+    const frac  = i / Math.max(n - 1, 1);
+    const theta = frac * LOOPS * Math.PI * 2 - Math.PI / 2;
+    const r     = MIN_R + frac * (maxR() - MIN_R);
+    const seed  = track.id || i;
+    const j     = (rng(seed) - 0.5) * 5;
+
+    return {
+      x: cx + Math.cos(theta) * (r + j),
+      y: cy + Math.sin(theta) * (r + j),
+      track,
+    };
+  });
+}
+
+// ── Preset logic ──────────────────────────────────────────────────────────────
+function matchesPreset(track, anchor) {
+  switch (S.activePreset) {
+    case 'synchronicity': {
+      if (!anchor || track === anchor) return false;
+      const d = Math.abs(track.year - anchor.year);
+      return d > 0 && d <= 7;
+    }
+    case 'space': {
+      const t = (track.title || '').toLowerCase();
+      return SPACE_WORDS.some(w => t.includes(w));
+    }
+    case 'year': {
+      if (!anchor || track === anchor) return false;
+      return Math.abs(track.year - anchor.year) <= 2;
+    }
+    case 'style': {
+      if (!anchor || track === anchor) return false;
+      const aSet = new Set(anchor.styles || []);
+      return (track.styles || []).some(s => aSet.has(s));
+    }
+    default: return true;
+  }
+}
+
+function isHighlighted(track) {
+  if (!S.activePreset) return true;
+  if (track === S.anchorTrack) return true;
+  if (S.activePreset === 'space') return matchesPreset(track, null);
+  if (!S.anchorTrack) return true; // no anchor yet → show all
+  return matchesPreset(track, S.anchorTrack);
+}
+
+// ── Path computation ──────────────────────────────────────────────────────────
+function computePath() {
+  if (!S.pathOrigin || !S.pathDest) { S.pathWaypoints = []; return; }
+  const aPos = trackPos(S.pathOrigin);
+  const dPos = trackPos(S.pathDest);
+  const used = new Set([S.pathOrigin.id, S.pathDest.id]);
+  S.pathWaypoints = [];
+
+  for (let i = 1; i <= S.pathStops; i++) {
+    const t  = i / (S.pathStops + 1);
+    const tx = aPos.x + t * (dPos.x - aPos.x);
+    const ty = aPos.y + t * (dPos.y - aPos.y);
+    let best = null, bestD = Infinity;
+    S.spiralTracks.forEach(track => {
+      if (used.has(track.id)) return;
+      const p = trackPos(track);
+      const d = (p.x - tx) ** 2 + (p.y - ty) ** 2;
+      if (d < bestD) { bestD = d; best = track; }
+    });
+    if (best) { S.pathWaypoints.push(best); used.add(best.id); }
+  }
+}
+
+function pathSequence() {
+  if (!S.pathOrigin) return [];
+  const seq = [S.pathOrigin, ...S.pathWaypoints];
+  if (S.pathDest) seq.push(S.pathDest);
+  return seq;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  ctx.clearRect(0, 0, W, H);
+  if (!S.dots.length) return;
+
+  const MR = maxR();
+  const n  = S.spiralTracks.length;
+
+  // Spiral guide
+  ctx.beginPath();
+  for (let i = 0; i <= 500; i++) {
+    const frac  = i / 500;
+    const theta = frac * LOOPS * Math.PI * 2 - Math.PI / 2;
+    const r     = MIN_R + frac * (MR - MIN_R);
+    const x = cx + Math.cos(theta) * r;
+    const y = cy + Math.sin(theta) * r;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = 'rgba(200,169,110,0.05)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Year labels at each decade
+  const years = S.spiralTracks.map(t => t.year).filter(y => y > 0);
+  if (years.length) {
+    const minY = Math.min(...years), maxY = Math.max(...years);
+    ctx.font = '8px Courier New';
+    ctx.fillStyle = 'rgba(200,169,110,0.3)';
+    ctx.textAlign = 'center';
+
+    for (let yr = Math.ceil(minY / 10) * 10; yr <= maxY; yr += 10) {
+      const idx = S.spiralTracks.findIndex(t => t.year >= yr);
+      if (idx < 0) continue;
+      const frac  = idx / Math.max(n - 1, 1);
+      const theta = frac * LOOPS * Math.PI * 2 - Math.PI / 2;
+      const r     = MIN_R + frac * (MR - MIN_R);
+      ctx.fillText(yr,
+        cx + Math.cos(theta) * (r + 11),
+        cy + Math.sin(theta) * (r + 11) + 3
+      );
+    }
+  }
+
+  // Dots — dim first, lit on top
+  S.dots.forEach(dot => {
+    if (dot === S.hoveredDot || dot.track === S.anchorTrack) return;
+    const hue = styleHue(dot.track.styles, dot.track.label);
+    const lit = isHighlighted(dot.track);
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${hue},70%,62%,${lit ? 0.72 : 0.07})`;
+    ctx.fill();
+  });
+
+  // Hovered dot
+  if (S.hoveredDot && S.hoveredDot.track !== S.anchorTrack) {
+    const { x, y } = S.hoveredDot;
+    const hue = styleHue(S.hoveredDot.track.styles, S.hoveredDot.track.label);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 18);
+    g.addColorStop(0, `hsla(${hue},75%,65%,0.38)`);
+    g.addColorStop(1, `hsla(${hue},75%,65%,0)`);
+    ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = `hsl(${hue},72%,68%)`; ctx.fill();
+  }
+
+  // Anchor dot — gold, on top
+  if (S.anchorTrack && !S.pathMode) {
+    const dot = S.dots.find(d => d.track === S.anchorTrack);
+    if (dot) {
+      const g = ctx.createRadialGradient(dot.x, dot.y, 0, dot.x, dot.y, 22);
+      g.addColorStop(0, 'rgba(200,169,110,0.5)');
+      g.addColorStop(1, 'rgba(200,169,110,0)');
+      ctx.beginPath(); ctx.arc(dot.x, dot.y, 22, 0, Math.PI * 2);
+      ctx.fillStyle = g; ctx.fill();
+      ctx.beginPath(); ctx.arc(dot.x, dot.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#c8a96e'; ctx.fill();
+    }
+  }
+
+  // ── Path ──
+  if (S.pathMode) {
+    const seq = pathSequence();
+    const seqDots = seq.map(t => S.dots.find(d => d.track === t)).filter(Boolean);
+
+    // Snap candidate glow
+    if (S.snapDot) {
+      const g = ctx.createRadialGradient(S.snapDot.x, S.snapDot.y, 0, S.snapDot.x, S.snapDot.y, 16);
+      g.addColorStop(0, 'rgba(240,237,232,0.35)'); g.addColorStop(1, 'rgba(240,237,232,0)');
+      ctx.beginPath(); ctx.arc(S.snapDot.x, S.snapDot.y, 16, 0, Math.PI * 2);
+      ctx.fillStyle = g; ctx.fill();
+    }
+
+    // Catmull-Rom spline through path dots
+    if (seqDots.length >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(seqDots[0].x, seqDots[0].y);
+      for (let i = 0; i < seqDots.length - 1; i++) {
+        const p0 = seqDots[Math.max(i - 1, 0)];
+        const p1 = seqDots[i];
+        const p2 = seqDots[i + 1];
+        const p3 = seqDots[Math.min(i + 2, seqDots.length - 1)];
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+      }
+      ctx.strokeStyle = 'rgba(240,237,232,0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Origin dot — gold
+    if (S.pathOrigin) {
+      const d = S.dots.find(x => x.track === S.pathOrigin);
+      if (d) {
+        ctx.beginPath(); ctx.arc(d.x, d.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#c8a96e'; ctx.fill();
+      }
+    }
+
+    // Destination dot — white
+    if (S.pathDest) {
+      const d = S.dots.find(x => x.track === S.pathDest);
+      if (d) {
+        ctx.beginPath(); ctx.arc(d.x, d.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#f0ede8'; ctx.fill();
+      }
+    }
+
+    // Waypoint dots — draggable, outlined
+    S.pathWaypoints.forEach((track, i) => {
+      const d = S.dots.find(x => x.track === track);
+      if (!d) return;
+      const isDragging = S.dragWpIdx === i;
+      ctx.beginPath(); ctx.arc(d.x, d.y, isDragging ? 7 : 5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(240,237,232,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.beginPath(); ctx.arc(d.x, d.y, isDragging ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(240,237,232,0.15)';
+      ctx.fill();
+    });
+  }
+}
+
+// ── Filter + sort ─────────────────────────────────────────────────────────────
+function applyFilter() {
+  let base = [...S.collection];
+
+  if (S.selectedStyles.size) {
+    base = base.filter(t =>
+      (t.styles || []).some(s => S.selectedStyles.has(s))
+    );
+  }
+
+  // Spiral: always chronological
+  S.spiralTracks = [...base].sort((a, b) => (a.year || 0) - (b.year || 0));
+
+  applySort(false); // rebuild list without re-filtering
+  buildSpiral();
+  render();
+}
+
+function applySort(rebuildSpiral = true) {
+  S.listTracks = [...S.spiralTracks].sort((a, b) => {
+    let av, bv;
+    switch (S.sortKey) {
+      case 'year':  av = a.year  || 0;        bv = b.year  || 0;        break;
+      case 'style': av = a.styles?.[0] || ''; bv = b.styles?.[0] || ''; break;
+      case 'label': av = a.label || '';       bv = b.label || '';       break;
+      case 'title': av = a.title || '';       bv = b.title || '';       break;
+      default:      av = 0; bv = 0;
+    }
+    const cmp = typeof av === 'number' ? av - bv : av.localeCompare(bv);
+    return S.sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  if (rebuildSpiral) { buildSpiral(); render(); }
+  renderList();
+}
+
+// ── Side panel list ───────────────────────────────────────────────────────────
+function renderList() {
+  // When preset + anchor active, show only matching tracks in list
+  const tracks = (S.activePreset && S.anchorTrack)
+    ? S.listTracks.filter(t => t === S.anchorTrack || matchesPreset(t, S.anchorTrack))
+    : S.listTracks;
+
+  trackList.innerHTML = tracks.map(track => {
+    const hue     = styleHue(track.styles, track.label);
+    const isAnch  = track === S.anchorTrack;
+    return `<div class="ti${isAnch ? ' anchor' : ''}" data-id="${track.id}">
+      <div class="ti-dot" style="background:hsl(${hue},70%,62%)"></div>
+      <div class="ti-body">
+        <div class="ti-title">${track.title}</div>
+        <div class="ti-meta">${track.artist}${track.styles?.[0] ? ' · ' + track.styles[0] : ''}</div>
+      </div>
+      <div class="ti-year">${track.year || '—'}</div>
+    </div>`;
+  }).join('');
+
+  trackList.querySelectorAll('.ti').forEach(el => {
+    el.addEventListener('click', () => {
+      const track = S.collection.find(t => t.id === parseInt(el.dataset.id));
+      if (track) setAnchor(track);
+    });
+  });
+}
+
+// ── Style chips ───────────────────────────────────────────────────────────────
+function buildStyleChips() {
+  const counts = {};
+  S.collection.forEach(t => (t.styles || []).forEach(s => {
+    counts[s] = (counts[s] || 0) + 1;
+  }));
+
+  styleChips.innerHTML = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 18)
+    .map(([s]) => `<button class="chip" data-s="${s}">${s}</button>`)
+    .join('');
+
+  styleChips.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const s = btn.dataset.s;
+      if (S.selectedStyles.has(s)) { S.selectedStyles.delete(s); btn.classList.remove('on'); }
+      else                          { S.selectedStyles.add(s);    btn.classList.add('on');    }
+      S.anchorTrack = null;
+      applyFilter();
+    });
+  });
+}
+
+// ── Palette wheel ─────────────────────────────────────────────────────────────
+function buildPalette() {
+  const counts = {};
+  S.collection.forEach(t => (t.styles || []).forEach(s => {
+    counts[s] = (counts[s] || 0) + 1;
+  }));
+
+  const hasStyles = Object.keys(counts).length > 0;
+
+  if (!hasStyles) {
+    // CSV upload: no styles — use Label as color axis
+    S.collection.forEach(t => {
+      if (t.label) counts[t.label] = (counts[t.label] || 0) + 1;
+    });
+    S._colorByLabel = true;
+  } else {
+    S._colorByLabel = false;
+  }
+
+  paletteStyles = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([s]) => s);
+  paletteCounts = counts;
+
+  const section = document.getElementById('palette-section');
+  if (!paletteStyles.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  document.querySelector('#palette-section .panel-label').textContent =
+    (hasStyles ? 'Palette — drag to repaint' : 'Labels — drag to repaint');
+
+  paletteStyles.forEach(s => {
+    if (customHues[s] === undefined) customHues[s] = rawStyleHue(s);
+  });
+
+  drawWheel();
+  renderPaletteChips();
+}
+
+function drawWheel() {
+  const wc = document.getElementById('color-wheel');
+  if (!wc) return;
+  const wctx = wc.getContext('2d');
+  const cx = WHEEL_SIZE / 2, cy = WHEEL_SIZE / 2;
+  wctx.clearRect(0, 0, WHEEL_SIZE, WHEEL_SIZE);
+
+  // Color ring — drawn as thin radial spokes
+  for (let a = 0; a < 360; a++) {
+    const rad = (a - 90) * Math.PI / 180;
+    wctx.beginPath();
+    wctx.moveTo(cx + Math.cos(rad) * INNER_R, cy + Math.sin(rad) * INNER_R);
+    wctx.lineTo(cx + Math.cos(rad) * OUTER_R, cy + Math.sin(rad) * OUTER_R);
+    wctx.strokeStyle = `hsl(${a},68%,60%)`;
+    wctx.lineWidth = 2.2;
+    wctx.stroke();
+  }
+
+  // Dark centre fill
+  wctx.beginPath();
+  wctx.arc(cx, cy, INNER_R - 1, 0, Math.PI * 2);
+  wctx.fillStyle = '#07070b';
+  wctx.fill();
+
+  // Style count label in centre
+  wctx.textAlign = 'center';
+  paletteStyles.forEach((style, i) => {
+    const hue = customHues[style];
+    const cnt = paletteCounts[style] || 0;
+    const y   = cy - 20 + i * 14;
+    wctx.font = '7px Courier New';
+    wctx.fillStyle = `hsl(${hue},68%,60%)`;
+    wctx.fillText(`${style.slice(0, 14)} · ${cnt}`, cx, y);
+  });
+
+  // Style dots on the ring
+  paletteStyles.forEach(style => {
+    const hue = customHues[style];
+    const rad = (hue - 90) * Math.PI / 180;
+    const x   = cx + Math.cos(rad) * MID_R;
+    const y   = cy + Math.sin(rad) * MID_R;
+
+    // Soft glow
+    const g = wctx.createRadialGradient(x, y, 0, x, y, 12);
+    g.addColorStop(0, `hsla(${hue},72%,62%,0.55)`);
+    g.addColorStop(1, `hsla(${hue},72%,62%,0)`);
+    wctx.beginPath(); wctx.arc(x, y, 12, 0, Math.PI * 2);
+    wctx.fillStyle = g; wctx.fill();
+
+    // Dot
+    wctx.beginPath(); wctx.arc(x, y, 7, 0, Math.PI * 2);
+    wctx.fillStyle = `hsl(${hue},68%,60%)`;
+    wctx.fill();
+    wctx.strokeStyle = '#f0ede8';
+    wctx.lineWidth = 1.5;
+    wctx.stroke();
+  });
+}
+
+function renderPaletteChips() {
+  const el = document.getElementById('palette-chips');
+  if (!el) return;
+  el.innerHTML = paletteStyles.map(s => {
+    const hue = customHues[s];
+    const cnt = paletteCounts[s] || 0;
+    return `<div class="pal-chip">
+      <span class="pal-swatch" style="background:hsl(${hue},68%,60%)"></span>
+      <span class="pal-name">${s}</span>
+      <span class="pal-count">${cnt}</span>
+    </div>`;
+  }).join('');
+}
+
+function hitPaletteStyle(mx, my) {
+  const cx = WHEEL_SIZE / 2, cy = WHEEL_SIZE / 2;
+  for (const style of paletteStyles) {
+    const hue = customHues[style];
+    const rad = (hue - 90) * Math.PI / 180;
+    const x   = cx + Math.cos(rad) * MID_R;
+    const y   = cy + Math.sin(rad) * MID_R;
+    if ((mx - x) ** 2 + (my - y) ** 2 < 144) return style;
+  }
+  return null;
+}
+
+// Wheel canvas interactions
+(function () {
+  const wc = document.getElementById('color-wheel');
+  if (!wc) return;
+
+  wc.addEventListener('mousedown', e => {
+    const r  = wc.getBoundingClientRect();
+    dragPaletteStyle = hitPaletteStyle(e.clientX - r.left, e.clientY - r.top);
+  });
+
+  wc.addEventListener('mousemove', e => {
+    if (!dragPaletteStyle) return;
+    const r   = wc.getBoundingClientRect();
+    const mx  = e.clientX - r.left - WHEEL_SIZE / 2;
+    const my  = e.clientY - r.top  - WHEEL_SIZE / 2;
+    const deg = Math.atan2(my, mx) * 180 / Math.PI + 90;
+    customHues[dragPaletteStyle] = ((deg % 360) + 360) % 360;
+    drawWheel();
+    renderPaletteChips();
+    render();
+  });
+
+  wc.addEventListener('mouseup',    () => { dragPaletteStyle = null; });
+  wc.addEventListener('mouseleave', () => { dragPaletteStyle = null; });
+})();
+
+// ── Anchor ────────────────────────────────────────────────────────────────────
+function setAnchor(track) {
+  S.anchorTrack = S.anchorTrack === track ? null : track;
+  renderList();
+  render();
+  updateHint();
+}
+
+function updateHint() {
+  const needsAnchor = ['synchronicity', 'year', 'style'].includes(S.activePreset);
+  if (!S.activePreset) {
+    hintEl.classList.remove('show');
+    return;
+  }
+  if (S.activePreset === 'space') {
+    const n = S.spiralTracks.filter(t => matchesPreset(t, null)).length;
+    hintEl.textContent = `${n} space tracks`;
+    hintEl.classList.add('show');
+    return;
+  }
+  if (!S.anchorTrack) {
+    hintEl.textContent = 'Click a track to set anchor';
+    hintEl.classList.add('show');
+    return;
+  }
+  const matches = S.spiralTracks.filter(t =>
+    t !== S.anchorTrack && matchesPreset(t, S.anchorTrack)
+  );
+  const labels = {
+    synchronicity: `${matches.length} tracks ±7yr from ${S.anchorTrack.year}`,
+    year:          `${matches.length} tracks within ±2yr of ${S.anchorTrack.year}`,
+    style:         `${matches.length} tracks sharing ${S.anchorTrack.styles?.[0] || 'style'}`,
+  };
+  hintEl.textContent = labels[S.activePreset] || '';
+  hintEl.classList.add('show');
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function buildStats() {
+  const yrs = S.collection.map(t => t.year).filter(y => y > 1920);
+  statsEl.innerHTML = `${S.collection.length} releases · ${Math.min(...yrs)}–${Math.max(...yrs)}`;
+}
+
+// ── Hover + click ─────────────────────────────────────────────────────────────
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  let best = null, bestD = Infinity;
+  S.dots.forEach(d => {
+    const dist = (d.x - mx) ** 2 + (d.y - my) ** 2;
+    if (dist < bestD) { bestD = dist; best = d; }
+  });
+
+  const hit = bestD < 400 ? best : null;
+
+  // During waypoint drag, find snap candidate (exclude origin/dest/existing waypoints)
+  if (S.dragWpIdx !== null) {
+    const excluded = new Set([
+      S.pathOrigin?.id, S.pathDest?.id,
+      ...S.pathWaypoints.map(t => t.id),
+    ]);
+    let snapBest = null, snapD = Infinity;
+    S.dots.forEach(d => {
+      if (excluded.has(d.track.id)) return;
+      const dist = (d.x - mx) ** 2 + (d.y - my) ** 2;
+      if (dist < snapD) { snapD = dist; snapBest = d; }
+    });
+    S.snapDot = snapBest;
+    render();
+    return;
+  }
+
+  if (hit !== S.hoveredDot) { S.hoveredDot = hit; render(); }
+
+  if (S.hoveredDot) {
+    const t   = S.hoveredDot.track;
+    const hue = styleHue(t.styles, t.label);
+    const cover = tooltip.querySelector('.tt-cover');
+    cover.src = t.cover_image || '';
+    cover.style.display = t.cover_image ? 'block' : 'none';
+    tooltip.querySelector('.tt-artist').textContent = t.artist || '—';
+    tooltip.querySelector('.tt-title').textContent  = t.title  || '—';
+    tooltip.querySelector('.tt-meta').innerHTML = [
+      t.year ? String(t.year) : null,
+      t.styles?.length ? `<span class="gdot" style="background:hsl(${hue},70%,62%)"></span>${t.styles[0]}` : null,
+      t.label || null,
+    ].filter(Boolean).join('<br>');
+
+    let tx = e.clientX + 16, ty = e.clientY - 10;
+    if (tx + 210 > window.innerWidth)  tx = e.clientX - 210;
+    if (ty + 150 > window.innerHeight) ty = e.clientY - 150;
+    tooltip.style.left = `${tx}px`;
+    tooltip.style.top  = `${ty}px`;
+    tooltip.classList.add('show');
+  } else {
+    tooltip.classList.remove('show');
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  S.hoveredDot = null;
+  S.snapDot    = null;
+  S.dragWpIdx  = null;
+  tooltip.classList.remove('show');
+  render();
+});
+
+canvas.addEventListener('mousedown', e => {
+  if (!S.pathMode || !S.pathWaypoints.length) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  S.pathWaypoints.forEach((track, i) => {
+    const d = S.dots.find(x => x.track === track);
+    if (!d) return;
+    if ((d.x - mx) ** 2 + (d.y - my) ** 2 < 144) S.dragWpIdx = i; // 12px
+  });
+});
+
+canvas.addEventListener('mouseup', () => {
+  if (S.dragWpIdx !== null && S.snapDot) {
+    S.pathWaypoints[S.dragWpIdx] = S.snapDot.track;
+    S.snapDot   = null;
+    S.dragWpIdx = null;
+    render();
+    updatePathPanel();
+  } else {
+    S.dragWpIdx = null;
+    S.snapDot   = null;
+  }
+});
+
+canvas.addEventListener('click', e => {
+  if (S.pathMode) {
+    if (!S.hoveredDot) return;
+    if (e.shiftKey) {
+      if (S.hoveredDot.track !== S.pathOrigin) {
+        S.pathDest = S.hoveredDot.track;
+        computePath();
+        render();
+        updatePathPanel();
+        renderPathStrip();
+      }
+    } else {
+      S.pathOrigin    = S.hoveredDot.track;
+      S.pathDest      = null;
+      S.pathWaypoints = [];
+      render();
+      updatePathPanel();
+      renderPathStrip();
+    }
+  } else {
+    if (S.hoveredDot) setAnchor(S.hoveredDot.track);
+  }
+});
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+document.getElementById('menu-btn').addEventListener('click', () => {
+  const open = sidePanel.classList.toggle('open');
+  document.getElementById('menu-btn').classList.toggle('open', open);
+  setTimeout(() => { sizeCanvas(); buildSpiral(); render(); }, 300);
+});
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = btn.dataset.preset;
+    const toggling = S.activePreset === p;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    S.activePreset = toggling ? null : p;
+    S.anchorTrack  = null;
+    if (!toggling) btn.classList.add('active');
+    renderList();
+    render();
+    updateHint();
+  });
+});
+
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    S.sortKey = btn.dataset.key;
+    applySort();
+  });
+});
+
+document.getElementById('dir-btn').addEventListener('click', () => {
+  S.sortDir = S.sortDir === 'asc' ? 'desc' : 'asc';
+  document.getElementById('dir-btn').textContent = S.sortDir === 'asc' ? '↑' : '↓';
+  applySort();
+});
+
+// ── Path strip ────────────────────────────────────────────────────────────────
+const pathStrip  = document.getElementById('path-strip');
+const psSlider   = document.getElementById('ps-slider');
+const psCount    = document.getElementById('ps-stop-count');
+const psCards    = document.getElementById('ps-cards');
+const psJourney  = document.getElementById('ps-journey');
+
+function renderPathStrip() {
+  const seq = pathSequence();
+  const active = S.pathMode && seq.length >= 2;
+  pathStrip.classList.toggle('show', active);
+
+  if (!active) return;
+
+  // Journey label
+  psJourney.textContent = seq
+    .map(t => `${t.styles?.[0] || '?'} ${t.year || '?'}`)
+    .join(' → ');
+
+  // Cards
+  psCards.innerHTML = seq.map((track, i) => {
+    const isOrigin = i === 0;
+    const isDest   = i === seq.length - 1;
+    const cls      = isOrigin ? 'origin' : isDest ? 'dest' : 'waypoint';
+    const hue      = styleHue(track.styles, track.label);
+    const arrow    = i < seq.length - 1
+      ? '<span class="pc-arrow">→</span>' : '';
+    return `<div class="pc ${cls}" data-id="${track.id}">
+      <img class="pc-cover" src="${track.cover_image || ''}" alt="" />
+      <div class="pc-info">
+        <div class="pc-title">${track.title}</div>
+        <div class="pc-year">${track.year || '—'}</div>
+        <div class="pc-style" style="color:hsl(${hue},68%,60%)">${track.styles?.[0] || '—'}</div>
+      </div>
+    </div>${arrow}`;
+  }).join('');
+
+  // Hover card → highlight dot on spiral
+  psCards.querySelectorAll('.pc').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      const id    = parseInt(el.dataset.id);
+      const found = S.dots.find(d => d.track.id === id);
+      if (found) { S.hoveredDot = found; render(); }
+    });
+    el.addEventListener('mouseleave', () => {
+      S.hoveredDot = null; render();
+    });
+  });
+}
+
+function updatePathPanel() {
+  const n = S.pathStops;
+  psCount.textContent  = `${n} stop${n > 1 ? 's' : ''}`;
+  psSlider.value       = n;
+  renderPathStrip();
+  // Hint
+  if (S.pathMode) {
+    if (!S.pathOrigin) {
+      hintEl.textContent = 'Click origin track'; hintEl.classList.add('show');
+    } else if (!S.pathDest) {
+      hintEl.textContent = 'Shift+click destination'; hintEl.classList.add('show');
+    } else {
+      hintEl.classList.remove('show');
+    }
+  }
+}
+
+document.getElementById('path-btn').addEventListener('click', () => {
+  S.pathMode      = !S.pathMode;
+  S.pathOrigin    = null;
+  S.pathDest      = null;
+  S.pathWaypoints = [];
+  S.dragWpIdx     = null;
+  S.snapDot       = null;
+  document.getElementById('path-btn').classList.toggle('active', S.pathMode);
+  if (!S.pathMode) { hintEl.classList.remove('show'); pathStrip.classList.remove('show'); }
+  render();
+  updatePathPanel();
+});
+
+psSlider.addEventListener('input', () => {
+  S.pathStops = parseInt(psSlider.value);
+  computePath();
+  render();
+  updatePathPanel();
+});
+
+window.addEventListener('resize', () => {
+  if (!S.collection.length) return;
+  sizeCanvas(); buildSpiral(); render();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init(data) {
+  S.collection = data;
+  applyFilter();
+  buildStyleChips();
+  buildPalette();
+  buildStats();
+}
+
+(async () => {
+  try {
+    const res = await fetch('data/collection.json');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    overlay.style.display = 'none';
+    init(data);
+  } catch {
+    overlay.style.display = 'flex';
+  }
+})();
+
+document.getElementById('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const text = ev.target.result;
+      const data = file.name.endsWith('.csv') ? parseDiscogsCSV(text) : JSON.parse(text);
+      if (!data.length) throw new Error('empty');
+      overlay.style.display = 'none';
+      init(data);
+    } catch { alert('Could not parse file. Try a Discogs CSV export or collection.json.'); }
+  };
+  reader.readAsText(file);
+});
+
+// ── CSV parser (Discogs collection export — tab-separated) ───────────────────
+function parseDiscogsCSV(text) {
+  // Strip BOM, normalize line endings
+  const clean = text.replace(/^﻿/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = clean.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+
+  // Detect separator: tab-separated (Discogs default) or comma-separated
+  const sep = lines[0].includes('\t') ? '\t' : ',';
+
+  function splitLine(line) {
+    if (sep === '\t') return line.split('\t').map(s => s.trim());
+    // Comma: handle quoted fields
+    const out = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (c === ',' && !inQ) { out.push(cur); cur = ''; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out.map(s => s.trim());
+  }
+
+  const headers = splitLine(lines[0]).map(h => h.replace(/^﻿/, ''));
+  const col = key => headers.findIndex(h => h.toLowerCase() === key.toLowerCase());
+
+  const iCatalog    = col('Catalog#');
+  const iArtist     = col('Artist');
+  const iTitle      = col('Title');
+  const iLabel      = col('Label');
+  const iFormat     = col('Format');
+  const iRating     = col('Rating');
+  const iReleased   = col('Released') >= 0 ? col('Released') : col('release_year');
+  const iId         = col('release_id');
+  const iDateAdded  = col('Date Added');
+
+  return lines.slice(1).map((line, i) => {
+    const v   = splitLine(line);
+    const get = idx => (idx >= 0 ? v[idx] || '' : '');
+
+    const catno  = get(iCatalog);
+    const year   = parseInt(get(iReleased)) || null;
+    const m      = catno.match(/\d+/);
+    const rating = parseFloat(get(iRating)) || 0;
+
+    // Parse date_added to a timestamp for spree detection
+    const dateRaw   = get(iDateAdded);
+    const dateAdded = dateRaw ? new Date(dateRaw).getTime() : null;
+
+    return {
+      id:          parseInt(get(iId)) || (i + 1),
+      title:       get(iTitle),
+      artist:      get(iArtist),
+      year,
+      genre:       [],
+      styles:      [],
+      label:       get(iLabel),
+      format:      get(iFormat),
+      rating,
+      catno,
+      catno_num:   m ? parseInt(m[0]) : null,
+      date_added:  dateAdded,
+      cover_image: '',
+    };
+  }).filter(t => t.title);
+}
+</script>
+
+</body>
+</html>

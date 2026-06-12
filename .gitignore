@@ -1,5 +1,3 @@
-.claude/
 node_modules/
-loob/sessions.json
-loob/participants.csv
-loob/identity_map.json
+.env
+data/collection.json
