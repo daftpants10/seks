@@ -108,6 +108,7 @@
     #rmssd-btn   { margin-top:6px; background:none; border:1px solid #333; color:#555; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; transition:border-color 0.2s, color 0.2s; }
     #rmssd-btn.active { border-color:#ffcc00; color:#ffcc00; }
     #rmssd-bar-wrap { margin-top:8px; display:none; }
+    #rmssd-mini { font-size:16px; color:#888; margin-top:6px; display:none; letter-spacing:0.05em; }
     #rmssd-val  { font-size:clamp(40px,7vw,80px); font-weight:700; line-height:1; letter-spacing:-0.04em; }
     #rmssd-unit { font-size:12px; letter-spacing:0.1em; color:#555; margin-top:2px; }
     #rmssd-canvas { display:block; width:100%; height:36px; margin-top:6px; border-radius:4px; overflow:hidden; }
@@ -268,6 +269,7 @@
 <div id="top">
   <div>
     <div id="alpha-num">—</div>
+    <div id="rmssd-mini"></div>
     <canvas id="dfa-bar-canvas" height="72"></canvas>
     <div id="zone-word">—</div>
     <div id="zone-hint"></div>
@@ -567,8 +569,10 @@ async function initAudio() {
   if (!audioCtx) {
     audioCtx   = new (window.AudioContext||window.webkitAudioContext)()
     masterGain = audioCtx.createGain()
-    masterGain.gain.value = 0.9
+    masterGain.gain.value = 0
     masterGain.connect(audioCtx.destination)
+    if (audioCtx.state === 'suspended') audioCtx.resume()
+    startAmbientDrone()
   }
   if (trackArrayBuffer) {
     try {
@@ -579,11 +583,10 @@ async function initAudio() {
       return
     } catch(e) { console.warn('Decode failed:', e) }
   }
-  // Fallback metronome
+  // Fallback metronome (no track file) — drone already running, master gain stays at 0 until glow
   metroSource = audioCtx.createBufferSource()
   metroSource.buffer = buildMetronome(audioCtx)
   metroSource.loop = true; metroSource.connect(masterGain); metroSource.start()
-  audioCtx.suspend()
 }
 
 function startTrackSource() {
@@ -622,7 +625,7 @@ function startAmbientDrone() {
   lfo.type = 'sine'; lfo.frequency.value = 0.08
   lfoG.gain.value = 0.025
   lfo.connect(lfoG); lfoG.connect(ambientGain.gain); lfo.start()
-  ambientGain.gain.setTargetAtTime(0.07, audioCtx.currentTime, 2)
+  ambientGain.gain.setTargetAtTime(0.18, audioCtx.currentTime, 0.5)
 }
 
 function pauseAudio() {
@@ -1096,6 +1099,15 @@ function tick() {
         : currentZone.color
       document.documentElement.style.setProperty('--zone', col)
       document.documentElement.style.setProperty('--zone-dim', col+'20')
+      // always show RMSSD mini value alongside DFA
+      if (rmssdValue !== null) {
+        const rmEl = document.getElementById('rmssd-mini')
+        const rmz  = RMSSD_ZONES.find(z => rmssdValue >= z.min && rmssdValue < z.max) ?? RMSSD_ZONES[RMSSD_ZONES.length-1]
+        rmEl.textContent = `${Math.round(rmssdValue)} ms rmssd`
+        rmEl.style.color = rmz.color
+        rmEl.style.display = 'block'
+      }
+
       if (!useRMSSD) {
         document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(2)
         drawDFABar(dfaAlpha)
