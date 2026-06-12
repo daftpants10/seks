@@ -546,9 +546,39 @@ document.getElementById('complete').addEventListener('click', () => {
 // Stop mode-select div from reacting to clicks on its children (input / buttons)
 document.getElementById('mode-select').addEventListener('click', e => e.stopPropagation())
 
+let previewCtx = null, previewSrc = null, previewGain = null
+
+function stopPreview() {
+  if (previewSrc) { try { previewSrc.stop() } catch {} previewSrc = null }
+  if (previewGain) { try { previewGain.disconnect() } catch {} previewGain = null }
+}
+
+async function playPreview(buf) {
+  stopPreview()
+  if (!previewCtx) return
+  if (previewCtx.state !== 'running') await previewCtx.resume()
+  try {
+    const decoded = await previewCtx.decodeAudioData(buf.slice(0))
+    const src  = previewCtx.createBufferSource()
+    const gain = previewCtx.createGain()
+    src.buffer = decoded
+    gain.gain.value = 0.75
+    src.connect(gain); gain.connect(previewCtx.destination)
+    const offset = Math.min(30, decoded.duration * 0.08)
+    src.start(0, offset, 5)
+    gain.gain.setTargetAtTime(0, previewCtx.currentTime + 4, 0.4)
+    previewSrc = src; previewGain = gain
+    src.onended = () => { previewSrc = null; document.getElementById('track-status').textContent = document.getElementById('track-status').textContent.replace(' ▶ preview', '') }
+  } catch(e) { console.warn('preview failed:', e) }
+}
+
 function selectTrack(n) {
   selectedTrack = n
   document.querySelectorAll('.track-btn').forEach((b, i) => b.classList.toggle('selected', i + 1 === n))
+  // Create preview context immediately inside user gesture so Safari allows audio
+  stopPreview()
+  if (!previewCtx || previewCtx.state === 'closed') previewCtx = new (window.AudioContext||window.webkitAudioContext)()
+  previewCtx.resume()
   const st = document.getElementById('track-status')
   st.textContent = `loading seks_track_${n}…`
   trackArrayBuffer = null; decodedTrack = null; trackFetching = true
@@ -558,9 +588,10 @@ function selectTrack(n) {
     .then(r => { if (!r.ok) throw 0; return r.arrayBuffer() })
     .then(b => {
       trackArrayBuffer = b; trackFetching = false
-      st.textContent = `seks_track_${n} · ready`
+      st.textContent = `seks_track_${n} · ready  ▶ preview`
       document.getElementById('btn-simple').disabled = false
       document.getElementById('btn-full').disabled   = false
+      playPreview(b)
     })
     .catch(() => {
       trackFetching = false
@@ -627,6 +658,7 @@ async function initAudio() {
   }
   // Always await resume — context starts suspended on Safari/iOS
   if (audioCtx.state !== 'running') await audioCtx.resume()
+  stopPreview(); if (previewCtx) { try { previewCtx.close() } catch {} previewCtx = null }
   if (!ambientGain) startAmbientDrone()
   if (trackArrayBuffer) {
     try {
