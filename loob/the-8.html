@@ -52,6 +52,7 @@
     #alpha-num { font-size:clamp(56px,10vw,104px); font-weight:700; line-height:1; color:var(--zone); transition:color 2s; letter-spacing:-0.04em; }
     #zone-word  { font-size:clamp(13px,2vw,18px); letter-spacing:0.22em; color:var(--zone); transition:color 2s; margin-top:2px; }
     #zone-hint  { font-size:10px; letter-spacing:0.18em; color:var(--zone); opacity:0.6; margin-top:3px; min-height:14px; transition:color 2s; text-transform:uppercase; }
+    #zone-dist  { font-size:10px; letter-spacing:0.12em; color:#555; margin-top:4px; min-height:14px; }
     #play-state { font-size:11px; color:#555; margin-top:6px; letter-spacing:0.1em; }
     #top-right  { text-align:right; }
     #ws-dot     { font-size:11px; color:#444; }
@@ -268,6 +269,7 @@
     <div id="alpha-num">—</div>
     <div id="zone-word">—</div>
     <div id="zone-hint"></div>
+    <div id="zone-dist"></div>
     <div id="rmssd-bar-wrap">
       <div id="rmssd-val" style="color:#ffcc00">—</div>
       <div id="rmssd-unit">ms RMSSD</div>
@@ -529,6 +531,7 @@ function resetSession() {
   ZONES.forEach(z => phaseTime[z.name] = 0)
   dfaHistory.length = 0
   rrHistory.splice(0)
+  ambientGain = null
   restartTrackSource()
 }
 
@@ -542,7 +545,7 @@ navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:12
 // ═══════════════════════════════════════════════
 // Audio
 // ═══════════════════════════════════════════════
-let audioCtx, masterGain, trackSource, metroSource
+let audioCtx, masterGain, trackSource, metroSource, ambientGain
 let trackArrayBuffer = null, trackLoaded = false, decodedTrack = null
 
 function buildMetronome(ctx) {
@@ -591,7 +594,9 @@ function startTrackSource() {
   trackSource.start()
   trackLoaded = true
   audioPaused = true
-  audioCtx.suspend()  // silent until glow
+  masterGain.gain.value = 0
+  if (audioCtx.state === 'suspended') audioCtx.resume()
+  startAmbientDrone()
 }
 
 function restartTrackSource() {
@@ -599,14 +604,34 @@ function restartTrackSource() {
   startTrackSource()
 }
 
+function startAmbientDrone() {
+  if (ambientGain) return
+  ambientGain = audioCtx.createGain()
+  ambientGain.gain.value = 0
+  ambientGain.connect(audioCtx.destination)
+  [[55,0.5],[110,0.32],[165,0.18]].forEach(([freq, w]) => {
+    const osc = audioCtx.createOscillator()
+    const g   = audioCtx.createGain()
+    osc.type = 'sine'; osc.frequency.value = freq
+    g.gain.value = w
+    osc.connect(g); g.connect(ambientGain); osc.start()
+  })
+  const lfo = audioCtx.createOscillator()
+  const lfoG = audioCtx.createGain()
+  lfo.type = 'sine'; lfo.frequency.value = 0.08
+  lfoG.gain.value = 0.025
+  lfo.connect(lfoG); lfoG.connect(ambientGain.gain); lfo.start()
+  ambientGain.gain.setTargetAtTime(0.07, audioCtx.currentTime, 2)
+}
+
 function pauseAudio() {
   if (audioPaused || !audioCtx) return
-  audioPaused = true; audioCtx.suspend()
+  audioPaused = true
 }
 
 function resumeAudio() {
   if (!audioPaused || !audioCtx) return
-  audioPaused = false; audioCtx.resume()
+  audioPaused = false
 }
 
 // ═══════════════════════════════════════════════
@@ -1040,6 +1065,24 @@ function tick() {
         if (!audioPaused) pauseAudio()
       }
 
+      // Continuous gain: soft fade-in when approaching zone, hard silence when grace expired
+      if (masterGain && audioCtx) {
+        let targetGain = 0
+        if (!hasReal) {
+          targetGain = 0
+        } else if (isGlow) {
+          targetGain = 0.9
+        } else if (outOfZoneSec < modeGrace) {
+          // approaching or grace period — whisper preview based on proximity
+          const dist = useRMSSD
+            ? Math.max(0, RMSSD_GLOW - rmssdValue) / RMSSD_GLOW
+            : (dfaAlpha >= DFA_HIGH ? dfaAlpha - DFA_HIGH : Math.max(0, DFA_LOW - dfaAlpha))
+          const proximity = Math.max(0, 1 - dist / 0.3)
+          targetGain = 0.14 * proximity
+        }
+        masterGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, isGlow ? 0.8 : 0.4)
+      }
+
       if (!completeFired) {
         if (!audioPaused) songProgress += dt
         if (songProgress >= modeDuration) { showComplete(); return }
@@ -1054,9 +1097,20 @@ function tick() {
         document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(3)
         const hint = currentZone.name === 'STABLE' ? 'breathe deeper' : currentZone.name === 'TENSION' ? 'move faster' : ''
         document.getElementById('zone-hint').textContent = hint
+        // proximity distance label
+        const distEl = document.getElementById('zone-dist')
+        if (isGlow) {
+          distEl.textContent = ''
+        } else if (dfaAlpha >= DFA_HIGH) {
+          distEl.textContent = `${(dfaAlpha - DFA_HIGH).toFixed(2)} above zone`
+        } else {
+          distEl.textContent = `${(DFA_LOW - dfaAlpha).toFixed(2)} below zone`
+        }
       } else {
         drawRMSSDBar(rmssdValue)
         document.getElementById('zone-hint').textContent = rmssdValue < RMSSD_GLOW ? 'relax · breathe slower' : ''
+        const distEl = document.getElementById('zone-dist')
+        distEl.textContent = isGlow ? '' : `${Math.round(RMSSD_GLOW - rmssdValue)}ms to glow`
       }
       document.getElementById('zone-word').textContent = isGlow ? 'glow' : 'flow'
       const st = document.getElementById('play-state')
