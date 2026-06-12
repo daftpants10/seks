@@ -223,10 +223,16 @@ app.post('/api/generate-draft', async (req, res) => {
     return `## ${e.title || '(untitled)'} (${date})\n${body}`;
   }).join('\n\n');
 
-  const prompt = `You are helping a researcher share their thesis progress with friends and family.
+  const prompt = `You are helping a researcher share their progress with friends and family.
 Write a short update (150-250 words) in first person, warm and accessible (no academic jargon),
-synthesising the following research entries. Focus on the narrative arc — what changed, what was learned, what's next.
+synthesising the following research entries. Focus on the narrative arc: what changed, what was learned, what is next.
 Start with a suggested title on the first line, then a blank line, then the body.
+
+Style rules (follow these strictly):
+- No em dashes. Use commas, colons, or full stops instead.
+- No rhetorical negations of the form "not X, but Y" or "it is not about X". State things directly and positively.
+- No hedging phrases like "much bigger", "everything changed", "turned into something".
+- Write in plain, direct sentences. Say what happened and what it meant.
 
 Entries:
 ${entriesText}`;
