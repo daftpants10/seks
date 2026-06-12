@@ -1,5 +1,16 @@
 [
   {
+    "id": 9,
+    "date": "2026-03-01",
+    "title": "The Regenerative Dancefloor",
+    "body": "Over the past two months, I've been pulling together the public face of a system I've been building around the o-o stick game, movement, and music. The work started as scattered research and has become something I can actually show people.\n\nThe breakthrough came in recognizing that everything connects: the eight cheat codes (movement prompts), the eight sekstapes (sonic environments), the eight case studies in dancefloor design, and the spaces themselves all map onto each other. Once I saw that pattern, I rewrote almost everything to make it visible.\n\nI built a portfolio site called Experience Design Studios. It's eight pages, each one showing a different approach to \"listening to your body together.\" Each page has its code, its corresponding music embedded live, a room description, and visual references. The whole thing runs on a single principle: we shape spaces, and spaces shape us back.\n\nThen I got serious about the language. I removed every defensive phrase, every \"not this, but that\" construction. I swapped \"parties\" for \"activations\" to signal that these are functional gatherings, not just social events. I cut the scaffolding that explained things and let the material speak.\n\nThe work split into two tracks: one path became an art installation at Tryp Expo, the other a fourteen-day study at FU Berlin tracking what happens to people's nervous systems inside these regenerative dancefloors. I drew that fork, mapped the feedback loop, and put the timeline in front of it.\n\nWhat's next is running both experiments and watching what the data tells me about how movement, sound, and space actually change how we feel.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-12 at 17.39.48.png"
+    ],
+    "project": "loob"
+  },
+  {
     "id": 8,
     "date": "2026-04-01",
     "title": "Time Compass: Making Music Navigation Visible",
