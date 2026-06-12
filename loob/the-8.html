@@ -961,7 +961,10 @@ function parseHR(event) {
     const ms=(d.getUint16(offset,true)/1024)*1000; offset+=2
     if(ms>300&&ms<2000){rrBuffer.push(ms);if(rrBuffer.length>512)rrBuffer.shift();rrNew++;rrBatch.push(Math.round(ms))}
   }
-  if(rrBatch.length) rrHistory.push({ t: Date.now(), rr: rrBatch })
+  if(rrBatch.length) {
+    rrHistory.push({ t: Date.now(), rr: rrBatch })
+    h10Active = true; mockMode = false
+  }
   if(rrNew>=8){
     rrNew=0
     rmssdValue = computeRMSSD(rrBuffer.slice(-64))
@@ -1023,7 +1026,7 @@ function tick() {
       }
 
       // Gate: real signal only; glow plays, flow counts down then stops
-      const hasReal = !mockMode
+      const hasReal = useRMSSD ? h10Active : !mockMode
       if (hasReal) {
         if (isGlow) {
           if (!firstGlowTime) firstGlowTime = songProgress
