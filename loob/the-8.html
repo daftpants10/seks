@@ -53,6 +53,7 @@
     #zone-word  { font-size:clamp(13px,2vw,18px); letter-spacing:0.22em; color:var(--zone); transition:color 2s; margin-top:2px; }
     #zone-hint  { font-size:10px; letter-spacing:0.18em; color:var(--zone); opacity:0.6; margin-top:3px; min-height:14px; transition:color 2s; text-transform:uppercase; }
     #zone-dist  { font-size:10px; letter-spacing:0.12em; color:#555; margin-top:4px; min-height:14px; }
+    #dfa-bar-canvas { display:block; width:100%; height:36px; margin-top:6px; }
     #play-state { font-size:11px; color:#555; margin-top:6px; letter-spacing:0.1em; }
     #top-right  { text-align:right; }
     #ws-dot     { font-size:11px; color:#444; }
@@ -267,6 +268,7 @@
 <div id="top">
   <div>
     <div id="alpha-num">—</div>
+    <canvas id="dfa-bar-canvas" height="72"></canvas>
     <div id="zone-word">—</div>
     <div id="zone-hint"></div>
     <div id="zone-dist"></div>
@@ -433,11 +435,10 @@ const RMSSD_ZONES = [
 ]
 
 const ZONES = [
-  { name:'CHAOS',    min:0,    max:0.5,  color:'#ff2200' },
-  { name:'TENSION',  min:0.5,  max:0.75, color:'#ff8800' },
-  { name:'ADAPTIVE', min:0.75, max:1.0,  color:'#00ff88' },
-  { name:'STABLE',   min:1.0,  max:1.25, color:'#0088ff' },
-  { name:'RIGID',    min:1.25, max:2.0,  color:'#aa44ff' },
+  { name:'RECOVERING', min:0,    max:0.5,  color:'#ff3300' },
+  { name:'REGULAR',    min:0.5,  max:0.75, color:'#ffcc00' },
+  { name:'ADAPTIVE',   min:0.75, max:1.0,  color:'#00ff88' },
+  { name:'TENSION',    min:1.0,  max:2.0,  color:'#8855ff' },
 ]
 const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0]
 
@@ -1094,10 +1095,10 @@ function tick() {
       document.documentElement.style.setProperty('--zone', col)
       document.documentElement.style.setProperty('--zone-dim', col+'20')
       if (!useRMSSD) {
-        document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(3)
-        const hint = currentZone.name === 'STABLE' ? 'breathe deeper' : currentZone.name === 'TENSION' ? 'move faster' : ''
-        document.getElementById('zone-hint').textContent = hint
-        // proximity distance label
+        document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(2)
+        drawDFABar(dfaAlpha)
+        const hints = { TENSION:'relax · re-cycle', REGULAR:'move more · vary rhythm', RECOVERING:'slow down · soften joints' }
+        document.getElementById('zone-hint').textContent = hints[currentZone.name] || ''
         const distEl = document.getElementById('zone-dist')
         if (isGlow) {
           distEl.textContent = ''
@@ -1148,6 +1149,67 @@ function computeRMSSD(rr) {
   let sum = 0
   for (let i = 1; i < rr.length; i++) sum += (rr[i] - rr[i-1]) ** 2
   return Math.sqrt(sum / (rr.length - 1))
+}
+
+const DFA_BAR_MAX = 1.5
+function drawDFABar(val) {
+  const cv  = document.getElementById('dfa-bar-canvas')
+  const dpr = window.devicePixelRatio || 1
+  cv.width  = cv.offsetWidth * dpr
+  cv.height = 72 * dpr
+  const ctx = cv.getContext('2d')
+  const W = cv.width, H = cv.height
+  const barH = Math.round(H * 0.42), barY = Math.round(H * 0.3)
+
+  const grad = ctx.createLinearGradient(0, 0, W, 0)
+  grad.addColorStop(0,    '#ff2200')
+  grad.addColorStop(0.2,  '#ff6600')
+  grad.addColorStop(0.33, '#ffcc00')
+  grad.addColorStop(0.5,  '#00ff88')
+  grad.addColorStop(0.67, '#00ccff')
+  grad.addColorStop(0.83, '#0088ff')
+  grad.addColorStop(1,    '#aa44ff')
+  ctx.fillStyle = grad
+  ctx.beginPath()
+  ctx.roundRect(0, barY, W, barH, barH/2)
+  ctx.fill()
+
+  // glow zone highlight
+  const glowX1 = (DFA_LOW / DFA_BAR_MAX) * W
+  const glowX2 = (DFA_HIGH / DFA_BAR_MAX) * W
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)'
+  ctx.lineWidth = dpr
+  ctx.strokeRect(glowX1, barY - dpr, glowX2 - glowX1, barH + 2*dpr)
+
+  // tick labels
+  const ticks = [
+    { v:0.5,  label:'recovering' },
+    { v:0.75, label:'regular' },
+    { v:1.0,  label:'adaptive' },
+    { v:1.25, label:'tension' },
+  ]
+  ctx.font = `${9*dpr}px ui-monospace, monospace`
+  ctx.textAlign = 'center'
+  ticks.forEach(({ v, label }) => {
+    const x = (v / DFA_BAR_MAX) * W
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'
+    ctx.lineWidth = dpr
+    ctx.beginPath(); ctx.moveTo(x, barY + barH*0.2); ctx.lineTo(x, barY + barH*0.8); ctx.stroke()
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'
+    ctx.fillText(label, x, barY + barH + 11*dpr)
+  })
+
+  if (val == null) return
+  const nx = Math.min(val, DFA_BAR_MAX) / DFA_BAR_MAX * W
+  const triH = 8*dpr, triW = 6*dpr
+  ctx.fillStyle = '#fff'
+  ctx.beginPath()
+  ctx.moveTo(nx - triW/2, barY - 2*dpr)
+  ctx.lineTo(nx + triW/2, barY - 2*dpr)
+  ctx.lineTo(nx, barY + triH)
+  ctx.closePath(); ctx.fill()
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = dpr
+  ctx.beginPath(); ctx.moveTo(nx, barY); ctx.lineTo(nx, barY + barH); ctx.stroke()
 }
 
 function toggleRMSSD() {
