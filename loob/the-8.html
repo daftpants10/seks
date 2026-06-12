@@ -51,6 +51,7 @@
     #top { position:fixed; top:0; left:0; right:0; padding:22px 28px 80px; background:linear-gradient(to bottom,rgba(0,0,0,0.75),transparent); z-index:20; display:flex; align-items:flex-start; justify-content:space-between; }
     #alpha-num { font-size:clamp(56px,10vw,104px); font-weight:700; line-height:1; color:var(--zone); transition:color 2s; letter-spacing:-0.04em; }
     #zone-word  { font-size:clamp(13px,2vw,18px); letter-spacing:0.22em; color:var(--zone); transition:color 2s; margin-top:2px; }
+    #zone-hint  { font-size:10px; letter-spacing:0.18em; color:var(--zone); opacity:0.6; margin-top:3px; min-height:14px; transition:color 2s; text-transform:uppercase; }
     #play-state { font-size:11px; color:#555; margin-top:6px; letter-spacing:0.1em; }
     #top-right  { text-align:right; }
     #ws-dot     { font-size:11px; color:#444; }
@@ -79,6 +80,14 @@
     #complete-stats { font-size:13px; color:#555; letter-spacing:0.08em; line-height:2.2; border-top:1px solid #111; padding-top:18px; }
     #complete-stats span { color:#fff; }
     #complete-tap   { margin-top:36px; font-size:11px; color:#2a2a2a; letter-spacing:0.2em; text-align:center; }
+    /* ── demographics + save ──────────────────────── */
+    #demo-form      { margin-top:28px; border-top:1px solid #111; padding-top:28px; }
+    .demo-label     { font-size:10px; letter-spacing:0.2em; color:#444; margin-bottom:8px; text-transform:uppercase; }
+    .demo-input     { background:none; border:none; border-bottom:1px solid #1e1e1e; color:#fff; font-family:inherit; font-size:20px; padding:6px 0 10px; outline:none; width:100%; margin-bottom:22px; }
+    .demo-input::placeholder { color:#222; }
+    #save-btn       { background:none; border:1px solid #00ff88; color:#00ff88; font-family:inherit; font-size:11px; letter-spacing:0.22em; padding:16px 0; cursor:pointer; border-radius:3px; width:100%; margin-top:6px; text-transform:uppercase; transition:opacity 0.2s; }
+    #save-btn:disabled { opacity:0.3; cursor:default; }
+    #save-status    { font-size:10px; color:#555; letter-spacing:0.12em; margin-top:12px; text-align:center; min-height:14px; }
 
     #complete-about { margin-top:48px; border-top:1px solid #111; padding-top:32px; }
     .ca-section     { margin-bottom:28px; }
@@ -92,8 +101,27 @@
     .ca-credits     { font-size:11px; color:#333; letter-spacing:0.08em; line-height:2; margin-top:32px; padding-top:20px; border-top:1px solid #111; }
 
     #pose-cv  { position:fixed; inset:0; width:100%; height:100%; transform:scaleX(-1); z-index:16; pointer-events:none; display:none; }
-    #pose-btn { margin-top:8px; background:none; border:1px solid #333; color:#555; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; transition:border-color 0.2s, color 0.2s; }
+    #pose-btn    { margin-top:8px; background:none; border:1px solid #333; color:#555; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; transition:border-color 0.2s, color 0.2s; }
     #pose-btn.active { border-color:#00ff88; color:#00ff88; }
+    #rmssd-btn   { margin-top:6px; background:none; border:1px solid #333; color:#555; font-family:inherit; font-size:10px; letter-spacing:0.12em; padding:4px 10px; border-radius:3px; cursor:pointer; display:block; transition:border-color 0.2s, color 0.2s; }
+    #rmssd-btn.active { border-color:#ffcc00; color:#ffcc00; }
+    #rmssd-bar-wrap { margin-top:8px; display:none; }
+    #rmssd-val  { font-size:clamp(40px,7vw,80px); font-weight:700; line-height:1; letter-spacing:-0.04em; }
+    #rmssd-unit { font-size:12px; letter-spacing:0.1em; color:#555; margin-top:2px; }
+    #rmssd-canvas { display:block; width:100%; height:36px; margin-top:6px; border-radius:4px; overflow:hidden; }
+
+    /* consent screen */
+    #consent-screen { overflow-y:auto; align-items:flex-start; }
+    #consent-inner  { max-width:520px; width:100%; margin:0 auto; padding:44px 0 60px; }
+    .consent-info   { font-size:12px; color:#555; line-height:1.8; letter-spacing:0.03em; margin-bottom:32px; }
+    .cs-input       { width:100%; background:none; border:none; border-bottom:1px solid #1e1e1e; color:#fff; font-family:inherit; font-size:20px; padding:6px 0 10px; outline:none; margin-bottom:22px; display:block; }
+    .cs-input::placeholder { color:#222; }
+    .cs-select      { width:100%; background:#000; border:none; border-bottom:1px solid #1e1e1e; color:#fff; font-family:inherit; font-size:18px; padding:6px 0 10px; outline:none; margin-bottom:22px; display:block; appearance:none; }
+    .consent-check  { display:flex; gap:12px; align-items:flex-start; margin:28px 0 24px; cursor:pointer; }
+    .consent-check input { margin-top:3px; accent-color:#00ff88; flex-shrink:0; width:16px; height:16px; }
+    .consent-check span { font-size:12px; color:#555; line-height:1.7; letter-spacing:0.03em; }
+    .cs-begin-btn   { background:none; border:1px solid #00ff88; color:#00ff88; font-family:inherit; font-size:11px; letter-spacing:0.22em; padding:16px 0; cursor:pointer; border-radius:3px; width:100%; text-transform:uppercase; }
+    #cs-error       { font-size:10px; color:#ff4444; letter-spacing:0.12em; margin-top:12px; min-height:14px; }
   </style>
 </head>
 <body>
@@ -120,6 +148,86 @@
       <li><strong>flow</strong> — outside the zone. music stops after the grace period. change your movement. find your way back.</li>
     </ul>
     <div id="about-tap">tap to continue</div>
+  </div>
+</div>
+
+<!-- Screen 2b: consent + demographics -->
+<div id="consent-screen" class="overlay">
+  <div id="consent-inner">
+    <div class="ms-label" style="margin-bottom:18px;font-size:12px;letter-spacing:0.25em">the 8 — research study</div>
+    <p class="consent-info">You are invited to participate in a study on biometric movement and autonomic regulation. Your heart rate variability will be measured using a Polar H10 sensor. All data is stored locally and anonymised. You may stop at any time.</p>
+
+    <div class="ms-label">full name</div>
+    <input id="cs-name" class="cs-input" type="text" placeholder="—" autocomplete="off" spellcheck="false">
+
+    <div class="ms-label">date of birth</div>
+    <input id="cs-dob" class="cs-input" type="date">
+
+    <div class="ms-label">email</div>
+    <input id="cs-email" class="cs-input" type="email" placeholder="—" autocomplete="off">
+
+    <div class="ms-label">sex</div>
+    <select id="cs-sex" class="cs-select">
+      <option value="">—</option>
+      <option value="male">male</option>
+      <option value="female">female</option>
+      <option value="other">other</option>
+      <option value="prefer_not">prefer not to say</option>
+    </select>
+
+    <div class="ms-label">physical activity level</div>
+    <select id="cs-activity" class="cs-select">
+      <option value="">—</option>
+      <option value="sedentary">sedentary</option>
+      <option value="light">light (1–2x per week)</option>
+      <option value="moderate">moderate (3–4x per week)</option>
+      <option value="active">active (5+ per week)</option>
+    </select>
+
+    <div class="ms-label">movement or dance experience</div>
+    <select id="cs-movement" class="cs-select">
+      <option value="">—</option>
+      <option value="none">none</option>
+      <option value="some">some</option>
+      <option value="regular">regular practice</option>
+      <option value="professional">professional</option>
+    </select>
+
+    <div class="ms-label">medications affecting heart rate</div>
+    <select id="cs-meds" class="cs-select">
+      <option value="">—</option>
+      <option value="no">no</option>
+      <option value="yes">yes</option>
+    </select>
+
+    <div class="ms-label">flow arts practiced (e.g. poi, staff, hooping, juggling)</div>
+    <input id="cs-flow-arts" class="cs-input" type="text" placeholder="—" autocomplete="off" spellcheck="false">
+
+    <div class="ms-label">years practicing flow arts</div>
+    <input id="cs-flow-years" class="cs-input" type="number" min="0" max="80" step="0.5" placeholder="—">
+
+    <div class="ms-label">hours per week practicing flow arts</div>
+    <input id="cs-flow-hours" class="cs-input" type="number" min="0" max="168" step="0.5" placeholder="—">
+
+    <div class="ms-label" style="margin-top:28px">flow toy for this session</div>
+    <input id="cs-toy" class="cs-input" type="text" placeholder="stick, poi, hoop, staff, …" autocomplete="off" spellcheck="false">
+
+    <div class="ms-label">stress level today (1 = calm · 5 = high)</div>
+    <input id="cs-stress" class="cs-input" type="number" min="1" max="5" placeholder="—">
+
+    <div class="ms-label">sleep last night (hours)</div>
+    <input id="cs-sleep" class="cs-input" type="number" min="0" max="24" step="0.5" placeholder="—">
+
+    <div class="ms-label">last caffeine (hours ago)</div>
+    <input id="cs-caffeine" class="cs-input" type="number" min="0" max="48" step="0.5" placeholder="—">
+
+    <label class="consent-check">
+      <input type="checkbox" id="cs-consent">
+      <span>I have read the above information and give informed consent to participate in this research study.</span>
+    </label>
+
+    <button class="cs-begin-btn" onclick="beginConsent(event)">begin</button>
+    <div id="cs-error"></div>
   </div>
 </div>
 
@@ -159,6 +267,12 @@
   <div>
     <div id="alpha-num">—</div>
     <div id="zone-word">—</div>
+    <div id="zone-hint"></div>
+    <div id="rmssd-bar-wrap">
+      <div id="rmssd-val" style="color:#ffcc00">—</div>
+      <div id="rmssd-unit">ms RMSSD</div>
+      <canvas id="rmssd-canvas" height="72"></canvas>
+    </div>
     <div id="play-state">○ waiting</div>
   </div>
   <div id="top-right">
@@ -167,6 +281,7 @@
     <button id="h10-btn" onclick="connectH10()">⬡ CONNECT H10</button>
     <div id="h10-status"></div>
     <button id="pose-btn" onclick="togglePose()">◈ BODY</button>
+    <button id="rmssd-btn" onclick="toggleRMSSD()">◈ RMSSD</button>
   </div>
 </div>
 
@@ -189,7 +304,14 @@
     <div id="cz-bars"></div>
     <div id="cz-list"></div>
     <div id="complete-stats"></div>
-    <div id="complete-tap">tap to play again</div>
+
+    <!-- save section -->
+    <div id="save-section" onclick="event.stopPropagation()" style="margin-top:28px;border-top:1px solid #111;padding-top:24px;">
+      <button id="save-btn" onclick="saveAndDownload(event)">save + download</button>
+      <div id="save-status"></div>
+    </div>
+
+    <div id="complete-tap">tap anywhere to play again</div>
 
     <div id="complete-about">
 
@@ -299,6 +421,15 @@ const DFA_LOW = 0.75, DFA_HIGH = 1.0
 const HISTORY_SECS = 60, HISTORY_RATE = 4
 let SONG_DURATION = 240
 
+const RMSSD_GLOW = 45
+const RMSSD_MAX  = 90
+const RMSSD_ZONES = [
+  { label:'low',       min:0,  max:20, color:'#ff2200' },
+  { label:'moderate',  min:20, max:45, color:'#ffcc00' },
+  { label:'good',      min:45, max:65, color:'#00ff88' },
+  { label:'excellent', min:65, max:200,color:'#0088ff' },
+]
+
 const ZONES = [
   { name:'CHAOS',    min:0,    max:0.5,  color:'#ff2200' },
   { name:'TENSION',  min:0.5,  max:0.75, color:'#ff8800' },
@@ -318,7 +449,10 @@ let mockMode = false, mockT = 0, wsConnected = false
 let audioPaused = true, lastHistorySample = 0
 let currentMode = null, playerName = '', modeDuration = 240, modeGrace = 30
 let completeFired = false
-const dfaHistory = [], phaseTime = {}
+let participantId = null, participantBaseline = {}
+let sessionStartTime = null, sessionEndTime = null, firstGlowTime = null
+let signalMode = 'dfa', rmssdValue = null
+const dfaHistory = [], phaseTime = {}, rrHistory = []
 ZONES.forEach(z => phaseTime[z.name] = 0)
 
 // ═══════════════════════════════════════════════
@@ -333,16 +467,17 @@ document.getElementById('start').addEventListener('click', () => {
 
 document.getElementById('about').addEventListener('click', () => {
   document.getElementById('about').style.display = 'none'
-  document.getElementById('mode-select').style.display = 'flex'
-  document.getElementById('name-input').focus()
+  document.getElementById('consent-screen').style.display = 'flex'
 })
 
 document.getElementById('complete').addEventListener('click', () => {
+  participantId = null; participantBaseline = {}
+  sessionStartTime = null; sessionEndTime = null; firstGlowTime = null
+  rrHistory.splice(0)
   resetSession()
   document.getElementById('complete').style.display = 'none'
-  document.getElementById('mode-select').style.display = 'flex'
   document.getElementById('name-input').value = ''
-  document.getElementById('name-input').focus()
+  document.getElementById('consent-screen').style.display = 'flex'
   // re-enable mode buttons if a track is still loaded
   if (trackArrayBuffer) {
     document.getElementById('btn-simple').disabled = false
@@ -382,6 +517,9 @@ function selectMode(mode) {
   modeDuration = mode === 'simple' ? 60 : SONG_DURATION
   modeGrace    = mode === 'simple' ? 15 : 30
   completeFired = false
+  sessionStartTime = new Date().toISOString()
+  sessionEndTime   = null
+  firstGlowTime    = null
   document.getElementById('mode-select').style.display = 'none'
   initAudio().catch(e => console.warn('Audio:', e))
 }
@@ -390,6 +528,7 @@ function resetSession() {
   songProgress = 0; outOfZoneSec = 0; audioPaused = true; completeFired = false
   ZONES.forEach(z => phaseTime[z.name] = 0)
   dfaHistory.length = 0
+  rrHistory.splice(0)
   restartTrackSource()
 }
 
@@ -451,6 +590,7 @@ function startTrackSource() {
   trackSource.connect(masterGain)
   trackSource.start()
   trackLoaded = true
+  audioPaused = true
   audioCtx.suspend()  // silent until glow
 }
 
@@ -581,6 +721,7 @@ function drawPhaseBar() {
 // ═══════════════════════════════════════════════
 function showComplete() {
   completeFired = true
+  sessionEndTime = new Date().toISOString()
   if (!audioPaused) pauseAudio()
 
   const comp = document.getElementById('complete')
@@ -636,31 +777,116 @@ function showComplete() {
     `flow &nbsp;<span>${(total-glowTime).toFixed(0)}s</span><br>` +
     `α mean &nbsp;<span>${dfaMean}</span>`
 
-  saveSession(total, glowTime, glowPct, vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0)
+  document.getElementById('save-status').textContent = ''
+  document.getElementById('save-btn').disabled = false
 }
 
-async function saveSession(total, glowTime, glowPct, dfaMean) {
-  const session = {
-    name:        playerName,
-    mode:        currentMode,
-    track:       selectedTrack,
-    timestamp:   new Date().toISOString(),
-    modeDuration,
-    totalPlayTime: Math.round(total * 10) / 10,
-    glowTime:    Math.round(glowTime * 10) / 10,
-    glowPct,
-    phaseTime:   Object.fromEntries(Object.entries(phaseTime).map(([k,v]) => [k, Math.round(v*10)/10])),
-    dfaHistory:  dfaHistory.map(v => Math.round(v*1000)/1000),
-    dfaMean:     Math.round(dfaMean*1000)/1000,
+async function beginConsent(e) {
+  e.stopPropagation()
+  const name    = document.getElementById('cs-name').value.trim()
+  const dob     = document.getElementById('cs-dob').value
+  const consent = document.getElementById('cs-consent').checked
+  const errEl   = document.getElementById('cs-error')
+  if (!name)    { errEl.textContent = 'name required'; return }
+  if (!dob)     { errEl.textContent = 'date of birth required'; return }
+  if (!consent) { errEl.textContent = 'consent required to participate'; return }
+  errEl.textContent = 'registering...'
+
+  const age = dob ? Math.floor((Date.now() - new Date(dob)) / (365.25*24*3600*1000)) : null
+
+  participantBaseline = {
+    age,
+    sex:              document.getElementById('cs-sex').value      || null,
+    activityLevel:    document.getElementById('cs-activity').value || null,
+    movementExp:      document.getElementById('cs-movement').value || null,
+    medications:      document.getElementById('cs-meds').value     || null,
+    flowToy:          document.getElementById('cs-toy').value.trim()        || null,
+    flowArts:         document.getElementById('cs-flow-arts').value.trim()  || null,
+    flowYears:        document.getElementById('cs-flow-years').value   ? Number(document.getElementById('cs-flow-years').value)   : null,
+    flowHoursPerWeek: document.getElementById('cs-flow-hours').value   ? Number(document.getElementById('cs-flow-hours').value)   : null,
+    stress:           document.getElementById('cs-stress').value   ? Number(document.getElementById('cs-stress').value)   : null,
+    sleepHours:       document.getElementById('cs-sleep').value    ? Number(document.getElementById('cs-sleep').value)    : null,
+    caffeineHoursAgo: document.getElementById('cs-caffeine').value ? Number(document.getElementById('cs-caffeine').value) : null,
   }
+
   try {
-    await fetch('/sessions', {
+    const r = await fetch('/consent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(session)
+      body: JSON.stringify({
+        name, dob,
+        email:         document.getElementById('cs-email').value.trim() || null,
+        sex:           participantBaseline.sex,
+        activityLevel: participantBaseline.activityLevel,
+        movementExp:   participantBaseline.movementExp,
+        medications:   participantBaseline.medications,
+        consentAt:     new Date().toISOString(),
+      })
     })
-    console.log('session saved')
-  } catch(e) { console.warn('save session failed:', e) }
+    const data = await r.json()
+    participantId = data.participantId
+  } catch { participantId = null }
+
+  playerName = participantId ? `p${String(participantId).padStart(3,'0')}` : 'p_offline'
+  errEl.textContent = ''
+  document.getElementById('consent-screen').style.display = 'none'
+  document.getElementById('mode-select').style.display = 'flex'
+}
+
+async function saveAndDownload(e) {
+  e.stopPropagation()
+  const btn    = document.getElementById('save-btn')
+  const status = document.getElementById('save-status')
+  if (btn.disabled) return
+  btn.disabled = true
+  status.textContent = 'saving...'
+
+  const total    = Object.values(phaseTime).reduce((a,b)=>a+b,0)
+  const glowTime = phaseTime['ADAPTIVE'] || 0
+  const glowPct  = total ? Math.round((glowTime/total)*100) : 0
+  const vals     = dfaHistory.filter(v=>v>0)
+  const dfaMean  = vals.length ? Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*1000)/1000 : 0
+
+  const session = {
+    participantId,
+    mode:              currentMode,
+    signalMode,
+    track:             selectedTrack,
+    sessionDate:       sessionStartTime ? sessionStartTime.slice(0,10) : new Date().toISOString().slice(0,10),
+    sessionStart:      sessionStartTime,
+    sessionEnd:        sessionEndTime,
+    totalDurationS:    Math.round(total*10)/10,
+    timeToFirstGlowS:  firstGlowTime !== null ? Math.round(firstGlowTime*10)/10 : null,
+    baseline:          participantBaseline,
+    modeDuration,
+    glowTime:          Math.round(glowTime*10)/10,
+    glowPct,
+    phaseTime:         Object.fromEntries(Object.entries(phaseTime).map(([k,v])=>[k,Math.round(v*10)/10])),
+    dfaHistory:        dfaHistory.map(v=>Math.round(v*1000)/1000),
+    dfaMean,
+    rrHistory,
+  }
+
+  let savedId = participantId
+  try {
+    const res  = await fetch('/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(session) })
+    const data = await res.json()
+    savedId = data.participantId ?? savedId
+  } catch(err) { console.warn('save failed:', err) }
+
+  const pid  = 'p' + String(savedId || Date.now()).padStart(3,'0')
+  const base = `${pid}_${session.sessionDate}`
+
+  const blob = new Blob([JSON.stringify(session, null, 2)], {type:'application/json'})
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob); a.download = `${base}.json`; a.click()
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000)
+
+  const gc   = document.getElementById('complete-graph')
+  const imgA = document.createElement('a')
+  imgA.href = gc.toDataURL('image/png'); imgA.download = `${base}_graph.png`; imgA.click()
+
+  status.textContent = `saved · ${base}`
 }
 
 // ═══════════════════════════════════════════════
@@ -730,12 +956,15 @@ function parseHR(event) {
   const d=event.target.value, flags=d.getUint8(0), is16=flags&1, hasRR=(flags>>4)&1
   if(!hasRR) return
   let offset=is16?3:2
+  const rrBatch = []
   while(offset+1<d.byteLength){
     const ms=(d.getUint16(offset,true)/1024)*1000; offset+=2
-    if(ms>300&&ms<2000){rrBuffer.push(ms);if(rrBuffer.length>512)rrBuffer.shift();rrNew++}
+    if(ms>300&&ms<2000){rrBuffer.push(ms);if(rrBuffer.length>512)rrBuffer.shift();rrNew++;rrBatch.push(Math.round(ms))}
   }
+  if(rrBatch.length) rrHistory.push({ t: Date.now(), rr: rrBatch })
   if(rrNew>=8){
     rrNew=0
+    rmssdValue = computeRMSSD(rrBuffer.slice(-64))
     const alpha=computeDFA(rrBuffer)
     if(alpha!==null){
       dfaAlpha=Math.max(0.3,Math.min(1.8,alpha)); h10Active=true; mockMode=false
@@ -772,20 +1001,32 @@ function tick() {
 
   if (started && currentMode) {
     if (mockMode) dfaAlpha = mockDFA(dt)
-    if (dfaAlpha != null) {
-      if (now-lastHistorySample > 1000/HISTORY_RATE) {
-        dfaHistory.push(dfaAlpha)
-        if (dfaHistory.length > HISTORY_SECS*HISTORY_RATE) dfaHistory.shift()
-        lastHistorySample = now
-      }
-      currentZone = getZone(dfaAlpha)
-      const isGlow = dfaAlpha >= DFA_LOW && dfaAlpha < DFA_HIGH
-      phaseTime[currentZone.name] += dt
 
-      // Gate: real signal only (not mock); glow plays, flow counts down 30/15s then stops
+    // pick active signal
+    const useRMSSD  = signalMode === 'rmssd' && rmssdValue !== null
+    const activeVal = useRMSSD ? rmssdValue : dfaAlpha
+    const isGlow    = useRMSSD ? rmssdValue >= RMSSD_GLOW
+                               : (dfaAlpha !== null && dfaAlpha >= DFA_LOW && dfaAlpha < DFA_HIGH)
+
+    if (activeVal != null) {
+      if (!useRMSSD) {
+        if (now-lastHistorySample > 1000/HISTORY_RATE) {
+          dfaHistory.push(dfaAlpha)
+          if (dfaHistory.length > HISTORY_SECS*HISTORY_RATE) dfaHistory.shift()
+          lastHistorySample = now
+        }
+        currentZone = getZone(dfaAlpha)
+        phaseTime[currentZone.name] += dt
+      } else {
+        const rz = RMSSD_ZONES.find(z => rmssdValue >= z.min && rmssdValue < z.max) ?? RMSSD_ZONES[RMSSD_ZONES.length-1]
+        phaseTime[rz.label.toUpperCase()] = (phaseTime[rz.label.toUpperCase()] || 0) + dt
+      }
+
+      // Gate: real signal only; glow plays, flow counts down then stops
       const hasReal = !mockMode
       if (hasReal) {
         if (isGlow) {
+          if (!firstGlowTime) firstGlowTime = songProgress
           outOfZoneSec = 0
           if (audioPaused) resumeAudio()
         } else {
@@ -801,13 +1042,22 @@ function tick() {
         if (songProgress >= modeDuration) { showComplete(); return }
       }
 
-      const col = currentZone.color
+      const col = useRMSSD
+        ? (RMSSD_ZONES.find(z => rmssdValue >= z.min && rmssdValue < z.max) ?? RMSSD_ZONES[RMSSD_ZONES.length-1]).color
+        : currentZone.color
       document.documentElement.style.setProperty('--zone', col)
       document.documentElement.style.setProperty('--zone-dim', col+'20')
-      document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(3)
+      if (!useRMSSD) {
+        document.getElementById('alpha-num').textContent = dfaAlpha.toFixed(3)
+        const hint = currentZone.name === 'STABLE' ? 'breathe deeper' : currentZone.name === 'TENSION' ? 'move faster' : ''
+        document.getElementById('zone-hint').textContent = hint
+      } else {
+        drawRMSSDBar(rmssdValue)
+        document.getElementById('zone-hint').textContent = rmssdValue < RMSSD_GLOW ? 'relax · breathe slower' : ''
+      }
       document.getElementById('zone-word').textContent = isGlow ? 'glow' : 'flow'
       const st = document.getElementById('play-state')
-      if (!hasReal)                               { st.textContent='○ connect somasync';        st.style.color='#444' }
+      if (!hasReal)                               { st.textContent='○ connect h10';              st.style.color='#444' }
       else if (audioPaused && outOfZoneSec >= modeGrace) { st.textContent='■ stopped · find glow';  st.style.color='#ff2200' }
       else if (audioPaused)                       { st.textContent='○ enter glow to start';    st.style.color='#555' }
       else if (outOfZoneSec > 0)                  { st.textContent=`◌ ${Math.round(modeGrace-outOfZoneSec)}s`; st.style.color='#ff8800' }
@@ -832,6 +1082,84 @@ function tick() {
 wsFallback = setTimeout(() => { if (!wsConnected) enableMock() }, 6000)
 connectWS()
 requestAnimationFrame(tick)
+
+// ═══════════════════════════════════════════════
+// RMSSD mode
+// ═══════════════════════════════════════════════
+function computeRMSSD(rr) {
+  if (rr.length < 2) return null
+  let sum = 0
+  for (let i = 1; i < rr.length; i++) sum += (rr[i] - rr[i-1]) ** 2
+  return Math.sqrt(sum / (rr.length - 1))
+}
+
+function toggleRMSSD() {
+  signalMode = signalMode === 'rmssd' ? 'dfa' : 'rmssd'
+  const btn = document.getElementById('rmssd-btn')
+  btn.classList.toggle('active', signalMode === 'rmssd')
+  btn.textContent = signalMode === 'rmssd' ? '◈ RMSSD ON' : '◈ RMSSD'
+  document.getElementById('rmssd-bar-wrap').style.display = signalMode === 'rmssd' ? 'block' : 'none'
+  document.getElementById('alpha-num').style.display      = signalMode === 'rmssd' ? 'none'  : 'block'
+}
+
+function drawRMSSDBar(val) {
+  const cv  = document.getElementById('rmssd-canvas')
+  const dpr = window.devicePixelRatio || 1
+  cv.width  = cv.offsetWidth * dpr
+  cv.height = 72 * dpr
+  const ctx = cv.getContext('2d')
+  const W = cv.width, H = cv.height
+  const barH = Math.round(H * 0.42), barY = Math.round(H * 0.3)
+
+  // gradient bar
+  const grad = ctx.createLinearGradient(0, 0, W, 0)
+  grad.addColorStop(0,    '#ff2200')
+  grad.addColorStop(0.22, '#ff8800')
+  grad.addColorStop(0.38, '#ffcc00')
+  grad.addColorStop(0.55, '#00ff88')
+  grad.addColorStop(0.78, '#0088ff')
+  grad.addColorStop(1,    '#0044dd')
+  ctx.fillStyle = grad
+  ctx.beginPath()
+  const r = barH / 2
+  ctx.roundRect(0, barY, W, barH, r)
+  ctx.fill()
+
+  // zone tick marks + labels
+  const ticks = [{ v:20, label:'low' }, { v:45, label:'moderate' }, { v:65, label:'good' }, { v:RMSSD_MAX, label:'excellent' }]
+  ctx.font = `${9 * dpr}px ui-monospace, monospace`
+  ctx.textAlign = 'center'
+  ticks.forEach(({ v, label }) => {
+    const x = Math.min(v, RMSSD_MAX) / RMSSD_MAX * W
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)'
+    ctx.lineWidth = dpr
+    ctx.beginPath(); ctx.moveTo(x, barY + barH * 0.2); ctx.lineTo(x, barY + barH * 0.8); ctx.stroke()
+    ctx.fillStyle = 'rgba(255,255,255,0.45)'
+    ctx.fillText(label, x, barY + barH + 11 * dpr)
+  })
+
+  // needle
+  if (val === null) return
+  const nx = Math.min(Math.max(val, 0), RMSSD_MAX) / RMSSD_MAX * W
+  const triH = 8 * dpr, triW = 6 * dpr
+  ctx.fillStyle = '#fff'
+  ctx.beginPath()
+  ctx.moveTo(nx - triW/2, barY - 2*dpr)
+  ctx.lineTo(nx + triW/2, barY - 2*dpr)
+  ctx.lineTo(nx, barY + triH)
+  ctx.closePath()
+  ctx.fill()
+
+  // needle line
+  ctx.strokeStyle = '#fff'
+  ctx.lineWidth = dpr
+  ctx.beginPath(); ctx.moveTo(nx, barY); ctx.lineTo(nx, barY + barH); ctx.stroke()
+
+  // update value display
+  const rz = RMSSD_ZONES.find(z => val >= z.min && val < z.max) ?? RMSSD_ZONES[RMSSD_ZONES.length-1]
+  document.getElementById('rmssd-val').textContent = Math.round(val)
+  document.getElementById('rmssd-val').style.color = rz.color
+}
 
 // ═══════════════════════════════════════════════
 // MediaPipe Pose — toggle overlay
