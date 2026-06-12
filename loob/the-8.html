@@ -92,6 +92,15 @@
     #save-status    { font-size:10px; color:#555; letter-spacing:0.12em; margin-top:12px; text-align:center; min-height:14px; }
 
     #complete-about { margin-top:48px; border-top:1px solid #111; padding-top:32px; }
+    #post-q         { margin-top:28px; border-top:1px solid #111; padding-top:24px; }
+    .pq-item        { margin-bottom:22px; }
+    .pq-q           { font-size:11px; letter-spacing:0.1em; color:#888; margin-bottom:10px; }
+    .pq-row         { display:flex; align-items:center; gap:8px; }
+    .pq-hint        { font-size:9px; color:#333; letter-spacing:0.08em; flex-shrink:0; }
+    .pq-btns        { display:flex; gap:6px; }
+    .pq-btns button { width:38px; height:38px; background:none; border:1px solid #222; color:#444; font-family:inherit; font-size:13px; border-radius:3px; cursor:pointer; transition:border-color 0.15s, color 0.15s; }
+    .pq-btns button.sel { border-color:#00ff88; color:#00ff88; }
+    #pq-desc        { width:100%; box-sizing:border-box; background:none; border:1px solid #222; color:#ccc; font-family:inherit; font-size:12px; padding:10px 12px; border-radius:3px; resize:vertical; min-height:72px; margin-top:0; }
     .ca-section     { margin-bottom:28px; }
     .ca-label       { font-size:9px; letter-spacing:0.25em; color:#333; text-transform:uppercase; margin-bottom:10px; }
     .ca-body        { font-size:12px; color:#555; line-height:1.8; letter-spacing:0.03em; }
@@ -311,6 +320,42 @@
     <div id="cz-list"></div>
     <div id="complete-stats"></div>
 
+    <!-- post-questionnaire -->
+    <div id="post-q" onclick="event.stopPropagation()">
+      <div class="pq-item">
+        <div class="pq-q">how difficult did you find this game?</div>
+        <div class="pq-row">
+          <span class="pq-hint">very easy</span>
+          <div class="pq-btns" id="pq-difficulty">
+            <button onclick="setPQ('difficulty',1)">1</button>
+            <button onclick="setPQ('difficulty',2)">2</button>
+            <button onclick="setPQ('difficulty',3)">3</button>
+            <button onclick="setPQ('difficulty',4)">4</button>
+            <button onclick="setPQ('difficulty',5)">5</button>
+          </div>
+          <span class="pq-hint">very difficult</span>
+        </div>
+      </div>
+      <div class="pq-item">
+        <div class="pq-q">did the feedback help you improve your state?</div>
+        <div class="pq-row">
+          <span class="pq-hint">not at all</span>
+          <div class="pq-btns" id="pq-feedback">
+            <button onclick="setPQ('feedback',1)">1</button>
+            <button onclick="setPQ('feedback',2)">2</button>
+            <button onclick="setPQ('feedback',3)">3</button>
+            <button onclick="setPQ('feedback',4)">4</button>
+            <button onclick="setPQ('feedback',5)">5</button>
+          </div>
+          <span class="pq-hint">very much</span>
+        </div>
+      </div>
+      <div class="pq-item">
+        <div class="pq-q">how do you feel after having done this?</div>
+        <textarea id="pq-desc" placeholder="describe your experience…" onclick="event.stopPropagation()"></textarea>
+      </div>
+    </div>
+
     <!-- save section -->
     <div id="save-section" onclick="event.stopPropagation()" style="margin-top:28px;border-top:1px solid #111;padding-top:24px;">
       <button id="save-btn" onclick="saveAndDownload(event)">save + download</button>
@@ -455,6 +500,12 @@ let audioPaused = true, lastHistorySample = 0
 let currentMode = null, playerName = '', modeDuration = 240, modeGrace = 30
 let completeFired = false
 let participantId = null, participantBaseline = {}
+let postQ = { difficulty: null, feedback: null, description: '' }
+
+function setPQ(field, val) {
+  postQ[field] = val
+  document.querySelectorAll(`#pq-${field} button`).forEach((b, i) => b.classList.toggle('sel', i + 1 === val))
+}
 let sessionStartTime = null, sessionEndTime = null, firstGlowTime = null
 let signalMode = 'dfa', rmssdValue = null
 const dfaHistory = [], phaseTime = {}, rrHistory = []
@@ -752,6 +803,9 @@ function showComplete() {
   completeFired = true
   sessionEndTime = new Date().toISOString()
   if (!audioPaused) pauseAudio()
+  postQ = { difficulty: null, feedback: null, description: '' }
+  document.querySelectorAll('#pq-difficulty button, #pq-feedback button').forEach(b => b.classList.remove('sel'))
+  const descEl = document.getElementById('pq-desc'); if (descEl) descEl.value = ''
 
   const comp = document.getElementById('complete')
   comp.style.display = 'flex'
@@ -876,6 +930,8 @@ async function saveAndDownload(e) {
   const vals     = dfaHistory.filter(v=>v>0)
   const dfaMean  = vals.length ? Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*1000)/1000 : 0
 
+  postQ.description = (document.getElementById('pq-desc')?.value || '').trim()
+
   const session = {
     participantId,
     mode:              currentMode,
@@ -887,6 +943,7 @@ async function saveAndDownload(e) {
     totalDurationS:    Math.round(total*10)/10,
     timeToFirstGlowS:  firstGlowTime !== null ? Math.round(firstGlowTime*10)/10 : null,
     baseline:          participantBaseline,
+    postQ:             { ...postQ },
     modeDuration,
     glowTime:          Math.round(glowTime*10)/10,
     glowPct,
@@ -1142,6 +1199,10 @@ function tick() {
       renderPyramid(pct, isGlow, col)
     } else {
       renderPyramid(songProgress/modeDuration, false, '#444')
+      // H10 connected but DFA still calibrating — play at minimum so audio isn't silent
+      if (masterGain && audioCtx && h10Active) {
+        masterGain.gain.setTargetAtTime(0.05, audioCtx.currentTime, 0.3)
+      }
     }
   } else {
     renderPyramid(0, false, '#333')

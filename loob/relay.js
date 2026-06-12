@@ -32,11 +32,13 @@ const CSV_HEADERS = [
   'flow_arts','flow_years','flow_hours_per_week',
   'stress','sleep_hours','caffeine_hours_ago',
   'glow_time_s','glow_pct','dfa_mean',
-  'chaos_s','tension_s','adaptive_s','stable_s','rigid_s'
+  'chaos_s','tension_s','adaptive_s','stable_s','rigid_s',
+  'difficulty','feedback_helped','post_description'
 ].join(',') + '\n'
 
 function appendCSV(participantId, s) {
   const b = s.baseline || {}
+  const pq = s.postQ || {}
   const row = [
     participantId,
     s.mode ?? '',
@@ -66,6 +68,9 @@ function appendCSV(participantId, s) {
     s.phaseTime?.ADAPTIVE ?? '',
     s.phaseTime?.STABLE   ?? '',
     s.phaseTime?.RIGID    ?? '',
+    pq.difficulty ?? '',
+    pq.feedback   ?? '',
+    `"${(pq.description||'').replace(/"/g,'""')}"`,
   ].join(',') + '\n'
   if (!fs.existsSync(CSV_FILE)) fs.writeFileSync(CSV_FILE, CSV_HEADERS)
   fs.appendFileSync(CSV_FILE, row)
