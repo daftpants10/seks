@@ -1,5 +1,16 @@
 [
   {
+    "id": 8,
+    "date": "2020-05-05",
+    "title": "How We Inherit the Way We Listen",
+    "body": "My interest in minimal electronic music had always felt personal, a taste I couldn't fully explain. Then I read Judith Becker's work on listening habitus in Ben Ratliff's seminar at NYU and found the explanation I was looking for. Becker showed that listening is absorbed like an accent, taken in unconsciously from the people and places around you. You carry your listening forward without realising it. When I mapped my own patterns backward through my life, I found something underneath personal preference: a thread running from where I came from.\n\nThat thread became concrete when I wrote my Music Histories paper on rominimal. Tracing the Romanian minimal aesthetic across a century, from Brancusi's sculpture to George Enescu's violin compositions to jazz musician Johnny Raducanu to the electronic producers of today, I kept finding the same reductionist impulse: amplification of effect through reduction of means. Each generation inherited it and applied it to whatever sounds were available to them. The theorist Eyerman and Jamison call this mobilizing tradition, connecting a usable past with the present. Rominimal was proof that listening cultures have memory, and that memory passes forward across generations and mediums. If it worked for a whole country, it worked for a person too. Every listener carries threads from their own origin point. That realisation became the foundation of Time Compass.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-12 at 12.37.10.png"
+    ],
+    "project": "time-compass"
+  },
+  {
     "id": 7,
     "date": "2018-02-01",
     "title": "How Context, Why Context",
