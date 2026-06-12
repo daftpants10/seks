@@ -486,8 +486,8 @@ const RMSSD_ZONES = [
 const ZONES = [
   { name:'RECOVERING', min:0,    max:0.5,  color:'#ff3300' },
   { name:'REGULAR',    min:0.5,  max:0.75, color:'#ffcc00' },
-  { name:'ADAPTIVE',   min:0.75, max:1.0,  color:'#00ff88' },
-  { name:'TENSION',    min:1.0,  max:2.0,  color:'#8855ff' },
+  { name:'ADAPTIVE',   min:0.75, max:1.25, color:'#00ff88' },
+  { name:'TENSION',    min:1.25, max:2.0,  color:'#8855ff' },
 ]
 const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0]
 
@@ -618,7 +618,6 @@ function resetSession() {
   ZONES.forEach(z => phaseTime[z.name] = 0)
   dfaHistory.length = 0; dfaLog.length = 0; rmssdHistory.length = 0
   rrHistory.splice(0)
-  ambientGain = null
   restartTrackSource()
 }
 
@@ -632,7 +631,7 @@ navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:12
 // ═══════════════════════════════════════════════
 // Audio
 // ═══════════════════════════════════════════════
-let audioCtx, masterGain, trackSource, metroSource, ambientGain
+let audioCtx, masterGain, trackSource, metroSource
 let trackArrayBuffer = null, trackLoaded = false, decodedTrack = null
 
 function buildMetronome(ctx) {
@@ -659,7 +658,6 @@ async function initAudio() {
   // Always await resume — context starts suspended on Safari/iOS
   if (audioCtx.state !== 'running') await audioCtx.resume()
   stopPreview(); if (previewCtx) { try { previewCtx.close() } catch {} previewCtx = null }
-  if (!ambientGain) startAmbientDrone()
   if (trackArrayBuffer) {
     try {
       decodedTrack = await audioCtx.decodeAudioData(trackArrayBuffer.slice(0))
@@ -685,7 +683,6 @@ function startTrackSource() {
   trackLoaded = true
   audioPaused = true
   masterGain.gain.value = 0
-  startAmbientDrone()
 }
 
 function restartTrackSource() {
@@ -693,25 +690,6 @@ function restartTrackSource() {
   startTrackSource()
 }
 
-function startAmbientDrone() {
-  if (ambientGain) return
-  ambientGain = audioCtx.createGain()
-  ambientGain.gain.value = 0
-  ambientGain.connect(audioCtx.destination)
-  [[55,0.5],[110,0.32],[165,0.18]].forEach(([freq, w]) => {
-    const osc = audioCtx.createOscillator()
-    const g   = audioCtx.createGain()
-    osc.type = 'sine'; osc.frequency.value = freq
-    g.gain.value = w
-    osc.connect(g); g.connect(ambientGain); osc.start()
-  })
-  const lfo = audioCtx.createOscillator()
-  const lfoG = audioCtx.createGain()
-  lfo.type = 'sine'; lfo.frequency.value = 0.08
-  lfoG.gain.value = 0.025
-  lfo.connect(lfoG); lfoG.connect(ambientGain.gain); lfo.start()
-  ambientGain.gain.setTargetAtTime(0.18, audioCtx.currentTime, 0.5)
-}
 
 function pauseAudio() {
   if (audioPaused || !audioCtx) return
@@ -1229,7 +1207,7 @@ function tick() {
       else if (audioPaused && outOfZoneSec >= modeGrace) { st.textContent='■ stopped · find glow';  st.style.color='#ff2200' }
       else if (audioPaused)                       { st.textContent='○ enter glow to start';    st.style.color='#555' }
       else if (outOfZoneSec > 0)                  { st.textContent=`◌ ${Math.round(modeGrace-outOfZoneSec)}s`; st.style.color='#ff8800' }
-      else                                        { st.textContent='▶ playing';                st.style.color='#666' }
+      else                                        { st.textContent='▶ playing';                st.style.color='#00ff88' }
 
       const pct = Math.min(1, songProgress/modeDuration)
       document.getElementById('prog-fill').style.width = (pct*100).toFixed(1)+'%'
