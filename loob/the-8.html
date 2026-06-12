@@ -1126,15 +1126,11 @@ function tick() {
         if (!audioPaused) pauseAudio()
       }
 
-      // Continuous gain: soft fade-in when approaching zone, hard silence when grace expired
+      // Continuous gain: exponential falloff from zone, never fully silent while signal present
       if (masterGain && audioCtx) {
         let targetGain = 0
-        if (!hasReal) {
-          targetGain = 0
-        } else if (outOfZoneSec >= modeGrace) {
-          targetGain = 0  // grace expired — silence
-        } else {
-          // continuous distance-based volume: full in adaptive zone, fades out toward extremes
+        if (hasReal) {
+          // continuous distance-based volume — grace period only stops progress, not audio
           if (useRMSSD) {
             const dist = Math.max(0, RMSSD_GLOW - rmssdValue)
             targetGain = Math.max(0.05, 0.9 * Math.exp(-dist / 18))
