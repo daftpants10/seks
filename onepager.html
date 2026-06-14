@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BeReal for Audio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    color: #111;
+    width: 794px;
+    height: 1123px;
+    padding: 72px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .top {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  h1 {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  .tagline {
+    font-size: 16px;
+    color: #444;
+    line-height: 1.6;
+    max-width: 520px;
+  }
+
+  .tagline strong {
+    color: #111;
+    font-weight: 600;
+  }
+
+  .divider {
+    width: 40px;
+    height: 3px;
+    background: #111;
+    border-radius: 2px;
+  }
+
+  .why {
+    font-size: 15px;
+    color: #333;
+    line-height: 1.75;
+    max-width: 580px;
+  }
+
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .col h2 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 14px;
+  }
+
+  .col ol, .col ul {
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .col li {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.55;
+  }
+
+  .bottom {
+    border-top: 1px solid #eee;
+    padding-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .closing {
+    font-size: 18px;
+    font-weight: 600;
+    font-style: italic;
+    color: #111;
+  }
+
+  .build {
+    font-size: 12px;
+    color: #aaa;
+    text-align: right;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <h1>BeReal<br>for Audio</h1>
+  </div>
+
+  <p class="tagline">
+    Once a day, you record <strong>60 seconds</strong> of whatever you're hearing or feeling. No editing. Just you and a mic.
+  </p>
+
+  <div class="divider"></div>
+
+  <p class="why">
+    Music social media is all performance. Polished clips, curated playlists, aesthetic grids. Nobody shares the actual experience of being a music fan: the late-night rabbit hole, the song you've played 40 times this week, the half-formed feeling you can't name yet. This is the anti-curation layer. A journal, not a stage.
+  </p>
+
+  <div class="columns">
+    <div class="col">
+      <h2>How it works</h2>
+      <ol>
+        <li>Open the app, hit record, 60 seconds max</li>
+        <li>Capture whatever: what you're listening to, a voice memo of a feeling, ambient sound, a hum</li>
+        <li>It posts to your feed, chronologically</li>
+        <li>Your friends hear it</li>
+      </ol>
+    </div>
+    <div class="col">
+      <h2>Open questions</h2>
+      <ul>
+        <li>What's the interaction mechanic? If there are no likes or comments, what makes you feel heard?</li>
+        <li>What does your own history look like? That timeline might be the most compelling feature.</li>
+        <li>What gets someone to hit record for the first time?</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="bottom">
+  <p class="closing">What's the first thing you'd record?</p>
+  <p class="build">2-week prototype<br>Web app, works on your phone<br>Login. Record. Listen.</p>
+</div>
+
+</body>
+</html>
