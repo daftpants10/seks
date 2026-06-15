@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>arvy</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    min-height: 100dvh;
+    padding: 52px 24px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    max-width: 390px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .username {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+
+  .stats {
+    display: flex;
+    gap: 16px;
+  }
+
+  .stat {
+    font-size: 12px;
+    color: #444;
+  }
+
+  .stat span {
+    color: #888;
+    font-weight: 500;
+  }
+
+  /* Posts */
+  .posts {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .post {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .post-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .post-date {
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 0.02em;
+  }
+
+  .post-duration {
+    font-size: 11px;
+    color: #333;
+  }
+
+  /* Waveform */
+  .waveform-wrap {
+    position: relative;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .waveform {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    width: 100%;
+    height: 100%;
+  }
+
+  .waveform span {
+    display: block;
+    flex: 1;
+    border-radius: 2px;
+    background: #222;
+    transition: background 0.08s;
+    min-width: 0;
+  }
+
+  .waveform span.played {
+    background: #fff;
+  }
+
+  .waveform span.playing {
+    background: #fff;
+  }
+
+  /* Progress overlay */
+  .progress-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    pointer-events: none;
+  }
+
+  /* Post footer */
+  .post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Echo display */
+  .echo-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .echo-rings {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .echo-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #fff;
+    position: relative;
+    z-index: 2;
+  }
+
+  .echo-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .echo-label {
+    font-size: 11px;
+    color: #444;
+  }
+
+  /* Export / save */
+  .save-btn {
+    font-size: 11px;
+    color: #444;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    letter-spacing: 0.04em;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s;
+  }
+
+  .save-btn:active, .save-btn.saved {
+    color: #fff;
+  }
+
+  .save-btn.saved::before {
+    content: "saved to library  ";
+    color: #555;
+  }
+
+  /* Divider */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: #111;
+  }
+
+  /* Library section */
+  .library {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    color: #333;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .library-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .library-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #111;
+  }
+
+  .library-item-left {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .library-from {
+    font-size: 12px;
+    color: #666;
+  }
+
+  .library-date {
+    font-size: 10px;
+    color: #333;
+  }
+
+  .export-btn {
+    font-size: 10px;
+    color: #444;
+    background: none;
+    border: 1px solid #222;
+    border-radius: 4px;
+    padding: 4px 10px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .export-btn:active {
+    border-color: #555;
+    color: #fff;
+  }
+
+  .empty-library {
+    font-size: 12px;
+    color: #2a2a2a;
+    padding: 8px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="profile-header">
+  <div class="username">arvy</div>
+  <div class="stats">
+    <div class="stat"><span>12</span> sounds</div>
+    <div class="stat"><span>34</span> followers</div>
+    <div class="stat"><span>18</span> following</div>
+  </div>
+</div>
+
+<div class="posts" id="posts"></div>
+
+<div class="divider"></div>
+
+<div class="library">
+  <div class="section-label">Sample library</div>
+  <div class="library-items" id="libraryItems">
+    <div class="empty-library">sounds you save will appear here</div>
+  </div>
+</div>
+
+<script>
+  const postsData = [
+    {
+      id: 1,
+      date: "today, 8:14 am",
+      duration: "0:41",
+      durationSec: 41,
+      echoes: [18, 32, 9],
+      playedFraction: 0,
+      label: "morning coffee, radio on in the background"
+    },
+    {
+      id: 2,
+      date: "yesterday, 11:52 pm",
+      duration: "0:17",
+      durationSec: 17,
+      echoes: [24, 14],
+      playedFraction: 0,
+      label: "couldn't sleep, headphones in"
+    },
+    {
+      id: 3,
+      date: "jun 13, 3:06 pm",
+      duration: "0:58",
+      durationSec: 58,
+      echoes: [40, 22, 11, 6],
+      playedFraction: 0,
+      label: "on the train, found something"
+    }
+  ];
+
+  function makeWaveform(barCount, playedFraction) {
+    const wrap = document.createElement('div');
+    wrap.className = 'waveform-wrap';
+
+    const wf = document.createElement('div');
+    wf.className = 'waveform';
+
+    const playedBars = Math.floor(barCount * playedFraction);
+    for (let i = 0; i < barCount; i++) {
+      const bar = document.createElement('span');
+      const h = 4 + Math.pow(Math.random(), 0.7) * 42;
+      bar.style.height = h + 'px';
+      if (i < playedBars) bar.classList.add('played');
+      wf.appendChild(bar);
+    }
+
+    wrap.appendChild(wf);
+    return wrap;
+  }
+
+  function makeEchoRings(echoes) {
+    const wrap = document.createElement('div');
+    wrap.className = 'echo-rings';
+
+    const dot = document.createElement('div');
+    dot.className = 'echo-dot';
+    wrap.appendChild(dot);
+
+    const maxEcho = Math.max(...echoes);
+    echoes.forEach((e, i) => {
+      const ring = document.createElement('div');
+      ring.className = 'echo-ring';
+      const size = 10 + (e / maxEcho) * 16;
+      ring.style.width = size + 'px';
+      ring.style.height = size + 'px';
+      wrap.appendChild(ring);
+    });
+
+    return wrap;
+  }
+
+  const postsEl = document.getElementById('posts');
+  const libraryItems = document.getElementById('libraryItems');
+  let libraryEmpty = true;
+
+  postsData.forEach((post, idx) => {
+    const postEl = document.createElement('div');
+    postEl.className = 'post';
+
+    const meta = document.createElement('div');
+    meta.className = 'post-meta';
+    meta.innerHTML = `<span class="post-date">${post.date}</span><span class="post-duration">${post.duration}</span>`;
+
+    const wfWrap = makeWaveform(72, post.playedFraction);
+
+    // Simple play toggle on tap
+    wfWrap.addEventListener('click', () => {
+      const bars = wfWrap.querySelectorAll('.waveform span');
+      let anyPlayed = [...bars].some(b => b.classList.contains('played'));
+      if (anyPlayed) {
+        bars.forEach(b => b.classList.remove('played'));
+      } else {
+        const n = Math.floor(bars.length * (0.3 + Math.random() * 0.6));
+        bars.forEach((b, i) => {
+          if (i < n) b.classList.add('played');
+          else b.classList.remove('played');
+        });
+      }
+    });
+
+    const footer = document.createElement('div');
+    footer.className = 'post-footer';
+
+    const echoDisplay = document.createElement('div');
+    echoDisplay.className = 'echo-display';
+    echoDisplay.appendChild(makeEchoRings(post.echoes));
+
+    const totalEchoes = post.echoes.length;
+    const echoLabel = document.createElement('span');
+    echoLabel.className = 'echo-label';
+    echoLabel.textContent = `${totalEchoes} echo${totalEchoes !== 1 ? 's' : ''}`;
+    echoDisplay.appendChild(echoLabel);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'save-btn';
+    saveBtn.textContent = 'save to library';
+
+    saveBtn.addEventListener('click', () => {
+      if (saveBtn.classList.contains('saved')) return;
+      saveBtn.classList.add('saved');
+      saveBtn.textContent = '';
+
+      if (libraryEmpty) {
+        libraryItems.innerHTML = '';
+        libraryEmpty = false;
+      }
+
+      const item = document.createElement('div');
+      item.className = 'library-item';
+      item.innerHTML = `
+        <div class="library-item-left">
+          <span class="library-from">arvy · ${post.duration}</span>
+          <span class="library-date">${post.date}</span>
+        </div>
+        <button class="export-btn" onclick="this.textContent='exported'">export</button>
+      `;
+      libraryItems.appendChild(item);
+    });
+
+    footer.appendChild(echoDisplay);
+    footer.appendChild(saveBtn);
+
+    postEl.appendChild(meta);
+    postEl.appendChild(wfWrap);
+    postEl.appendChild(footer);
+
+    postsEl.appendChild(postEl);
+  });
+</script>
+
+</body>
+</html>
