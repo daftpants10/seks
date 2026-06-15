@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Echo Mechanic</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .post {
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #888;
+  }
+
+  .meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .username { font-size: 13px; font-weight: 500; }
+  .timestamp { font-size: 11px; color: #555; }
+
+  .waveform {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .waveform span {
+    display: block;
+    width: 3px;
+    border-radius: 2px;
+    background: #333;
+    flex-shrink: 0;
+    transition: background 0.1s;
+  }
+
+  .waveform span.played {
+    background: #fff;
+  }
+
+  .post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .duration { font-size: 11px; color: #555; }
+
+  /* Echo button area */
+  .echo-zone {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .echo-core {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    position: relative;
+    z-index: 10;
+    transition: transform 0.1s ease, background 0.1s ease;
+  }
+
+  .echo-zone.pressing .echo-core {
+    background: #fff;
+  }
+
+  /* Ripple rings */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.6);
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+    pointer-events: none;
+  }
+
+  /* Growing ring while holding */
+  .growing-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: width 0.05s linear, height 0.05s linear, opacity 0.05s;
+  }
+
+  /* Released ripple animation */
+  @keyframes release-ripple {
+    0%   { opacity: 0.7; }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  }
+
+  .echo-count {
+    font-size: 11px;
+    color: #555;
+    min-width: 20px;
+    text-align: right;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: #333;
+    text-align: center;
+    margin-top: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  .hint.active {
+    color: #555;
+  }
+
+  /* Persistent echoed rings */
+  .echoed-rings {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    pointer-events: none;
+  }
+
+  .echoed-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    transform: translate(-50%, -50%);
+    left: 0;
+    top: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="post">
+  <div class="post-header">
+    <div class="avatar">A</div>
+    <div class="meta">
+      <span class="username">andre</span>
+      <span class="timestamp">2 minutes ago</span>
+    </div>
+  </div>
+
+  <div class="waveform" id="waveform"></div>
+
+  <div class="post-footer">
+    <span class="duration">0:23</span>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span class="echo-count" id="echoCount">0</span>
+      <div class="echo-zone" id="echoZone">
+        <div class="echoed-rings" id="echoedRings"></div>
+        <div class="growing-ring" id="growingRing" style="width:10px;height:10px;opacity:0;"></div>
+        <div class="echo-core" id="echoCore"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="hint" id="hint">hold to echo</p>
+
+<script>
+  // Generate waveform bars
+  const waveform = document.getElementById('waveform');
+  const barCount = 60;
+  for (let i = 0; i < barCount; i++) {
+    const bar = document.createElement('span');
+    const h = 4 + Math.random() * 36;
+    bar.style.height = h + 'px';
+    if (i < 20) bar.classList.add('played');
+    waveform.appendChild(bar);
+  }
+
+  // Echo mechanic
+  const zone = document.getElementById('echoZone');
+  const growingRing = document.getElementById('growingRing');
+  const echoedRings = document.getElementById('echoedRings');
+  const echoCount = document.getElementById('echoCount');
+  const hint = document.getElementById('hint');
+
+  let pressing = false;
+  let pressStart = null;
+  let animFrame = null;
+  let totalEchoes = 0;
+  const MIN_MS = 80;
+  const MAX_MS = 1200;
+  const MAX_SIZE = 120; // px diameter at max hold
+
+  function startPress(e) {
+    e.preventDefault();
+    pressing = true;
+    pressStart = Date.now();
+    zone.classList.add('pressing');
+    hint.textContent = 'hold...';
+    hint.classList.add('active');
+    growingRing.style.opacity = '1';
+    animFrame = requestAnimationFrame(animate);
+  }
+
+  function animate() {
+    if (!pressing) return;
+    const elapsed = Date.now() - pressStart;
+    const t = Math.min(elapsed / MAX_MS, 1);
+    const size = 10 + t * (MAX_SIZE - 10);
+    growingRing.style.width = size + 'px';
+    growingRing.style.height = size + 'px';
+    animFrame = requestAnimationFrame(animate);
+  }
+
+  function endPress(e) {
+    if (!pressing) return;
+    e.preventDefault();
+    pressing = false;
+    cancelAnimationFrame(animFrame);
+    zone.classList.remove('pressing');
+
+    const elapsed = Date.now() - pressStart;
+    if (elapsed < MIN_MS) {
+      // Too short, reset
+      growingRing.style.opacity = '0';
+      growingRing.style.width = '10px';
+      growingRing.style.height = '10px';
+      hint.textContent = 'hold to echo';
+      hint.classList.remove('active');
+      return;
+    }
+
+    const t = Math.min(elapsed / MAX_MS, 1);
+    const finalSize = 10 + t * (MAX_SIZE - 10);
+
+    // Persist a ring at that size
+    const ring = document.createElement('div');
+    ring.className = 'echoed-ring';
+    ring.style.width = finalSize + 'px';
+    ring.style.height = finalSize + 'px';
+    echoedRings.appendChild(ring);
+
+    // Release ripple
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    ripple.style.width = finalSize + 'px';
+    ripple.style.height = finalSize + 'px';
+    ripple.style.animation = `release-ripple 0.6s ease-out forwards`;
+    zone.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 700);
+
+    // Reset growing ring
+    growingRing.style.opacity = '0';
+    growingRing.style.width = '10px';
+    growingRing.style.height = '10px';
+
+    totalEchoes++;
+    echoCount.textContent = totalEchoes;
+    hint.textContent = totalEchoes === 1 ? 'echoed' : `echoed ${totalEchoes}x`;
+    hint.classList.add('active');
+  }
+
+  zone.addEventListener('mousedown', startPress);
+  zone.addEventListener('touchstart', startPress, { passive: false });
+  window.addEventListener('mouseup', endPress);
+  window.addEventListener('touchend', endPress, { passive: false });
+</script>
+
+</body>
+</html>
