@@ -1,5 +1,16 @@
 [
   {
+    "id": 12,
+    "date": "2026-06-01",
+    "title": "From Prototype to Live Measurement",
+    "body": "After weeks of design work, we've crossed the threshold into real fieldwork. The system is now a functioning research instrument, ready to collect data from actual participants starting this week.\n\nThe big shift came in two moves. First, we rebuilt the participant-facing experience around the o-o stick game and heart-rate feedback, tightening how people engage with the measurements so the data stays clean and responsive. Second, we locked in all the backend pieces: consent screens that capture what we need while keeping identities private, real-time displays of heart variability for facilitators (a gradient bar showing recovery and tension states), and automatic exports in research-ready formats.\n\nWe also made a choice about study size. Instead of guessing how many people we'd need, we're running a quick pilot with 10 participants first. We'll use those results to calculate the exact sample size for full power, aiming for around thirty participants across June. This keeps our logistics simple: one heart-rate sensor rotating across community sessions, each running fifteen minutes.\n\nThe ambient drone playing beneath everything, the proximity display showing distance to zones, the continuous heart-rhythm tracking from moment one—all of this is now live. The trial is the measurement.\n\nData collection begins June first. What comes next is fieldwork: showing up, collecting good data, and learning what the numbers tell us.",
+    "tags": [],
+    "images": [
+      "mushroom genesis.jpeg"
+    ],
+    "project": "stick"
+  },
+  {
     "id": 13,
     "date": "2026-06-16",
     "title": "Building the Research System",
@@ -9,18 +20,6 @@
       "Screenshot 2026-06-16 at 16.09.27.png",
       "Screenshot 2026-06-16 at 16.04.04.png",
       "Screenshot 2026-06-16 at 16.03.59.png"
-    ],
-    "project": "stick"
-  },
-  {
-    "id": 12,
-    "date": "2026-06-01",
-    "title": "From Prototype to Live Measurement",
-    "body": "After weeks of design work, we've crossed the threshold into real fieldwork. The system is now a functioning research instrument, ready to collect data from actual participants starting this week.\n\nThe big shift came in two moves. First, we rebuilt the participant-facing experience around the o-o stick game and heart-rate feedback, tightening how people engage with the measurements so the data stays clean and responsive. Second, we locked in all the backend pieces: consent screens that capture what we need while keeping identities private, real-time displays of heart variability for facilitators (a gradient bar showing recovery and tension states), and automatic exports in research-ready formats.\n\nWe also made a choice about study size. Instead of guessing how many people we'd need, we're running a quick pilot with 10 participants first. We'll use those results to calculate the exact sample size for full power, aiming for around thirty participants across June. This keeps our logistics simple: one heart-rate sensor rotating across community sessions, each running fifteen minutes.\n\nThe ambient drone playing beneath everything, the proximity display showing distance to zones, the continuous heart-rhythm tracking from moment one—all of this is now live. The trial is the measurement.\n\nData collection begins June first. What comes next is fieldwork: showing up, collecting good data, and learning what the numbers tell us.",
-    "tags": [],
-    "images": [
-      "mushroom genesis.jpeg",
-      "Screenshot 2026-06-03 at 14.25.16.png"
     ],
     "project": "stick"
   },
