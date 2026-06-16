@@ -24,15 +24,15 @@ const CSV_FILE     = path.join(__dirname, 'participants.csv')
 const IDENTITY_FILE = path.join(__dirname, 'identity_map.json')
 
 const CSV_HEADERS = [
-  'participant_id','mode','track',
+  'participant_id','trial_id','trial_label','condition',
   'session_date','session_start','session_end','total_duration_s',
-  'time_to_first_glow_s',
+  'time_to_first_flow_s',
   'age','sex','activity_level','movement_exp','medications',
   'flow_toy',
   'flow_arts','flow_years','flow_hours_per_week',
   'stress','sleep_hours','caffeine_hours_ago',
-  'glow_time_s','glow_pct','dfa_mean',
-  'chaos_s','tension_s','adaptive_s','stable_s','rigid_s',
+  'flow_time_s','flow_pct','dfa_mean',
+  'recovering_s','regular_s','adaptive_s','tension_s',
   'difficulty','feedback_helped','post_description'
 ].join(',') + '\n'
 
@@ -41,13 +41,14 @@ function appendCSV(participantId, s) {
   const pq = s.postQ || {}
   const row = [
     participantId,
-    s.mode ?? '',
-    s.track ?? '',
+    s.trial_id ?? '',
+    s.trial_label ?? '',
+    s.condition ?? '',
     s.sessionDate ?? '',
     s.sessionStart ?? '',
     s.sessionEnd ?? '',
     s.totalDurationS ?? s.totalPlayTime ?? '',
-    s.timeToFirstGlowS ?? '',
+    s.timeToFirstFlowS ?? s.timeToFirstGlowS ?? '',
     b.age ?? '',
     b.sex ?? '',
     b.activityLevel ?? '',
@@ -60,14 +61,13 @@ function appendCSV(participantId, s) {
     b.stress ?? '',
     b.sleepHours ?? '',
     b.caffeineHoursAgo ?? '',
-    s.glowTime ?? '',
-    s.glowPct ?? '',
+    s.flowTime ?? s.glowTime ?? '',
+    s.flowPct ?? s.glowPct ?? '',
     s.dfaMean ?? '',
-    s.phaseTime?.CHAOS    ?? '',
-    s.phaseTime?.TENSION  ?? '',
-    s.phaseTime?.ADAPTIVE ?? '',
-    s.phaseTime?.STABLE   ?? '',
-    s.phaseTime?.RIGID    ?? '',
+    s.phaseTime?.RECOVERING ?? '',
+    s.phaseTime?.REGULAR    ?? '',
+    s.phaseTime?.ADAPTIVE   ?? '',
+    s.phaseTime?.TENSION    ?? '',
     pq.difficulty ?? '',
     pq.feedback   ?? '',
     `"${(pq.description||'').replace(/"/g,'""')}"`,
@@ -159,7 +159,7 @@ const httpServer = http.createServer((req, res) => {
         sessions.push({ ...session, participantId, savedAt: new Date().toISOString() })
         fs.writeFileSync(SESSION_FILE, JSON.stringify(sessions, null, 2))
         appendCSV(participantId, session)
-        console.log(`\n💾 p${String(participantId).padStart(3,'0')} · ${session.mode} · glow ${session.glowTime}s · first glow ${session.timeToFirstGlowS}s`)
+        console.log(`\n💾 p${String(participantId).padStart(3,'0')} · ${session.trial_label||'?'} · ${session.condition||''} · flow ${session.flowTime??'?'}s · first flow ${session.timeToFirstFlowS??'?'}s`)
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({ ok: true, count: sessions.length, participantId }))
       } catch { res.writeHead(400); res.end('bad request') }
