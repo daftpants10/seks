@@ -1,5 +1,18 @@
 [
   {
+    "id": 13,
+    "date": "2026-06-16",
+    "title": "Building the Research System",
+    "body": "Over the past week, I've moved my flow arts project from a simple prototype of a game into something like a research study. The core question I'm investigating: does the type of (bio-) feedback (ambient versus metronome) help people stay in flow states during movement, and does holding a prop change that effect?\n\nThe breakthrough came in realizing I needed to move from a one-off experience to a structured four-trial design. Each participant now does the same movement twice with ambient music and with metronome music, alternating between using a prop (like a stick) and moving without one. I measure their heart rate variability to detect when they're in \"flow\"; that sweet spot of autonomic regulation where the music gates on — and collect questionnaire data before and after each trial.\n\nI've built the data pipeline: participants wear a Polar H10 chest strap or use a mobile app to stream heart data, and I'm tracking two signals in real time. The system automatically gates the audio volume up when someone enters the flow zone and down when they drift out, creating a kind of biofeedback loop. Everything gets saved as timestamped data: the raw heart intervals, the computed flow measurements, participant responses, even the music's volume over time.\n\nThe infrastructure is live on my server. Next, I'm recruiting flow arts practitioners to run through the study and begin collecting data. My focus now shifts from building to testing whether the system actually helps people stay in flow.",
+    "tags": [],
+    "images": [
+      "Screenshot 2026-06-16 at 16.09.27.png",
+      "Screenshot 2026-06-16 at 16.04.04.png",
+      "Screenshot 2026-06-16 at 16.03.59.png"
+    ],
+    "project": "stick"
+  },
+  {
     "id": 12,
     "date": "2026-06-01",
     "title": "From Prototype to Live Measurement",
