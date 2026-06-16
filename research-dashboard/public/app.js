@@ -459,19 +459,22 @@ function renderEditor(upd) {
 
     <div class="form-row">
       <label>Images</label>
-      ${!isPublished ? `
-        <div class="image-upload-area">
-          <input type="file" id="ed-image-file" accept="image/*" multiple style="display:none">
-          <button class="btn-sm" onclick="document.getElementById('ed-image-file').click()">+ Upload images</button>
-          <span id="upload-status" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
-        </div>` : ''}
+      <div class="image-upload-area">
+        <input type="file" id="ed-image-file" accept="image/*" multiple style="display:none">
+        <button class="btn-sm" onclick="document.getElementById('ed-image-file').click()">+ Upload images</button>
+        <span id="upload-status" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+      </div>
       <div id="ed-image-list" class="image-list"></div>
     </div>
 
     <div class="editor-actions">
-      ${!isPublished ? `<button class="btn-primary" onclick="saveDraft()">Save Draft</button>` : ''}
-      ${!isPublished ? `<button class="btn-success" onclick="publishUpdate()">Publish</button>` : '<span style="color:var(--success);font-size:13px;">✓ Published</span>'}
-      ${!isPublished ? `<button class="btn-danger btn-sm" onclick="deleteDraft()">Delete Draft</button>` : ''}
+      ${isPublished
+        ? `<button class="btn-sm" onclick="enablePublishedEdit(${upd.id})">Edit</button>
+           <button class="btn-sm" onclick="unpublishUpdate()">Unpublish</button>`
+        : `<button class="btn-primary" onclick="saveDraft()">Save Draft</button>
+           <button class="btn-success" onclick="publishUpdate()">Publish</button>
+           <button class="btn-danger btn-sm" onclick="deleteDraft()">Delete Draft</button>`
+      }
     </div>
     <div id="ed-status"></div>
   `;
@@ -634,6 +637,57 @@ async function deleteDraft() {
 }
 
 window.deleteDraft = deleteDraft;
+
+async function unpublishUpdate() {
+  if (!selectedUpdateId) return;
+  if (!confirm('Unpublish this update? It will become an editable draft again.')) return;
+  const statusEl = document.getElementById('ed-status');
+  try {
+    await api('POST', '/updates/' + selectedUpdateId + '/unpublish');
+    updates = await api('GET', '/updates');
+    renderUpdateList();
+    const upd = updates.find(u => u.id === selectedUpdateId);
+    if (upd) renderEditor(upd);
+    showStatus(statusEl, '✓ Unpublished. You can now edit and re-publish.', 'success');
+  } catch (e) {
+    showStatus(statusEl, '✗ ' + e.message, 'error');
+  }
+}
+
+window.unpublishUpdate = unpublishUpdate;
+
+async function saveAndRepublish() {
+  if (!selectedUpdateId) return;
+  const statusEl = document.getElementById('ed-status');
+  await saveDraft();
+  try {
+    await api('POST', '/updates/' + selectedUpdateId + '/publish');
+    updates = await api('GET', '/updates');
+    renderUpdateList();
+    const upd = updates.find(u => u.id === selectedUpdateId);
+    if (upd) renderEditor(upd);
+    showStatus(statusEl, '✓ Saved and re-published to GitHub.', 'success');
+  } catch (e) {
+    showStatus(statusEl, '✗ ' + e.message, 'error');
+  }
+}
+
+window.saveAndRepublish = saveAndRepublish;
+
+function enablePublishedEdit() {
+  document.getElementById('ed-title').removeAttribute('readonly');
+  document.getElementById('ed-date').removeAttribute('readonly');
+  document.getElementById('ed-body').removeAttribute('readonly');
+  document.getElementById('ed-project').removeAttribute('disabled');
+  document.getElementById('ed-tag-input').removeAttribute('disabled');
+  const actionsEl = document.querySelector('.editor-actions');
+  actionsEl.innerHTML = `
+    <button class="btn-primary" onclick="saveAndRepublish()">Save &amp; Re-publish</button>
+    <button class="btn-sm" onclick="unpublishUpdate()">Unpublish</button>
+  `;
+}
+
+window.enablePublishedEdit = enablePublishedEdit;
 
 document.getElementById('new-draft-btn').addEventListener('click', async () => {
   const title = prompt('Draft title:');
