@@ -502,7 +502,13 @@ document.getElementById('about').addEventListener('click', () => {
   document.getElementById('consent-screen').style.display = 'flex'
 })
 
-document.getElementById('complete').addEventListener('click', () => {
+document.getElementById('complete').addEventListener('click', async () => {
+  // capture postQ description and auto-save before resetting anything
+  const descEl = document.getElementById('pq-desc')
+  if (descEl) postQ.description = descEl.value.trim()
+  if (trialResults.length > 0) trialResults[trialResults.length - 1].postQ = { ...postQ }
+  await autoSave()
+
   document.getElementById('complete').style.display = 'none'
   resetSession()
   // reset per-trial logs
@@ -907,6 +913,48 @@ function showComplete() {
     somaSync_log: [...somaLog],
     postQ: { ...postQ },
   })
+}
+
+async function autoSave() {
+  const total   = Object.values(phaseTime).reduce((a,b)=>a+b,0)
+  const flowTime = phaseTime['ADAPTIVE'] || 0
+  const flowPct  = total ? Math.round((flowTime/total)*100) : 0
+  const vals     = dfaHistory.filter(v=>v>0)
+  const dfaMean  = vals.length ? Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*1000)/1000 : 0
+  const session = {
+    participantId,
+    baseline: participantBaseline,
+    trials: trialResults,
+    trial_id: currentTrial?.id ?? null,
+    trial_label: currentTrial?.label ?? null,
+    condition: currentTrial?.condition ?? null,
+    track: currentTrial?.trackN ?? null,
+    signalMode,
+    sessionDate: sessionStartTime ? sessionStartTime.slice(0,10) : new Date().toISOString().slice(0,10),
+    sessionStart: sessionStartTime,
+    sessionEnd: sessionEndTime,
+    totalDurationS: Math.round(total*10)/10,
+    timeToFirstFlowS: firstFlowTime !== null ? Math.round(firstFlowTime*10)/10 : null,
+    postQ: { ...postQ },
+    modeDuration,
+    flowTime: Math.round(flowTime*10)/10,
+    flowPct,
+    phaseTime: Object.fromEntries(Object.entries(phaseTime).map(([k,v])=>[k,Math.round(v*10)/10])),
+    dfaLog: [...dfaLog],
+    dfaHistory: dfaHistory.map(v=>Math.round(v*1000)/1000),
+    dfaMean,
+    rmssdHistory: [...rmssdHistory],
+    h10_rrHistory: [...rrHistory],
+    somaSync_log: [...somaLog],
+    savedAt: new Date().toISOString(),
+  }
+  try {
+    const res = await fetch('/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(session) })
+    const data = await res.json()
+    console.log(`✅ auto-saved trial ${currentTrialIdx + 1}, participant ${data.participantId}`)
+    const status = document.getElementById('save-status')
+    if (status) status.textContent = 'auto-saved ✓'
+  } catch(err) { console.warn('auto-save failed:', err) }
 }
 
 async function saveAndDownload(e) {
