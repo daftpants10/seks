@@ -457,10 +457,10 @@ const ZONES = [
 const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[0]
 
 const TRIALS = [
-  { id:1, label:'ambient',    trackN:1, condition:'with stick',    hasAudio:true, duration:180, grace:20 },
-  { id:2, label:'ambient',    trackN:1, condition:'without stick', hasAudio:true, duration:180, grace:20 },
-  { id:3, label:'metronome',  trackN:2, condition:'with stick',    hasAudio:true, duration:180, grace:20 },
-  { id:4, label:'metronome',  trackN:2, condition:'without stick', hasAudio:true, duration:180, grace:20 },
+  { id:1, label:'ambient',    trackN:3, condition:'with stick',    hasAudio:true, duration:180, grace:20 },
+  { id:2, label:'ambient',    trackN:3, condition:'without stick', hasAudio:true, duration:180, grace:20 },
+  { id:3, label:'metronome',  trackN:8, condition:'with stick',    hasAudio:true, duration:180, grace:20 },
+  { id:4, label:'metronome',  trackN:8, condition:'without stick', hasAudio:true, duration:180, grace:20 },
 ]
 let currentTrialIdx = 0, trialResults = []
 
