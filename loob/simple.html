@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>⦿-⦿ the game · simple</title>
+<style>
+  :root { --zone:#00ff88; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; background:#000; color:#fff; font-family:'SF Mono',ui-monospace,Menlo,monospace; overflow:hidden; -webkit-user-select:none; user-select:none; }
+  #cam { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); opacity:0.32; }
+  #pose-cv, #py { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; }
+  #pose-cv { transform:scaleX(-1); z-index:16; }
+  #py { z-index:14; }
+  #ring { position:fixed; inset:0; pointer-events:none; border:3px solid var(--zone); box-shadow:0 0 60px var(--zone) inset; transition:border-color 1.4s, box-shadow 1.4s; z-index:10; }
+
+  .overlay { position:fixed; inset:0; z-index:60; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.92); padding:32px; text-align:center; }
+  h1 { font-size:clamp(40px,9vw,80px); font-weight:700; letter-spacing:-0.02em; }
+  .sub { color:#777; font-size:13px; letter-spacing:0.24em; margin-top:14px; }
+  .hint { color:#444; font-size:11px; letter-spacing:0.2em; margin-top:40px; }
+
+  #song-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; max-width:520px; width:100%; margin-top:8px; }
+  .song { aspect-ratio:1; border:1px solid #222; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:300; color:#888; cursor:pointer; transition:all 0.2s; }
+  .song:hover, .song:active { border-color:var(--zone); color:var(--zone); }
+  .grid-label { font-size:11px; letter-spacing:0.24em; color:#555; margin-bottom:22px; }
+
+  /* live HUD */
+  #hud { position:fixed; top:0; left:0; right:0; z-index:30; padding:22px 26px; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
+  #zone-name { font-size:13px; letter-spacing:0.28em; color:var(--zone); transition:color 1s; }
+  #timer { font-size:13px; letter-spacing:0.18em; color:#666; }
+  #status-line { position:fixed; bottom:32px; left:0; right:0; text-align:center; z-index:30; font-size:12px; letter-spacing:0.24em; color:#555; pointer-events:none; }
+
+  /* complete */
+  #done { z-index:70; }
+  #done h2 { font-size:clamp(28px,6vw,48px); font-weight:700; color:var(--zone); margin-bottom:6px; }
+  #done-meta { font-size:11px; letter-spacing:0.18em; color:#555; margin-bottom:26px; }
+  #done-bars { width:280px; max-width:80vw; height:8px; display:flex; border-radius:4px; overflow:hidden; margin-bottom:14px; }
+  #done-list { display:flex; flex-wrap:wrap; gap:10px 18px; justify-content:center; margin-bottom:30px; font-size:11px; letter-spacing:0.06em; }
+  .dl-item { display:flex; align-items:center; gap:6px; }
+  .dl-dot { width:8px; height:8px; border-radius:50%; }
+  #done-qr { width:160px; height:160px; background:#fff; padding:8px; border-radius:8px; margin:8px 0 12px; }
+  #done-qr-label { font-size:10px; letter-spacing:0.2em; color:#555; }
+  .restart { margin-top:30px; font-size:11px; letter-spacing:0.22em; color:#444; }
+</style>
+</head>
+<body>
+<video id="cam" autoplay playsinline muted></video>
+<canvas id="py"></canvas>
+<canvas id="pose-cv"></canvas>
+<div id="ring"></div>
+
+<!-- live HUD -->
+<div id="hud" style="display:none">
+  <div id="zone-name">FLOW</div>
+  <div id="timer">0:00</div>
+</div>
+<div id="status-line" style="display:none">move to keep the music alive</div>
+
+<!-- start / song select -->
+<div id="start" class="overlay">
+  <h1>⦿-⦿</h1>
+  <div class="sub">move your body · make a pyramid</div>
+  <div class="hint">tap a track to begin</div>
+  <div style="margin-top:30px">
+    <div class="grid-label">CHOOSE A TRACK</div>
+    <div id="song-grid"></div>
+  </div>
+</div>
+
+<!-- complete -->
+<div id="done" class="overlay" style="display:none">
+  <h2>your pyramid</h2>
+  <div id="done-meta"></div>
+  <div id="done-bars"></div>
+  <div id="done-list"></div>
+  <div id="done-qr-label">SEE THE COLLECTIVE ON YOUR PHONE</div>
+  <img id="done-qr" src="" alt="QR">
+  <div class="restart">tap anywhere to play again</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<script>
+// ═══════════════════════════════════════════════
+// Config
+// ═══════════════════════════════════════════════
+const ZONES = [
+  { name:'STILL',    min:0,    max:0.55, color:'#ffcc00' },  // too still — warming up
+  { name:'FLOW',     min:0.55, max:1.30, color:'#00ff88' },  // sustained, rhythmic movement
+  { name:'TENSION',  min:1.30, max:2.0,  color:'#8855ff' },  // frantic / erratic
+]
+const FLOW_LOW = 0.55, FLOW_HIGH = 1.30
+const SESSION_SECS = 90          // each walk-up session length
+const getZone = a => ZONES.find(z => a >= z.min && a < z.max) ?? ZONES[ZONES.length-1]
+
+// ═══════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════
+let sessionId = null, playerActive = false
+let moveSignal = 0.8, currentZone = ZONES[1]
+let phaseTime = { STILL:0, FLOW:0, TENSION:0 }
+let sessionStart = 0, lastTick = 0, songProgress = 0
+let lanBase = null
+
+// movement tracking
+let prevLM = null, motionEMA = 0, motionVarEMA = 0
+
+// audio
+let audioCtx, masterGain, trackSource, decodedTrack = null, trackBuf = null
+
+// ═══════════════════════════════════════════════
+// LAN address (for the collective QR) + song grid
+// ═══════════════════════════════════════════════
+fetch('/whoami').then(r=>r.json()).then(d => { lanBase = `http://${d.ip}:${d.port}` }).catch(()=>{})
+
+const grid = document.getElementById('song-grid')
+for (let n=1;n<=8;n++){
+  const d=document.createElement('div'); d.className='song'; d.textContent=n
+  d.onclick = ()=>chooseSong(n)
+  grid.appendChild(d)
+}
+
+// ═══════════════════════════════════════════════
+// Camera + Pose
+// ═══════════════════════════════════════════════
+navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280} }, audio:false })
+  .then(s => document.getElementById('cam').srcObject = s)
+  .catch(()=> document.getElementById('cam').style.display='none')
+
+const POSE_LINKS = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]]
+const KEY_JOINTS = [11,12,13,14,15,16,23,24]
+let mpPose = null
+
+function loadPose(){
+  mpPose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` })
+  mpPose.setOptions({ modelComplexity:1, smoothLandmarks:true, enableSegmentation:false, minDetectionConfidence:0.5, minTrackingConfidence:0.5 })
+  mpPose.onResults(onPose)
+  schedulePose()
+}
+function schedulePose(){
+  const vid = document.getElementById('cam')
+  if (vid.readyState>=2){ mpPose.send({image:vid}).then(()=>setTimeout(schedulePose,50)) }
+  else setTimeout(schedulePose,100)
+}
+
+function onPose(results){
+  const cv=document.getElementById('pose-cv'), ctx=cv.getContext('2d')
+  const w=cv.width, h=cv.height
+  ctx.clearRect(0,0,w,h)
+  if(!results.poseLandmarks) { prevLM=null; return }
+  const lm=results.poseLandmarks
+
+  // ── movement magnitude from key joints ──
+  if (prevLM){
+    let m=0,c=0
+    KEY_JOINTS.forEach(i=>{
+      const a=lm[i], b=prevLM[i]
+      if(a&&b&&a.visibility>0.4){ m+=Math.hypot(a.x-b.x,a.y-b.y); c++ }
+    })
+    if(c){ const inst=m/c
+      motionEMA = motionEMA*0.85 + inst*0.15
+      motionVarEMA = motionVarEMA*0.9 + Math.abs(inst-motionEMA)*0.1
+    }
+  }
+  prevLM = lm.map(p=>({x:p.x,y:p.y,visibility:p.visibility}))
+
+  // ── draw skeleton in current zone color ──
+  const color=currentZone.color, dpr=window.devicePixelRatio||1
+  ctx.lineCap='round'; ctx.lineJoin='round'
+  ctx.strokeStyle=color; ctx.lineWidth=1.5*dpr; ctx.globalAlpha=0.3; ctx.setLineDash([3*dpr,6*dpr])
+  POSE_LINKS.forEach(([a,b])=>{ const pa=lm[a],pb=lm[b]; if(!pa||!pb||pa.visibility<0.4||pb.visibility<0.4)return
+    ctx.beginPath(); ctx.moveTo(pa.x*w,pa.y*h); ctx.lineTo(pb.x*w,pb.y*h); ctx.stroke() })
+  const lw=lm[15],rw=lm[16]
+  if(lw&&rw&&lw.visibility>0.4&&rw.visibility>0.4){ ctx.lineWidth=2.5*dpr; ctx.globalAlpha=0.55; ctx.setLineDash([5*dpr,5*dpr])
+    ctx.beginPath(); ctx.moveTo(lw.x*w,lw.y*h); ctx.lineTo(rw.x*w,rw.y*h); ctx.stroke() }
+  ctx.setLineDash([]); ctx.fillStyle=color; ctx.globalAlpha=0.4
+  KEY_JOINTS.concat([25,26,27,28]).forEach(i=>{ const p=lm[i]; if(!p||p.visibility<0.4)return
+    ctx.beginPath(); ctx.arc(p.x*w,p.y*h,2.5*dpr,0,Math.PI*2); ctx.fill() })
+  ctx.globalAlpha=1
+}
+
+function resizePoseCv(){ const cv=document.getElementById('pose-cv'); const dpr=window.devicePixelRatio||1
+  cv.width=window.innerWidth*dpr; cv.height=window.innerHeight*dpr }
+resizePoseCv(); window.addEventListener('resize',resizePoseCv)
+
+// ═══════════════════════════════════════════════
+// Map movement → pseudo-alpha (the flow signal)
+//   still  → ~0.4 (yellow)
+//   good rhythmic motion → 0.55–1.30 (green)
+//   frantic/erratic → >1.30 (purple)
+// ═══════════════════════════════════════════════
+function computeSignal(){
+  const level = Math.min(motionEMA / 0.020, 1.6)   // normalized motion 0..1.6
+  const erratic = Math.min(motionVarEMA / 0.010, 1.0)
+  let alpha
+  if (level < 0.25) alpha = 0.40 + level*0.6        // still → yellow
+  else alpha = 0.55 + Math.min(level,1.0)*0.7        // moving → into green
+  alpha += erratic * 0.5                              // erratic pushes toward tension
+  return Math.max(0, Math.min(1.9, alpha))
+}
+
+// ═══════════════════════════════════════════════
+// Audio
+// ═══════════════════════════════════════════════
+async function chooseSong(n){
+  document.querySelectorAll('.song').forEach(s=>s.style.pointerEvents='none')
+  try {
+    const r = await fetch(`/track?n=${n}`)
+    if(r.ok) trackBuf = await r.arrayBuffer()
+  } catch {}
+  await initAudio()
+  startSession(n)
+}
+
+async function initAudio(){
+  if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)()
+    masterGain=audioCtx.createGain(); masterGain.gain.value=0; masterGain.connect(audioCtx.destination) }
+  if(audioCtx.state!=='running') await audioCtx.resume()
+  if(trackBuf){
+    try { decodedTrack=await audioCtx.decodeAudioData(trackBuf.slice(0)) } catch(e){ console.warn('decode',e) }
+  }
+  if(decodedTrack){
+    trackSource=audioCtx.createBufferSource(); trackSource.buffer=decodedTrack; trackSource.loop=true
+    trackSource.connect(masterGain); trackSource.start()
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Session
+// ═══════════════════════════════════════════════
+function startSession(n){
+  sessionId = 'g'+Date.now().toString(36)+Math.floor(Math.random()*900+100)
+  playerActive = true
+  phaseTime = { STILL:0, FLOW:0, TENSION:0 }
+  sessionStart = performance.now(); lastTick = sessionStart; songProgress = 0
+  moveSignal = 0.8; motionEMA = 0; motionVarEMA = 0; prevLM = null
+  if(!mpPose) loadPose()
+  document.getElementById('start').style.display='none'
+  document.getElementById('done').style.display='none'
+  document.getElementById('hud').style.display='flex'
+  document.getElementById('status-line').style.display='block'
+}
+
+function endSession(){
+  playerActive = false
+  if(masterGain&&audioCtx) masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.4)
+  sendCollective(false)
+  showDone()
+}
+
+// ═══════════════════════════════════════════════
+// Collective stream (WebSocket → relay → collective viewers)
+// ═══════════════════════════════════════════════
+let ws=null, wsReady=false
+function connectWS(){
+  try {
+    ws = new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host)
+    ws.onopen = ()=> wsReady=true
+    ws.onclose = ()=>{ wsReady=false; setTimeout(connectWS,2000) }
+    ws.onerror = ()=>{}
+  } catch {}
+}
+connectWS()
+
+let lastSend=0
+function sendCollective(active){
+  if(!wsReady) return
+  const total = phaseTime.STILL+phaseTime.FLOW+phaseTime.TENSION || 1
+  const msg = { type:'pyramid', id:sessionId, active,
+    phases:{ STILL:phaseTime.STILL/total, FLOW:phaseTime.FLOW/total, TENSION:phaseTime.TENSION/total },
+    total: Math.round(total), zone: currentZone.name, signal: Math.round(moveSignal*100)/100,
+    t: Date.now() }
+  try { ws.send(JSON.stringify(msg)) } catch {}
+}
+
+// ═══════════════════════════════════════════════
+// Pyramid render (live, this player's own)
+// ═══════════════════════════════════════════════
+const pyCanvas=document.getElementById('py'), pyCtx=pyCanvas.getContext('2d')
+let pyAngle=0
+function resizePy(){ pyCanvas.width=window.innerWidth*devicePixelRatio; pyCanvas.height=window.innerHeight*devicePixelRatio }
+resizePy(); window.addEventListener('resize',resizePy)
+function rotY(v,a){ const[x,y,z]=v; return [x*Math.cos(a)+z*Math.sin(a),y,-x*Math.sin(a)+z*Math.cos(a)] }
+function proj(v,fov,cx,cy,s){ const[x,y,z]=v,d=z+fov; return [cx+(x/d)*fov*s,cy+(y/d)*fov*s] }
+function hex2rgba(h,a){ const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return `rgba(${r},${g},${b},${a})` }
+
+function renderPyramid(progress,isFlow,color){
+  const W=pyCanvas.width,H=pyCanvas.height
+  pyCtx.clearRect(0,0,W,H)
+  pyAngle += isFlow?0.003:0.009
+  const wobble = isFlow?0:Math.sin(Date.now()*0.0022)*0.06
+  const s=Math.min(W,H)*0.20, cx=W/2, cy=H*0.46, fov=4.5
+  const raw=[[0,-1,0],[-1,1,-1],[1,1,-1],[1,1,1],[-1,1,1]]
+  const rv=raw.map(v=>{const r=rotY(v,pyAngle);return[r[0],r[1]+wobble,r[2]]})
+  const pv=rv.map(v=>proj(v,fov,cx,cy,s))
+  if(progress>0.005){
+    const yc=-1+2*progress, sc=progress
+    const cutRaw=[[-sc,yc,-sc],[sc,yc,-sc],[sc,yc,sc],[-sc,yc,sc]]
+    const cpv=cutRaw.map(v=>{const r=rotY(v,pyAngle);return proj([r[0],r[1]+wobble,r[2]],fov,cx,cy,s)})
+    const apex=pv[0], opacity=0.08+progress*0.20
+    ;[[0,1],[1,2],[2,3],[3,0]].forEach(([a,b])=>{ pyCtx.beginPath(); pyCtx.moveTo(apex[0],apex[1]); pyCtx.lineTo(cpv[a][0],cpv[a][1]); pyCtx.lineTo(cpv[b][0],cpv[b][1]); pyCtx.closePath(); pyCtx.fillStyle=hex2rgba(color,opacity); pyCtx.fill() })
+    pyCtx.beginPath(); pyCtx.moveTo(cpv[0][0],cpv[0][1]); cpv.forEach(p=>pyCtx.lineTo(p[0],p[1])); pyCtx.closePath()
+    pyCtx.fillStyle=hex2rgba(color,opacity*1.8); pyCtx.strokeStyle=hex2rgba(color,0.7); pyCtx.lineWidth=1.5*devicePixelRatio; pyCtx.fill(); pyCtx.stroke()
+  }
+  const wireOpacity=isFlow?0.92+Math.sin(Date.now()*0.003)*0.08:0.72
+  pyCtx.strokeStyle=hex2rgba(color,wireOpacity); pyCtx.lineWidth=2.5*devicePixelRatio
+  ;[[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]].forEach(([a,b])=>{ pyCtx.beginPath(); pyCtx.moveTo(pv[a][0],pv[a][1]); pyCtx.lineTo(pv[b][0],pv[b][1]); pyCtx.stroke() })
+}
+
+// ═══════════════════════════════════════════════
+// Loop
+// ═══════════════════════════════════════════════
+function loop(){
+  requestAnimationFrame(loop)
+  const now=performance.now()
+
+  if(playerActive){
+    const dt=(now-lastTick)/1000; lastTick=now
+    // smooth signal toward movement target
+    const target=computeSignal()
+    moveSignal += (target-moveSignal)*Math.min(1,dt*3)
+    currentZone=getZone(moveSignal)
+    const isFlow = currentZone.name==='FLOW'
+    document.documentElement.style.setProperty('--zone', currentZone.color)
+
+    // accumulate phase time
+    phaseTime[currentZone.name]=(phaseTime[currentZone.name]||0)+dt
+
+    // music gates on movement: more movement → louder, still → fades
+    if(masterGain&&audioCtx){
+      const moving = moveSignal>0.5
+      const g = moving ? Math.min(0.9, 0.3+ (moveSignal-0.5)*0.7) : 0.04
+      masterGain.gain.setTargetAtTime(g, audioCtx.currentTime, isFlow?0.6:0.3)
+    }
+
+    // progress + HUD
+    songProgress=Math.min(1,(now-sessionStart)/1000/SESSION_SECS)
+    const el=(now-sessionStart)/1000
+    document.getElementById('zone-name').textContent=currentZone.name
+    document.getElementById('zone-name').style.color=currentZone.color
+    document.getElementById('timer').textContent=`${Math.floor(el/60)}:${String(Math.floor(el%60)).padStart(2,'0')}`
+    document.querySelector('#ring').style.borderColor=currentZone.color
+
+    renderPyramid(songProgress,isFlow,currentZone.color)
+
+    // stream to collective ~ every 1.2s
+    if(now-lastSend>1200){ lastSend=now; sendCollective(true) }
+
+    if(songProgress>=1) endSession()
+  }
+}
+requestAnimationFrame(loop)
+
+// ═══════════════════════════════════════════════
+// Complete screen
+// ═══════════════════════════════════════════════
+function showDone(){
+  document.getElementById('hud').style.display='none'
+  document.getElementById('status-line').style.display='none'
+  const total=phaseTime.STILL+phaseTime.FLOW+phaseTime.TENSION||1
+  const flowPct=Math.round(phaseTime.FLOW/total*100)
+  document.getElementById('done-meta').textContent=`${flowPct}% in flow · ${Math.round(total)}s`
+  const bars=document.getElementById('done-bars'); bars.innerHTML=''
+  const list=document.getElementById('done-list'); list.innerHTML=''
+  ZONES.forEach(z=>{ const pct=phaseTime[z.name]/total*100; if(pct<0.5)return
+    const d=document.createElement('div'); d.style.cssText=`width:${pct}%;background:${z.color};opacity:0.7`; bars.appendChild(d)
+    const it=document.createElement('div'); it.className='dl-item'
+    it.innerHTML=`<span class="dl-dot" style="background:${z.color}"></span><span style="color:${z.color}">${z.name.toLowerCase()}</span> <span style="color:#666">${Math.round(pct)}%</span>`
+    list.appendChild(it) })
+  const collectiveURL = (lanBase||location.origin)+'/collective'
+  document.getElementById('done-qr').src=`https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(collectiveURL)}&choe=UTF-8`
+  document.getElementById('done').style.display='flex'
+}
+
+document.getElementById('done').addEventListener('click',()=>{
+  document.getElementById('done').style.display='none'
+  document.querySelectorAll('.song').forEach(s=>s.style.pointerEvents='auto')
+  document.getElementById('start').style.display='flex'
+})
+</script>
+</body>
+</html>

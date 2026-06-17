@@ -19,6 +19,8 @@ const { exec } = require('child_process')
 const HTTP_PORT = 3000
 const SOMA_PORT = 8765
 const HTML_FILE    = path.join(__dirname, 'the-8.html')
+const SIMPLE_FILE  = path.join(__dirname, 'simple.html')
+const COLLECTIVE_FILE = path.join(__dirname, 'collective.html')
 const SESSION_FILE = path.join(__dirname, 'sessions.json')
 const CSV_FILE     = path.join(__dirname, 'participants.csv')
 const IDENTITY_FILE = path.join(__dirname, 'identity_map.json')
@@ -87,7 +89,7 @@ function findTrack() {
 const httpServer = http.createServer((req, res) => {
   const urlPath = req.url.split('?')[0]
 
-  if (urlPath === '/' || urlPath === '/the-8' || urlPath === '/the-8.html') {
+  if (urlPath === '/' || urlPath === '/the-8' || urlPath === '/the-8.html' || urlPath === '/research') {
     try {
       const html = fs.readFileSync(HTML_FILE, 'utf8')
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
@@ -95,6 +97,21 @@ const httpServer = http.createServer((req, res) => {
     } catch {
       res.writeHead(500); res.end('Could not read the-8.html')
     }
+  } else if (urlPath === '/simple') {
+    try {
+      const html = fs.readFileSync(SIMPLE_FILE, 'utf8')
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end(html)
+    } catch { res.writeHead(500); res.end('Could not read simple.html') }
+  } else if (urlPath === '/collective') {
+    try {
+      const html = fs.readFileSync(COLLECTIVE_FILE, 'utf8')
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end(html)
+    } catch { res.writeHead(500); res.end('Could not read collective.html') }
+  } else if (urlPath === '/whoami') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' })
+    res.end(JSON.stringify({ ip: localIP(), port: HTTP_PORT }))
   } else if (urlPath === '/track') {
     const qs  = new URL('http://x' + req.url).searchParams
     const n   = qs.get('n')
@@ -179,10 +196,28 @@ const httpServer = http.createServer((req, res) => {
 
 const browserWss = new WebSocket.Server({ server: httpServer })
 const browsers = new Set()
+const pyramids = new Map()   // id -> latest pyramid state (for collective view)
 
 browserWss.on('connection', ws => {
   browsers.add(ws)
   console.log(`📱 browser connected  (${browsers.size} active)`)
+
+  // send current collective snapshot to the newly connected viewer
+  if (pyramids.size) {
+    try { ws.send(JSON.stringify({ type: 'snapshot', pyramids: [...pyramids.values()] })) } catch {}
+  }
+
+  // a client (the simple game) may send pyramid updates → store + broadcast to everyone else
+  ws.on('message', data => {
+    let d
+    try { d = JSON.parse(data.toString()) } catch { return }
+    if (d && d.type === 'pyramid' && d.id) {
+      pyramids.set(d.id, d)
+      const out = JSON.stringify(d)
+      browsers.forEach(b => { if (b !== ws && b.readyState === WebSocket.OPEN) b.send(out) })
+    }
+  })
+
   ws.on('close', () => { browsers.delete(ws); console.log(`📱 browser left       (${browsers.size} active)`) })
 })
 
@@ -224,23 +259,26 @@ function localIP() {
 httpServer.listen(HTTP_PORT, '0.0.0.0', () => {
   const ip = localIP()
   console.log(`
-╔══════════════════════════════════════════╗
-║         THE 8 — biometric relay          ║
-╠══════════════════════════════════════════╣
-║                                          ║
-║  Open on iPad (browser):                 ║
-║  http://${ip.padEnd(16)}:${HTTP_PORT}          ║
-║                                          ║
-║  SomaSync → Streaming Settings:          ║
-║  Stream To:  WebSocket                   ║
-║  Server:     Custom                      ║
-║  IP:         ${ip.padEnd(16)}            ║
-║  Port:       ${String(SOMA_PORT).padEnd(16)}            ║
-║  Insecure:   ON  ← important             ║
-║                                          ║
-╚══════════════════════════════════════════╝
+╔════════════════════════════════════════════════╗
+║              THE 8 — seks relay                ║
+╠════════════════════════════════════════════════╣
+║                                                ║
+║  GAME (simple, webcam):                        ║
+║  http://${(ip+':'+HTTP_PORT+'/simple').padEnd(30)}  ║
+║                                                ║
+║  COLLECTIVE (on your phone):                   ║
+║  http://${(ip+':'+HTTP_PORT+'/collective').padEnd(30)}  ║
+║                                                ║
+║  GAME (research, sensors):                     ║
+║  http://${(ip+':'+HTTP_PORT+'/research').padEnd(30)}  ║
+║                                                ║
+║  SomaSync → Custom WebSocket                   ║
+║  IP ${ip.padEnd(16)} Port ${String(SOMA_PORT).padEnd(8)} Insecure ON ║
+║                                                ║
+╚════════════════════════════════════════════════╝
 
+Phone + game must be on the SAME WiFi.
 Waiting for connections... (Ctrl+C to stop)
 `)
-  exec('open http://localhost:3000')
+  exec('open http://localhost:3000/simple')
 })
