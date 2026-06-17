@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" font-family="'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3b9fd4"/>
+      <stop offset="1" stop-color="#2b6fae"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1080" height="1080" fill="#fdfdfe"/>
+
+  <!-- branch lines -->
+  <line x1="540" y1="500" x2="540" y2="285" stroke="url(#g1)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="500" y1="600" x2="330" y2="765" stroke="url(#g2)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="580" y1="600" x2="750" y2="765" stroke="url(#g3)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- node dots -->
+  <circle cx="540" cy="285" r="9" fill="#8b5cf6"/>
+  <circle cx="540" cy="500" r="7" fill="#22d3ee"/>
+  <circle cx="500" cy="600" r="7" fill="#22d3ee"/>
+  <circle cx="580" cy="600" r="7" fill="#22d3ee"/>
+  <circle cx="330" cy="765" r="9" fill="#8b5cf6"/>
+  <circle cx="750" cy="765" r="9" fill="#8b5cf6"/>
+
+  <!-- core logo ⦿-⦿ infinity -->
+  <g transform="translate(540,550)" fill="none" stroke="url(#core)" stroke-width="9" stroke-linecap="round">
+    <path d="M -22 0 C -22 -16 -2 -16 0 0 C 2 16 22 16 22 0 C 22 -16 2 -16 0 0 C -2 16 -22 16 -22 0 Z"/>
+  </g>
+
+  <!-- labels -->
+  <text x="540" y="235" text-anchor="middle" font-size="46" font-weight="300" fill="#8b5cf6">music</text>
+  <text x="540" y="262" text-anchor="middle" font-size="19" font-weight="300" fill="#9aa5b1">sekstapes · seksY radio</text>
+
+  <text x="330" y="828" text-anchor="middle" font-size="46" font-weight="300" fill="#3b9fd4">education</text>
+  <text x="330" y="855" text-anchor="middle" font-size="19" font-weight="300" fill="#9aa5b1">seksEDS · studio · consulting</text>
+
+  <text x="750" y="828" text-anchor="middle" font-size="46" font-weight="300" fill="#3b9fd4">community</text>
+  <text x="750" y="855" text-anchor="middle" font-size="19" font-weight="300" fill="#9aa5b1">parties · the dancefloor</text>
+
+  <!-- core label -->
+  <text x="540" y="635" text-anchor="middle" font-size="22" font-weight="500" fill="#2b6fae">seks</text>
+  <text x="540" y="662" text-anchor="middle" font-size="16" font-weight="300" fill="#9aa5b1">⦿-⦿ the stick · loob the journal</text>
+</svg>

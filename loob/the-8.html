@@ -331,6 +331,15 @@
 
     <div id="complete-tap">tap anywhere for next trial</div>
 
+    <!-- shown only on final trial -->
+    <div id="seks-cta" onclick="event.stopPropagation()" style="display:none;margin-top:40px;border-top:1px solid #111;padding-top:36px;text-align:center;">
+      <div style="font-size:10px;letter-spacing:0.25em;color:#444;margin-bottom:20px;">YOUR SESSION ID</div>
+      <div id="cta-pid" style="font-size:32px;font-weight:700;color:#fff;letter-spacing:0.12em;margin-bottom:28px;"></div>
+      <div style="font-size:10px;letter-spacing:0.2em;color:#444;margin-bottom:16px;">SCAN TO CONNECT WITH SEKS</div>
+      <img id="cta-qr" src="" alt="QR" style="width:180px;height:180px;border-radius:8px;background:#fff;padding:8px;" onerror="this.style.display='none'">
+      <div id="cta-link" style="margin-top:14px;font-size:11px;color:#555;letter-spacing:0.1em;word-break:break-all;"></div>
+    </div>
+
     <div id="complete-about">
 
       <div class="ca-section">
@@ -435,6 +444,7 @@
 // ═══════════════════════════════════════════════
 // Config
 // ═══════════════════════════════════════════════
+const SEKS_LINK = 'https://linktr.ee/seks.design'  // ← change to your Linktree / IG / Google Form
 const DFA_LOW = 0.75, DFA_HIGH = 1.25
 const HISTORY_SECS = 60, HISTORY_RATE = 4
 let SONG_DURATION = 240
@@ -890,7 +900,21 @@ function showComplete() {
 
   // Update tap text
   const tapEl = document.getElementById('complete-tap')
-  tapEl.textContent = (currentTrialIdx + 1 < TRIALS.length) ? 'tap anywhere for next trial' : 'tap anywhere to finish'
+  const isLast = currentTrialIdx + 1 >= TRIALS.length
+  tapEl.textContent = isLast ? 'tap anywhere to finish' : 'tap anywhere for next trial'
+
+  // Show QR + participant ID on final trial
+  const ctaEl = document.getElementById('seks-cta')
+  if (isLast) {
+    const pid = participantId ? 'p' + String(participantId).padStart(3,'0') : '—'
+    document.getElementById('cta-pid').textContent = pid
+    const url = `${SEKS_LINK}?p=${encodeURIComponent(pid)}`
+    document.getElementById('cta-qr').src = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(url)}&choe=UTF-8`
+    document.getElementById('cta-link').textContent = SEKS_LINK
+    ctaEl.style.display = 'block'
+  } else {
+    ctaEl.style.display = 'none'
+  }
 
   document.getElementById('save-status').textContent = ''
   document.getElementById('save-btn').disabled = false
