@@ -175,6 +175,7 @@ let pyAngle=0
 
 // signal mode: 'house' (EMA) | 'alpha' (movement-DFA)
 let sigMode='house'
+let somaAlpha=null, somaHR=null, lastSomaT=0
 const VEL_N=512
 const velBuf=new Float32Array(VEL_N)
 let velHead=0, velCount=0
@@ -220,8 +221,10 @@ function computeDFA(){
 }
 
 function toggleMode(){
-  sigMode=sigMode==='house'?'alpha':'house'
-  document.getElementById('mdbtn').textContent=sigMode==='alpha'?'α·DFA':'HOUSE'
+  const modes=['house','alpha','soma']
+  sigMode=modes[(modes.indexOf(sigMode)+1)%3]
+  const labels={house:'HOUSE',alpha:'α·DFA',soma:'SOMA'}
+  document.getElementById('mdbtn').textContent=labels[sigMode]
   velHead=0;velCount=0;lastDFA=0;movAlpha=1.0
 }
 
@@ -294,6 +297,10 @@ function connectWS(){
   try{
     ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host)
     ws.onopen=()=>wsOk=true
+    ws.onmessage=e=>{
+      let d;try{d=JSON.parse(e.data)}catch{return}
+      if(d.type==='soma'){somaAlpha=d.alpha;somaHR=d.hr;lastSomaT=Date.now()}
+    }
     ws.onclose=()=>{wsOk=false;setTimeout(connectWS,2000)}
     ws.onerror=()=>{}
   }catch{}
@@ -393,7 +400,16 @@ function sigAlpha(){
   if(a<=1.25) return 0.52+(a-0.75)/0.50*0.60
   return Math.min(1.9, 1.12+(a-1.25)/0.25*0.50)
 }
-function sig(){ return sigMode==='alpha'?sigAlpha():sigHouse() }
+// SomaSync HRV alpha → zone signal (uses SomaSync's own thresholds)
+function sigSoma(){
+  const a=somaAlpha
+  if(a==null||Date.now()-lastSomaT>8000)return 0.8  // no data → neutral
+  if(a<=0.6)return 0.25   // Recovering → STILL
+  if(a<=0.9)return 0.45   // Regular → low flow
+  if(a<=1.1)return 0.9    // Adaptive → FLOW
+  return 1.6               // Tension → TENSION
+}
+function sig(){ return sigMode==='soma'?sigSoma():sigMode==='alpha'?sigAlpha():sigHouse() }
 
 // ══════════════════════════════════════════════
 // Audio
@@ -523,7 +539,11 @@ function loop(){
   }
   const prog=Math.min(1,(now-sessionStart)/1000/SESSION_SECS)
   document.getElementById('zn').textContent=curZone.name;document.getElementById('zn').style.color=curZone.color
-  document.getElementById('av').textContent=sigMode==='alpha'?`α ${movAlpha.toFixed(2)}`:''
+  const somaLive=somaAlpha!=null&&Date.now()-lastSomaT<8000
+  document.getElementById('av').textContent=
+    sigMode==='soma'?(somaLive?`♡ ${somaAlpha.toFixed(2)}`:'SOMA –'):
+    sigMode==='alpha'?`α ${movAlpha.toFixed(2)}`:
+    somaLive?'♡':''
   const el=(now-sessionStart)/1000; document.getElementById('ti').textContent=`${Math.floor(el/60)}:${String(Math.floor(el%60)).padStart(2,'0')}`
   document.getElementById('bar').style.width=(prog*100)+'%'; document.getElementById('bar').style.background=curZone.color
   drawPy(prog,flow,curZone.color)

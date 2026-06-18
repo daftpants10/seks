@@ -176,7 +176,18 @@ wss.on('connection', ws => {
 
   ws.on('message', raw => {
     let d; try { d = JSON.parse(raw.toString()) } catch { return }
-    if (!d || !d.type) return
+    if (!d) return
+
+    // SomaSync biometric stream — has alpha/rmssd fields, no type
+    if (d.type == null && (d.alpha != null || d.rmssd != null)) {
+      const alpha = d.alpha ?? d.data?.alpha ?? null
+      const hr    = d.heartRate ?? d.hr ?? d.data?.heartRate ?? null
+      console.log(`♡ soma · alpha=${alpha?.toFixed(2)} hr=${hr}`)
+      broadcast(JSON.stringify({ type: 'soma', alpha, hr }), ws)
+      return
+    }
+
+    if (!d.type) return
 
     if (d.type === 'pyramid' && d.id) {
       return
