@@ -67,6 +67,9 @@ function readBody(req) {
 // ── HTTP server ──────────────────────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
   const urlPath = req.url.split('?')[0]
+  if (!['/','/game','/collective','/admin','/robots.txt'].includes(urlPath)) {
+    console.log(`[http] ${req.method} ${req.url}`)
+  }
 
   const routes = { '/':'index.html', '/game':'game.html', '/collective':'collective.html', '/admin':'admin.html' }
   const file = routes[urlPath]
@@ -170,7 +173,8 @@ const server = http.createServer(async (req, res) => {
 const wss = new WebSocket.Server({ server })
 const clients = new Set()
 
-wss.on('connection', ws => {
+wss.on('connection', (ws, req) => {
+  console.log(`[ws connect] ${req.url} origin=${req.headers.origin||'?'}`)
   clients.add(ws)
   ws.send(JSON.stringify({ type: 'snapshot', shared, grand: grandPyramid }))
 
