@@ -27,7 +27,7 @@
   #hud>*{pointer-events:auto;}
   #zn{font-size:12px;letter-spacing:0.3em;color:var(--z);transition:color 1s;}
   #ti{font-size:12px;letter-spacing:0.18em;color:#555;}
-  #av{font-size:10px;letter-spacing:0.16em;color:#333;min-width:52px;text-align:right;}
+  #av{font-size:10px;letter-spacing:0.12em;color:#333;min-width:52px;text-align:right;white-space:nowrap;}
   #mdbtn{font-size:9px;letter-spacing:0.22em;color:#333;cursor:pointer;border:1px solid #222;padding:3px 7px;user-select:none;}
   #mdbtn:hover{color:#aaa;border-color:#444;}
   #bar{position:fixed;bottom:0;left:0;height:3px;background:var(--z);transition:width 0.5s linear,background 1s;}
@@ -175,7 +175,7 @@ let pyAngle=0
 
 // signal mode: 'house' (EMA) | 'alpha' (movement-DFA)
 let sigMode='house'
-let somaAlpha=null, somaHR=null, lastSomaT=0
+let somaAlpha=null, somaHR=null, somaRMSSD=null, somaState=null, lastSomaT=0
 const VEL_N=512
 const velBuf=new Float32Array(VEL_N)
 let velHead=0, velCount=0
@@ -299,7 +299,7 @@ function connectWS(){
     ws.onopen=()=>wsOk=true
     ws.onmessage=e=>{
       let d;try{d=JSON.parse(e.data)}catch{return}
-      if(d.type==='soma'){somaAlpha=d.alpha;somaHR=d.hr;lastSomaT=Date.now()}
+      if(d.type==='soma'){somaAlpha=d.alpha;somaHR=d.hr;somaRMSSD=d.rmssd;somaState=d.state;lastSomaT=Date.now()}
     }
     ws.onclose=()=>{wsOk=false;setTimeout(connectWS,2000)}
     ws.onerror=()=>{}
@@ -540,10 +540,18 @@ function loop(){
   const prog=Math.min(1,(now-sessionStart)/1000/SESSION_SECS)
   document.getElementById('zn').textContent=curZone.name;document.getElementById('zn').style.color=curZone.color
   const somaLive=somaAlpha!=null&&Date.now()-lastSomaT<8000
-  document.getElementById('av').textContent=
-    sigMode==='soma'?(somaLive?`♡ ${somaAlpha.toFixed(2)}`:'SOMA –'):
-    sigMode==='alpha'?`α ${movAlpha.toFixed(2)}`:
-    somaLive?'♡':''
+  let avTxt=''
+  if(sigMode==='soma'){
+    if(somaLive){
+      const parts=[]
+      if(somaHR!=null)parts.push(`♡ ${Math.round(somaHR)}`)
+      if(somaRMSSD!=null)parts.push(`${Math.round(somaRMSSD)}ms`)
+      if(somaAlpha!=null)parts.push(`α${somaAlpha.toFixed(2)}`)
+      avTxt=parts.join('  ')
+    }else{avTxt='SOMA –'}
+  }else if(sigMode==='alpha'){avTxt=`α ${movAlpha.toFixed(2)}`}
+  else if(somaLive){avTxt=`♡ ${Math.round(somaHR??0)}`}
+  document.getElementById('av').textContent=avTxt
   const el=(now-sessionStart)/1000; document.getElementById('ti').textContent=`${Math.floor(el/60)}:${String(Math.floor(el%60)).padStart(2,'0')}`
   document.getElementById('bar').style.width=(prog*100)+'%'; document.getElementById('bar').style.background=curZone.color
   drawPy(prog,flow,curZone.color)

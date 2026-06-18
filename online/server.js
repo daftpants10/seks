@@ -182,8 +182,11 @@ wss.on('connection', ws => {
     if (d.type == null && (d.alpha != null || d.rmssd != null)) {
       const alpha = d.alpha ?? d.data?.alpha ?? null
       const hr    = d.heartRate ?? d.hr ?? d.data?.heartRate ?? null
-      console.log(`♡ soma · alpha=${alpha?.toFixed(2)} hr=${hr}`)
-      broadcast(JSON.stringify({ type: 'soma', alpha, hr }), ws)
+      const rmssd = d.rmssd ?? d.data?.rmssd ?? null
+      const sdnn  = d.sdnn ?? d.data?.sdnn ?? null
+      const state = d.state ?? d.data?.state ?? null
+      console.log(`♡ soma · alpha=${alpha?.toFixed(2)} hr=${hr} rmssd=${rmssd?.toFixed(1)} state=${state}`)
+      broadcast(JSON.stringify({ type: 'soma', alpha, hr, rmssd, sdnn, state }), ws)
       return
     }
 
