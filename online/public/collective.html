@@ -40,17 +40,16 @@ const dpr=window.devicePixelRatio||1
 function resize(){cv.width=innerWidth*dpr;cv.height=innerHeight*dpr}
 resize();addEventListener('resize',()=>{resize();reposition()})
 
-// ── grand pyramid state ──────────────────────────────────────────────────────
+// ── shared pyramids (permanent gallery) ─────────────────────────────────────
 let grand={sessions:0, phaseTotal:{STILL:0,FLOW:0,TENSION:0}}
+const pys=new Map()  // id -> render state — never deleted
 
-// ── live pyramids ────────────────────────────────────────────────────────────
-const pys=new Map()   // id -> pyramid render state
-const PRUNE_MS=1000*60*12
-
-function ingest(d){
-  let p=pys.get(d.id)
-  if(!p){ p={id:d.id,angle:Math.random()*Math.PI*2,x:null,y:null,scale:null}; pys.set(d.id,p) }
-  Object.assign(p,{phases:d.phases||{STILL:0,FLOW:1,TENSION:0},total:d.total||0,active:d.active,zone:d.zone,seen:Date.now()})
+function ingestShared(d){
+  if(pys.has(d.id)) return  // already have it
+  const p={id:d.id, angle:Math.random()*Math.PI*2, x:null, y:null, scale:null,
+    phases:d.phases||{STILL:0,FLOW:1,TENSION:0}, total:d.total||0,
+    shareSize:d.shareSize??1, active:false}
+  pys.set(d.id, p)
 }
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
@@ -59,9 +58,15 @@ function connect(){
   ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host)
   ws.onmessage=e=>{
     let d; try{d=JSON.parse(e.data)}catch{return}
-    if(d.type==='snapshot'){ if(d.grand) grand=d.grand; if(Array.isArray(d.pyramids)) d.pyramids.forEach(ingest); reposition() }
-    if(d.type==='pyramid'){ ingest(d); reposition() }
-    if(d.type==='grand_update'&&d.grand){ grand=d.grand; updateGrandStat() }
+    if(d.type==='snapshot'){
+      if(d.grand) grand=d.grand
+      if(Array.isArray(d.shared)) d.shared.forEach(ingestShared)
+      reposition(); updateGrandStat()
+    }
+    if(d.type==='shared_pyramid'){
+      ingestShared(d.pyramid); reposition()
+      if(d.grand){ grand=d.grand; updateGrandStat() }
+    }
   }
   ws.onclose=()=>setTimeout(connect,2000)
   ws.onerror=()=>{}
@@ -119,16 +124,21 @@ function drawPyramid(cx,cy,scale,angle,phases,active,isGrand){
   }
 }
 
-// ── layout: grand in center, live pyramids in a ring around it ────────────────
+// ── layout: grand in center, shared pyramids in orbit ────────────────────────
 const TARGET=new Map()
+const SHARE_SCALE=[0.5,1.0,1.5]
 function reposition(){
   const arr=[...pys.values()]; const n=arr.length
   const cx=innerWidth/2*dpr, cy=innerHeight/2*dpr
-  const maxR=Math.min(innerWidth,innerHeight)*0.32*dpr
+  const baseR=Math.min(innerWidth,innerHeight)*0.30*dpr
+  const r=Math.max(baseR*0.5, Math.min(baseR, 80*dpr+n*12*dpr))
+  // scale shrinks as gallery grows so they all fit
+  const baseScale=Math.min(innerWidth,innerHeight)*0.08*dpr
+  const scaleMul=Math.max(0.35, 1/Math.sqrt(Math.max(1,n/6)))
   arr.forEach((p,i)=>{
-    const angle=i/n*Math.PI*2-Math.PI/2
-    const r=Math.max(maxR*0.55,Math.min(maxR,120*dpr+n*8*dpr))
-    TARGET.set(p.id,{x:cx+r*Math.cos(angle),y:cy+r*Math.sin(angle),scale:Math.min(innerWidth,innerHeight)*0.09*dpr})
+    const a=i/n*Math.PI*2-Math.PI/2
+    const sz=SHARE_SCALE[p.shareSize??1]
+    TARGET.set(p.id,{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a),scale:baseScale*scaleMul*sz})
   })
 }
 reposition()
@@ -136,10 +146,9 @@ reposition()
 function updateGrandStat(){
   if(!grand.sessions) return
   const n=grand.sessions, fp=Math.round(grand.phaseTotal.FLOW/n*100)
-  document.getElementById('gstat').textContent=`${n} session${n>1?'s':''} · ${fp}% collective flow`
+  document.getElementById('gstat').textContent=`${n} shared · ${fp}% collective flow`
 }
 
-// ── grand pyramid derived from accumulated data ───────────────────────────────
 function grandPhases(){
   if(!grand.sessions) return {STILL:0,FLOW:1,TENSION:0}
   const n=grand.sessions
@@ -147,47 +156,29 @@ function grandPhases(){
 }
 let grandAngle=0
 
-// ── render loop ──────────────────────────────────────────────────────────────
 function render(){
   requestAnimationFrame(render)
   ctx.clearRect(0,0,cv.width,cv.height)
-  const now=Date.now()
-  // prune
-  for(const[id,p] of pys){ if(!p.active&&now-p.seen>PRUNE_MS){pys.delete(id);reposition()} }
   const arr=[...pys.values()]
   const cx=innerWidth/2*dpr, cy=innerHeight/2*dpr
 
-  // grand pyramid — always at center, size depends on session count
+  // grand pyramid — center, grows with shared count
   grandAngle+=0.0012
-  const gScale=Math.min(innerWidth,innerHeight)*(0.14+Math.min(grand.sessions,30)*0.004)*dpr
-  const gPhases=grandPhases()
-  const gActive=arr.some(p=>p.active)
-  drawPyramid(cx,cy,gScale,grandAngle,gPhases,gActive,true)
-  // grand label
-  if(grand.sessions>0){
-    ctx.fillStyle='rgba(255,255,255,0.15)';ctx.font=`${8*dpr}px 'SF Mono',monospace`
-    ctx.textAlign='center';ctx.fillText('COLLECTIVE',cx,cy+gScale*1.85)
-  }
+  const gScale=Math.min(innerWidth,innerHeight)*(0.12+Math.min(grand.sessions,40)*0.003)*dpr
+  drawPyramid(cx,cy,gScale,grandAngle,grandPhases(),false,true)
 
-  // live session pyramids in orbit
-  arr.forEach((p,i)=>{
-    const t=TARGET.get(p.id)||{x:cx,y:cy,scale:60*dpr}
+  // shared pyramids — permanent, slow rotation
+  arr.forEach(p=>{
+    const t=TARGET.get(p.id)||{x:cx,y:cy,scale:50*dpr}
     p.x=p.x??t.x; p.y=p.y??t.y; p.scale=p.scale??t.scale
-    p.x+=(t.x-p.x)*0.07; p.y+=(t.y-p.y)*0.07; p.scale+=(t.scale-p.scale)*0.07
-    p.angle+=(p.active?0.005:0.002)
-    if(p.phases) drawPyramid(p.x,p.y,p.scale,p.angle,p.phases,p.active,false)
-    // label: active dot
-    if(p.active){
-      ctx.fillStyle=h2r(COLORS[p.zone]||'#00ff88',0.7+0.3*Math.sin(now*0.005))
-      ctx.beginPath();ctx.arc(p.x,p.y+p.scale*1.6,3*dpr,0,Math.PI*2);ctx.fill()
-    }
+    p.x+=(t.x-p.x)*0.05; p.y+=(t.y-p.y)*0.05; p.scale+=(t.scale-p.scale)*0.05
+    p.angle+=0.0015
+    if(p.phases) drawPyramid(p.x,p.y,p.scale,p.angle,p.phases,false,false)
   })
 
-  // update UI
-  const activeN=arr.filter(p=>p.active).length
   document.getElementById('count').textContent=arr.length===0
-    ?'waiting for the first mover…'
-    :`${arr.length} pyramid${arr.length>1?'s':''} · ${activeN} moving now`
+    ?'no pyramids yet'
+    :`${arr.length} pyramid${arr.length>1?'s':''}`
   updateGrandStat()
 }
 render()

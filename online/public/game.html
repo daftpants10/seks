@@ -264,7 +264,12 @@ function initSendBtn(){
     const held=performance.now()-holdStart
     holdStart=0
     if(held>50&&held<3000){
-      // send — open collective
+      // send pyramid to collective then open it
+      const total=phaseTime.STILL+phaseTime.FLOW+phaseTime.TENSION||1
+      const msg={type:'share',id:sessionId,shareSize,
+        phases:{STILL:phaseTime.STILL/total,FLOW:phaseTime.FLOW/total,TENSION:phaseTime.TENSION/total},
+        total:Math.round(total)}
+      try{if(wsOk)ws.send(JSON.stringify(msg))}catch{}
       window.open('/collective','_blank')
     }
   })

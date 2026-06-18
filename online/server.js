@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// seks online relay — serves game + collective, relays pyramids via WebSocket
 const http = require('http')
 const fs   = require('fs')
 const path = require('path')
@@ -8,27 +7,38 @@ const WebSocket = require('ws')
 const PORT   = process.env.PORT || 3000
 const PUBLIC = path.join(__dirname, 'public')
 const TRACKS = path.join(PUBLIC, 'tracks')
+const DATA   = path.join(__dirname, 'data')
+const SHARED_PATH = path.join(DATA, 'shared.json')
 const AUDIO_EXTS = ['.mp3', '.m4a', '.wav', '.ogg', '.flac']
 const MIME = { '.mp3':'audio/mpeg', '.m4a':'audio/mp4', '.wav':'audio/wav', '.ogg':'audio/ogg', '.flac':'audio/flac' }
 
-// ── in-memory state ──────────────────────────────────────────────────────────
-const pyramids   = new Map()   // id -> latest live pyramid state
-const grandPyramid = {          // aggregate of all completed sessions
-  sessions: 0,
-  phaseTotal: { STILL: 0, FLOW: 0, TENSION: 0 }
+// ── persistent shared pyramids ───────────────────────────────────────────────
+// Only added when a user explicitly taps SEND on the done screen.
+// Never deleted.
+let shared = []
+const grandPyramid = { sessions: 0, phaseTotal: { STILL: 0, FLOW: 0, TENSION: 0 } }
+
+function loadShared() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(SHARED_PATH, 'utf8'))
+    shared = raw.pyramids || []
+    Object.assign(grandPyramid, raw.grand || {})
+  } catch {}
 }
-const PRUNE_MS = 1000 * 60 * 15  // prune inactive after 15 min
+function saveShared() {
+  try {
+    fs.mkdirSync(DATA, { recursive: true })
+    fs.writeFileSync(SHARED_PATH, JSON.stringify({ pyramids: shared, grand: grandPyramid }))
+  } catch {}
+}
+loadShared()
+console.log(`loaded ${shared.length} shared pyramids`)
 
 // ── HTTP server ──────────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
   const urlPath = req.url.split('?')[0]
 
-  const routes = {
-    '/':           'index.html',
-    '/game':       'game.html',
-    '/collective': 'collective.html',
-  }
-
+  const routes = { '/':'index.html', '/game':'game.html', '/collective':'collective.html' }
   const file = routes[urlPath]
   if (file) {
     try {
@@ -38,7 +48,6 @@ const server = http.createServer((req, res) => {
     } catch { res.writeHead(404); return res.end('not found') }
   }
 
-  // serve a real audio track by number: /track?n=3  → public/tracks/seks_track_3.mp3
   if (urlPath === '/track') {
     const n = parseInt((req.url.split('?')[1]||'').replace(/.*n=/,''), 10)
     if (!n) { res.writeHead(400); return res.end('missing n') }
@@ -61,7 +70,6 @@ const server = http.createServer((req, res) => {
     return fs.createReadStream(file).pipe(res)
   }
 
-  // list which track numbers have real audio: /tracks-available → [3,8]
   if (urlPath === '/tracks-available') {
     const avail = []
     for (let n = 1; n <= 8; n++) {
@@ -73,54 +81,54 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify(avail))
   }
 
-  // collective state (for late-join snapshot)
   if (urlPath === '/state') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' })
-    return res.end(JSON.stringify({
-      pyramids: [...pyramids.values()],
-      grand: grandPyramid
-    }))
+    return res.end(JSON.stringify({ shared, grand: grandPyramid }))
   }
 
-  // robots
   if (urlPath === '/robots.txt') { res.writeHead(200); return res.end('User-agent: *\nDisallow:') }
-
   res.writeHead(404); res.end('not found')
 })
 
-// ── WebSocket relay ──────────────────────────────────────────────────────────
+// ── WebSocket ────────────────────────────────────────────────────────────────
 const wss = new WebSocket.Server({ server })
 const clients = new Set()
 
 wss.on('connection', ws => {
   clients.add(ws)
-
-  // send current snapshot to new viewer
-  ws.send(JSON.stringify({
-    type: 'snapshot',
-    pyramids: [...pyramids.values()],
-    grand: grandPyramid
-  }))
+  // send full shared gallery to new viewer
+  ws.send(JSON.stringify({ type: 'snapshot', shared, grand: grandPyramid }))
 
   ws.on('message', raw => {
     let d; try { d = JSON.parse(raw.toString()) } catch { return }
     if (!d || !d.type) return
 
+    // live pyramid update — only relayed back to the sender's own game tab for feedback
+    // collective does NOT listen to this type
     if (d.type === 'pyramid' && d.id) {
-      pyramids.set(d.id, { ...d, seen: Date.now() })
-      broadcast(JSON.stringify(d), ws)
+      // echo back to sender only (for their own game state)
+      return
     }
 
-    if (d.type === 'session_complete' && d.phases) {
+    // explicit share: user tapped SEND on done screen
+    if (d.type === 'share' && d.id && d.phases) {
+      const entry = {
+        id: d.id,
+        phases: d.phases,
+        total: d.total || 0,
+        shareSize: d.shareSize ?? 1,
+        sharedAt: Date.now()
+      }
+      shared.push(entry)
       // accumulate into grand pyramid
       grandPyramid.sessions++
-      const total = (d.phases.STILL||0) + (d.phases.FLOW||0) + (d.phases.TENSION||0) || 1
-      grandPyramid.phaseTotal.STILL   += (d.phases.STILL   || 0) / total
-      grandPyramid.phaseTotal.FLOW    += (d.phases.FLOW    || 0) / total
-      grandPyramid.phaseTotal.TENSION += (d.phases.TENSION || 0) / total
-      const gMsg = JSON.stringify({ type: 'grand_update', grand: grandPyramid })
-      broadcast(gMsg)
-      console.log(`△ session complete · grand: ${grandPyramid.sessions} pyramids · ${Math.round(grandPyramid.phaseTotal.FLOW/grandPyramid.sessions*100)}% flow`)
+      const t = (d.phases.STILL||0) + (d.phases.FLOW||0) + (d.phases.TENSION||0) || 1
+      grandPyramid.phaseTotal.STILL   += (d.phases.STILL   || 0) / t
+      grandPyramid.phaseTotal.FLOW    += (d.phases.FLOW    || 0) / t
+      grandPyramid.phaseTotal.TENSION += (d.phases.TENSION || 0) / t
+      saveShared()
+      broadcast(JSON.stringify({ type: 'shared_pyramid', pyramid: entry, grand: grandPyramid }))
+      console.log(`△ shared · ${shared.length} total · ${Math.round(grandPyramid.phaseTotal.FLOW/(grandPyramid.sessions||1)*100)}% collective flow`)
     }
   })
 
@@ -132,12 +140,6 @@ function broadcast(msg, except) {
   clients.forEach(c => { if (c !== except && c.readyState === WebSocket.OPEN) { try { c.send(msg) } catch {} } })
 }
 
-// prune old inactive pyramids every 5 min
-setInterval(() => {
-  const now = Date.now()
-  for (const [id, p] of pyramids) { if (!p.active && now - (p.seen||0) > PRUNE_MS) pyramids.delete(id) }
-}, 1000 * 60 * 5)
-
 server.listen(PORT, () => {
   console.log(`
   ⦿-⦿  seks online
@@ -146,6 +148,6 @@ server.listen(PORT, () => {
   collective  → http://localhost:${PORT}/collective
   state API   → http://localhost:${PORT}/state
   ────────────────────────────────
-  PORT ${PORT}  (set via env for Railway/Render)
+  PORT ${PORT}
 `)
 })
