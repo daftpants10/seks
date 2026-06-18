@@ -3,6 +3,7 @@ const http = require('http')
 const fs   = require('fs')
 const path = require('path')
 const WebSocket = require('ws')
+const { Server: IOServer } = require('socket.io')
 
 const PORT   = process.env.PORT || 3000
 const PUBLIC = path.join(__dirname, 'public')
@@ -233,6 +234,25 @@ wss.on('connection', (ws, req) => {
 function broadcast(msg, except) {
   clients.forEach(c => { if (c !== except && c.readyState === WebSocket.OPEN) { try { c.send(msg) } catch {} } })
 }
+
+// ── Socket.IO (SomaSync uses Socket.IO namespaces) ───────────────────────────
+const io = new IOServer(server, { cors: { origin: '*' } })
+io.of(/.*/).on('connection', socket => {
+  const ns = socket.nsp.name
+  console.log(`[io connect] ns=${ns}`)
+  socket.onAny((event, data) => {
+    const payload = typeof data === 'object' ? data : {}
+    console.log(`[io event] ${event}`, JSON.stringify(payload).slice(0, 400))
+    const alpha = payload.alpha ?? payload.hrv_alpha ?? payload.data?.alpha ?? null
+    const hr    = payload.heartRate ?? payload.hr ?? payload.bpm ?? payload.data?.heartRate ?? null
+    const rmssd = payload.rmssd ?? payload.RMSSD ?? payload.data?.rmssd ?? null
+    const state = payload.state ?? payload.zone ?? payload.data?.state ?? null
+    if (alpha != null || hr != null || rmssd != null) {
+      console.log(`♡ soma · alpha=${alpha?.toFixed?.(2)} hr=${hr} rmssd=${rmssd?.toFixed?.(1)} state=${state}`)
+      broadcast(JSON.stringify({ type: 'soma', alpha, hr, rmssd, state }))
+    }
+  })
+})
 
 server.listen(PORT, () => {
   console.log(`
