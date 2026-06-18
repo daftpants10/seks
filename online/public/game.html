@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>⦿-⦿ the game · seks</title>
+<style>
+  :root { --z:#00ff88; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;background:#000;color:#fff;font-family:'SF Mono',ui-monospace,monospace;overflow:hidden;-webkit-user-select:none;user-select:none;}
+  #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0.28;}
+  #py,#pcv{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;}
+  #pcv{transform:scaleX(-1);z-index:16;}
+  #py{z-index:14;}
+  #ring{position:fixed;inset:0;pointer-events:none;border:3px solid var(--z);box-shadow:0 0 60px var(--z) inset;transition:border-color 1.4s,box-shadow 1.4s;z-index:10;opacity:0;transition:opacity 0.8s,border-color 1.4s;}
+  .ov{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.93);padding:28px;text-align:center;}
+  h1{font-size:clamp(40px,9vw,80px);font-weight:700;letter-spacing:-0.02em;}
+  .sub{color:#555;font-size:12px;letter-spacing:0.28em;margin-top:12px;}
+  .hint{color:#333;font-size:11px;letter-spacing:0.22em;margin-top:36px;}
+  #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:500px;width:100%;margin-top:8px;}
+  .t{aspect-ratio:1;border:1px solid #1a1a1a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;gap:6px;}
+  .t:hover,.t:active{border-color:var(--z);background:rgba(0,255,136,0.04);}
+  .tn{font-size:22px;font-weight:300;color:#777;}
+  .tl{font-size:8px;letter-spacing:0.18em;color:#444;}
+  .gl{font-size:10px;letter-spacing:0.26em;color:#555;margin-bottom:20px;}
+  #hud{position:fixed;top:0;left:0;right:0;z-index:30;padding:20px 24px;display:flex;justify-content:space-between;pointer-events:none;}
+  #zn{font-size:12px;letter-spacing:0.3em;color:var(--z);transition:color 1s;}
+  #ti{font-size:12px;letter-spacing:0.18em;color:#555;}
+  #bar{position:fixed;bottom:0;left:0;height:3px;background:var(--z);transition:width 0.5s linear,background 1s;}
+  #sl{position:fixed;bottom:30px;left:0;right:0;text-align:center;z-index:30;font-size:11px;letter-spacing:0.24em;color:#444;pointer-events:none;}
+  /* done */
+  #done{z-index:70;}
+  #done h2{font-size:clamp(24px,5vw,44px);font-weight:700;color:var(--z);margin-bottom:4px;}
+  #dm{font-size:11px;letter-spacing:0.16em;color:#555;margin-bottom:24px;}
+  #dbars{width:260px;max-width:75vw;height:8px;display:flex;border-radius:4px;overflow:hidden;margin-bottom:12px;}
+  #dlist{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;margin-bottom:26px;font-size:10px;letter-spacing:0.06em;}
+  .di{display:flex;align-items:center;gap:6px;}
+  .dd{width:7px;height:7px;border-radius:50%;}
+  #dqrl{font-size:9px;letter-spacing:0.22em;color:#444;margin-bottom:10px;}
+  #dqr{width:150px;height:150px;background:#fff;padding:7px;border-radius:8px;}
+  .re{margin-top:24px;font-size:10px;letter-spacing:0.22em;color:#333;}
+  a.clink{display:block;margin-top:18px;font-size:10px;color:#00aaff;letter-spacing:0.16em;text-decoration:none;}
+</style>
+</head>
+<body>
+<video id="cam" autoplay playsinline muted></video>
+<canvas id="py"></canvas>
+<canvas id="pcv"></canvas>
+<div id="ring"></div>
+<div id="hud" style="display:none"><div id="zn">FLOW</div><div id="ti">0:00</div></div>
+<div id="bar" style="width:0;display:none"></div>
+<div id="sl" style="display:none">move to keep the music alive</div>
+
+<!-- start -->
+<div id="start" class="ov">
+  <h1>⦿-⦿</h1>
+  <div class="sub">move your body · make a pyramid</div>
+  <div class="hint">pick a track to begin</div>
+  <div style="margin-top:28px;width:100%;max-width:500px;">
+    <div class="gl">CHOOSE A TRACK</div>
+    <div id="grid"></div>
+  </div>
+</div>
+
+<!-- done -->
+<div id="done" class="ov" style="display:none">
+  <h2>your pyramid</h2>
+  <div id="dm"></div>
+  <div id="dbars"></div>
+  <div id="dlist"></div>
+  <div id="dqrl">SEE THE COLLECTIVE</div>
+  <img id="dqr" src="" alt="" onerror="this.style.display='none'">
+  <a class="clink" id="clink" href="/collective" target="_blank">↗ open collective</a>
+  <div class="re">tap to play again</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<script>
+// ══════════════════════════════════════════════
+// Zones (movement-based)
+// ══════════════════════════════════════════════
+const ZONES=[
+  {name:'STILL',   min:0,    max:0.52, color:'#ffcc00'},
+  {name:'FLOW',    min:0.52, max:1.32, color:'#00ff88'},
+  {name:'TENSION', min:1.32, max:2.0,  color:'#8855ff'},
+]
+const getZ=a=>ZONES.find(z=>a>=z.min&&a<z.max)??ZONES[ZONES.length-1]
+const SESSION_SECS=90
+
+// ══════════════════════════════════════════════
+// 8 Procedural audio tracks (no mp3 files)
+// Each has a distinct feel / BPM / timbre
+// ══════════════════════════════════════════════
+const TRACKS=[
+  {label:'ambient', bpm:85,  desc:'slow pulse'},
+  {label:'groove',  bpm:110, desc:'4/4 house'},
+  {label:'techno',  bpm:128, desc:'minimal'},
+  {label:'tribal',  bpm:96,  desc:'drum circle'},
+  {label:'drift',   bpm:72,  desc:'slow haze'},
+  {label:'fast',    bpm:140, desc:'high energy'},
+  {label:'click',   bpm:120, desc:'metronomic'},
+  {label:'breath',  bpm:60,  desc:'breathing'},
+]
+
+function buildTrack(ctx, cfg){
+  const sr=ctx.sampleRate, bps=60/cfg.bpm
+  const bars=4, beats=4, len=Math.floor(bps*beats*bars*sr)
+  const buf=ctx.createBuffer(2,len,sr)
+  const L=buf.getChannelData(0), R=buf.getChannelData(1)
+  function tone(freq,start,dur,amp,decay=30){
+    for(let i=0;i<Math.floor(dur*sr)&&start+i<len;i++){
+      const s=Math.sin(2*Math.PI*freq*i/sr)*Math.exp(-i/sr*decay)*amp
+      L[start+i]+=s; R[start+i]+=s
+    }
+  }
+  for(let bar=0;bar<bars;bar++){
+    for(let beat=0;beat<beats;beat++){
+      const o=Math.floor((bar*beats+beat)*bps*sr)
+      const b=beat===0, sub=beat%2===0
+      if(cfg.bpm>=128){ tone(b?120:80,o,0.04,b?0.7:0.4,25) }     // techno kick
+      else if(cfg.bpm>=110){ tone(b?100:60,o,0.06,b?0.65:0.35,20) } // house
+      else if(cfg.bpm<=65){ // breath: slow sine swell
+        for(let i=0;i<Math.floor(bps*sr*0.8)&&o+i<len;i++){
+          const s=Math.sin(Math.PI*i/(bps*sr*0.8))*Math.sin(2*Math.PI*60*i/sr)*0.3
+          L[o+i]+=s; R[o+i]+=s
+        }
+      } else { tone(b?90:55,o,0.05,b?0.6:0.3,22) }               // default
+      // hi-hat (all tracks except breath)
+      if(cfg.bpm>65){
+        const hpct=sub?0.5:0.25
+        tone(3000+Math.random()*1000,o,0.015,hpct,200)
+        tone(4500+Math.random()*800,o+Math.floor(bps*sr*0.5),0.012,hpct*0.6,220)
+      }
+    }
+  }
+  return buf
+}
+
+// ══════════════════════════════════════════════
+// Build grid
+// ══════════════════════════════════════════════
+const gEl=document.getElementById('grid')
+TRACKS.forEach((t,i)=>{
+  const d=document.createElement('div'); d.className='t'
+  d.innerHTML=`<div class="tn">${i+1}</div><div class="tl">${t.label}</div>`
+  d.onclick=()=>pick(i)
+  gEl.appendChild(d)
+})
+
+// ══════════════════════════════════════════════
+// State
+// ══════════════════════════════════════════════
+let active=false, sessionId=null
+let phaseTime={STILL:0,FLOW:0,TENSION:0}
+let sessionStart=0, lastTick=0
+let moveSignal=0.8, curZone=ZONES[1]
+let prevLM=null, motEMA=0, motVarEMA=0
+let audioCtx, masterGain, trackSrc
+let pyAngle=0
+
+// ══════════════════════════════════════════════
+// WebSocket
+// ══════════════════════════════════════════════
+let ws=null, wsOk=false
+function connectWS(){
+  try{
+    ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host)
+    ws.onopen=()=>wsOk=true
+    ws.onclose=()=>{wsOk=false;setTimeout(connectWS,2000)}
+    ws.onerror=()=>{}
+  }catch{}
+}
+connectWS()
+let lastSend=0
+function sendPyramid(isComplete){
+  if(!wsOk||!sessionId) return
+  const total=phaseTime.STILL+phaseTime.FLOW+phaseTime.TENSION||1
+  const msg={type:isComplete?'session_complete':'pyramid',id:sessionId,active:!isComplete,
+    phases:{STILL:phaseTime.STILL/total,FLOW:phaseTime.FLOW/total,TENSION:phaseTime.TENSION/total},
+    total:Math.round(total),zone:curZone.name,t:Date.now()}
+  try{ws.send(JSON.stringify(msg))}catch{}
+}
+
+// ══════════════════════════════════════════════
+// Camera + Pose
+// ══════════════════════════════════════════════
+navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280}},audio:false})
+  .then(s=>document.getElementById('cam').srcObject=s).catch(()=>{})
+
+const PLINKS=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]]
+const KJOINTS=[11,12,13,14,15,16,23,24]
+let mpPose=null
+function loadPose(){
+  mpPose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`})
+  mpPose.setOptions({modelComplexity:1,smoothLandmarks:true,enableSegmentation:false,minDetectionConfidence:0.5,minTrackingConfidence:0.5})
+  mpPose.onResults(onPose)
+  sched()
+}
+function sched(){
+  const v=document.getElementById('cam')
+  if(v.readyState>=2) mpPose.send({image:v}).then(()=>setTimeout(sched,50))
+  else setTimeout(sched,100)
+}
+function onPose(r){
+  const cv=document.getElementById('pcv'),ctx=cv.getContext('2d'),w=cv.width,h=cv.height
+  ctx.clearRect(0,0,w,h)
+  if(!r.poseLandmarks){prevLM=null;return}
+  const lm=r.poseLandmarks
+  if(prevLM){
+    let m=0,c=0
+    KJOINTS.forEach(i=>{const a=lm[i],b=prevLM[i];if(a&&b&&a.visibility>0.4){m+=Math.hypot(a.x-b.x,a.y-b.y);c++}})
+    if(c){const inst=m/c;motEMA=motEMA*0.85+inst*0.15;motVarEMA=motVarEMA*0.9+Math.abs(inst-motEMA)*0.1}
+  }
+  prevLM=lm.map(p=>({x:p.x,y:p.y,visibility:p.visibility}))
+  const col=curZone.color,dpr=window.devicePixelRatio||1
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=col;ctx.lineWidth=1.5*dpr;ctx.globalAlpha=0.28;ctx.setLineDash([3*dpr,6*dpr])
+  PLINKS.forEach(([a,b])=>{const pa=lm[a],pb=lm[b];if(!pa||!pb||pa.visibility<0.4||pb.visibility<0.4)return;ctx.beginPath();ctx.moveTo(pa.x*w,pa.y*h);ctx.lineTo(pb.x*w,pb.y*h);ctx.stroke()})
+  ctx.setLineDash([]);ctx.fillStyle=col;ctx.globalAlpha=0.4
+  KJOINTS.forEach(i=>{const p=lm[i];if(!p||p.visibility<0.4)return;ctx.beginPath();ctx.arc(p.x*w,p.y*h,2.5*dpr,0,Math.PI*2);ctx.fill()})
+  ctx.globalAlpha=1
+}
+function resizePCV(){const cv=document.getElementById('pcv');const d=window.devicePixelRatio||1;cv.width=innerWidth*d;cv.height=innerHeight*d}
+resizePCV();addEventListener('resize',resizePCV)
+
+// ══════════════════════════════════════════════
+// Movement → flow signal
+// ══════════════════════════════════════════════
+function sig(){
+  const lv=Math.min(motEMA/0.018,1.6), er=Math.min(motVarEMA/0.009,1.0)
+  let a=lv<0.25?0.40+lv*0.6:0.52+Math.min(lv,1.0)*0.75
+  a+=er*0.52
+  return Math.max(0,Math.min(1.9,a))
+}
+
+// ══════════════════════════════════════════════
+// Audio
+// ══════════════════════════════════════════════
+async function pick(i){
+  document.querySelectorAll('.t').forEach(t=>t.style.pointerEvents='none')
+  if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();masterGain=audioCtx.createGain();masterGain.gain.value=0;masterGain.connect(audioCtx.destination)}
+  if(audioCtx.state!=='running') await audioCtx.resume()
+  const buf=buildTrack(audioCtx,TRACKS[i])
+  if(trackSrc){try{trackSrc.stop();trackSrc.disconnect()}catch{}}
+  trackSrc=audioCtx.createBufferSource();trackSrc.buffer=buf;trackSrc.loop=true;trackSrc.connect(masterGain);trackSrc.start()
+  begin()
+}
+
+// ══════════════════════════════════════════════
+// Session lifecycle
+// ══════════════════════════════════════════════
+function begin(){
+  sessionId='s'+Date.now().toString(36)+Math.floor(Math.random()*900+100)
+  active=true
+  phaseTime={STILL:0,FLOW:0,TENSION:0}
+  sessionStart=performance.now();lastTick=sessionStart
+  moveSignal=0.8;motEMA=0;motVarEMA=0;prevLM=null
+  if(!mpPose) loadPose()
+  document.getElementById('start').style.display='none'
+  document.getElementById('done').style.display='none'
+  document.getElementById('hud').style.display='flex'
+  document.getElementById('bar').style.display='block'
+  document.getElementById('sl').style.display='block'
+  document.getElementById('ring').style.opacity='1'
+}
+function end(){
+  active=false
+  if(masterGain&&audioCtx) masterGain.gain.setTargetAtTime(0,audioCtx.currentTime,0.5)
+  sendPyramid(true)
+  showDone()
+}
+
+function showDone(){
+  document.getElementById('hud').style.display='none'
+  document.getElementById('bar').style.display='none'
+  document.getElementById('sl').style.display='none'
+  document.getElementById('ring').style.opacity='0'
+  const total=phaseTime.STILL+phaseTime.FLOW+phaseTime.TENSION||1
+  const fp=Math.round(phaseTime.FLOW/total*100)
+  document.getElementById('dm').textContent=`${fp}% in flow · ${Math.round(total)}s`
+  const bars=document.getElementById('dbars');bars.innerHTML=''
+  const list=document.getElementById('dlist');list.innerHTML=''
+  ZONES.forEach(z=>{const p=phaseTime[z.name]/total*100;if(p<0.5)return
+    const d=document.createElement('div');d.style.cssText=`width:${p}%;background:${z.color};opacity:0.7`;bars.appendChild(d)
+    const it=document.createElement('div');it.className='di'
+    it.innerHTML=`<span class="dd" style="background:${z.color}"></span><span style="color:${z.color}">${z.name.toLowerCase()}</span><span style="color:#555"> ${Math.round(p)}%</span>`;list.appendChild(it)})
+  const cu=location.origin+'/collective'
+  document.getElementById('dqr').src=`https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(cu)}&choe=UTF-8`
+  document.getElementById('clink').href=cu
+  document.getElementById('done').style.display='flex'
+}
+document.getElementById('done').addEventListener('click',()=>{
+  document.getElementById('done').style.display='none'
+  document.querySelectorAll('.t').forEach(t=>t.style.pointerEvents='auto')
+  document.getElementById('start').style.display='flex'
+})
+
+// ══════════════════════════════════════════════
+// Pyramid renderer
+// ══════════════════════════════════════════════
+const pyC=document.getElementById('py'),pyX=pyC.getContext('2d')
+function resizePy(){const d=devicePixelRatio;pyC.width=innerWidth*d;pyC.height=innerHeight*d}
+resizePy();addEventListener('resize',resizePy)
+function rotY(v,a){const[x,y,z]=v;return[x*Math.cos(a)+z*Math.sin(a),y,-x*Math.sin(a)+z*Math.cos(a)]}
+function proj(v,fov,cx,cy,s){const[x,y,z]=v,d=z+fov;return[cx+(x/d)*fov*s,cy+(y/d)*fov*s]}
+function h2r(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+function drawPy(prog,flow,col){
+  const W=pyC.width,H=pyC.height;pyX.clearRect(0,0,W,H);pyAngle+=flow?0.003:0.009
+  const wb=flow?0:Math.sin(Date.now()*0.0022)*0.06
+  const s=Math.min(W,H)*0.20,cx=W/2,cy=H*0.46,fov=4.5
+  const raw=[[0,-1,0],[-1,1,-1],[1,1,-1],[1,1,1],[-1,1,1]]
+  const rv=raw.map(v=>{const r=rotY(v,pyAngle);return[r[0],r[1]+wb,r[2]]})
+  const pv=rv.map(v=>proj(v,fov,cx,cy,s))
+  if(prog>0.005){
+    const yc=-1+2*prog,sc=prog
+    const cr=[[-sc,yc,-sc],[sc,yc,-sc],[sc,yc,sc],[-sc,yc,sc]]
+    const cpv=cr.map(v=>{const r=rotY(v,pyAngle);return proj([r[0],r[1]+wb,r[2]],fov,cx,cy,s)})
+    const op=0.08+prog*0.22
+    ;[[0,1],[1,2],[2,3],[3,0]].forEach(([a,b])=>{pyX.beginPath();pyX.moveTo(pv[0][0],pv[0][1]);pyX.lineTo(cpv[a][0],cpv[a][1]);pyX.lineTo(cpv[b][0],cpv[b][1]);pyX.closePath();pyX.fillStyle=h2r(col,op);pyX.fill()})
+    pyX.beginPath();cpv.forEach((p,i)=>i?pyX.lineTo(p[0],p[1]):pyX.moveTo(p[0],p[1]));pyX.closePath()
+    pyX.fillStyle=h2r(col,op*1.9);pyX.strokeStyle=h2r(col,0.72);pyX.lineWidth=1.5*devicePixelRatio;pyX.fill();pyX.stroke()
+  }
+  const wo=flow?0.92+Math.sin(Date.now()*0.003)*0.08:0.72
+  pyX.strokeStyle=h2r(col,wo);pyX.lineWidth=2.5*devicePixelRatio
+  ;[[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]].forEach(([a,b])=>{pyX.beginPath();pyX.moveTo(pv[a][0],pv[a][1]);pyX.lineTo(pv[b][0],pv[b][1]);pyX.stroke()})
+}
+
+// ══════════════════════════════════════════════
+// Main loop
+// ══════════════════════════════════════════════
+function loop(){
+  requestAnimationFrame(loop)
+  if(!active) return
+  const now=performance.now(),dt=(now-lastTick)/1000;lastTick=now
+  const tgt=sig(); moveSignal+=( tgt-moveSignal)*Math.min(1,dt*3)
+  curZone=getZ(moveSignal)
+  const flow=curZone.name==='FLOW'
+  document.documentElement.style.setProperty('--z',curZone.color)
+  phaseTime[curZone.name]=(phaseTime[curZone.name]||0)+dt
+  if(masterGain&&audioCtx){
+    const g=moveSignal>0.5?Math.min(0.88,0.25+(moveSignal-0.5)*0.78):0.04
+    masterGain.gain.setTargetAtTime(g,audioCtx.currentTime,flow?0.6:0.3)
+  }
+  const prog=Math.min(1,(now-sessionStart)/1000/SESSION_SECS)
+  document.getElementById('zn').textContent=curZone.name;document.getElementById('zn').style.color=curZone.color
+  const el=(now-sessionStart)/1000; document.getElementById('ti').textContent=`${Math.floor(el/60)}:${String(Math.floor(el%60)).padStart(2,'0')}`
+  document.getElementById('bar').style.width=(prog*100)+'%'; document.getElementById('bar').style.background=curZone.color
+  drawPy(prog,flow,curZone.color)
+  if(now-lastSend>1200){lastSend=now;sendPyramid(false)}
+  if(prog>=1) end()
+}
+requestAnimationFrame(loop)
+</script>
+</body>
+</html>

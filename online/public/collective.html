@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>the collective · seks</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;background:#000;color:#fff;font-family:'SF Mono',ui-monospace,monospace;overflow:hidden;}
+  #cv{position:fixed;inset:0;width:100%;height:100%;}
+  #header{position:fixed;top:0;left:0;right:0;text-align:center;z-index:10;padding:20px;pointer-events:none;}
+  #header .t{font-size:12px;letter-spacing:0.4em;color:#666;}
+  #header .s{font-size:10px;letter-spacing:0.28em;color:#333;margin-top:6px;}
+  #footer{position:fixed;bottom:0;left:0;right:0;z-index:10;padding:16px 24px;display:flex;justify-content:space-between;pointer-events:none;}
+  #count{font-size:10px;letter-spacing:0.22em;color:#444;}
+  #gstat{font-size:10px;letter-spacing:0.14em;color:#555;text-align:right;}
+  #legend{position:fixed;bottom:38px;left:0;right:0;display:flex;gap:16px;justify-content:center;z-index:10;font-size:9px;letter-spacing:0.12em;pointer-events:none;}
+  .lg{display:flex;align-items:center;gap:5px;color:#555;}
+  .ld{width:7px;height:7px;border-radius:50%;}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="header">
+  <div class="t">THE COLLECTIVE</div>
+  <div class="s">⦿-⦿ · seks · every pyramid is a body in flow</div>
+</div>
+<div id="legend">
+  <div class="lg"><span class="ld" style="background:#ffcc00"></span>still</div>
+  <div class="lg"><span class="ld" style="background:#00ff88"></span>flow</div>
+  <div class="lg"><span class="ld" style="background:#8855ff"></span>tension</div>
+</div>
+<div id="footer">
+  <div id="count">waiting for the first mover…</div>
+  <div id="gstat"></div>
+</div>
+
+<script>
+const COLORS={STILL:'#ffcc00',FLOW:'#00ff88',TENSION:'#8855ff'}
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d')
+const dpr=window.devicePixelRatio||1
+function resize(){cv.width=innerWidth*dpr;cv.height=innerHeight*dpr}
+resize();addEventListener('resize',()=>{resize();reposition()})
+
+// ── grand pyramid state ──────────────────────────────────────────────────────
+let grand={sessions:0, phaseTotal:{STILL:0,FLOW:0,TENSION:0}}
+
+// ── live pyramids ────────────────────────────────────────────────────────────
+const pys=new Map()   // id -> pyramid render state
+const PRUNE_MS=1000*60*12
+
+function ingest(d){
+  let p=pys.get(d.id)
+  if(!p){ p={id:d.id,angle:Math.random()*Math.PI*2,x:null,y:null,scale:null}; pys.set(d.id,p) }
+  Object.assign(p,{phases:d.phases||{STILL:0,FLOW:1,TENSION:0},total:d.total||0,active:d.active,zone:d.zone,seen:Date.now()})
+}
+
+// ── WebSocket ────────────────────────────────────────────────────────────────
+let ws=null
+function connect(){
+  ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host)
+  ws.onmessage=e=>{
+    let d; try{d=JSON.parse(e.data)}catch{return}
+    if(d.type==='snapshot'){ if(d.grand) grand=d.grand; if(Array.isArray(d.pyramids)) d.pyramids.forEach(ingest); reposition() }
+    if(d.type==='pyramid'){ ingest(d); reposition() }
+    if(d.type==='grand_update'&&d.grand){ grand=d.grand; updateGrandStat() }
+  }
+  ws.onclose=()=>setTimeout(connect,2000)
+  ws.onerror=()=>{}
+}
+connect()
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+function h2r(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+function rotY(v,a){const[x,y,z]=v;return[x*Math.cos(a)+z*Math.sin(a),y,-x*Math.sin(a)+z*Math.cos(a)]}
+function proj(v,fov,cx,cy,s){const[x,y,z]=v,d=z+fov;return[cx+(x/d)*fov*s,cy+(y/d)*fov*s]}
+
+// ── draw one pyramid, edges colored by phase composite ───────────────────────
+const EDGES=[[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]]
+const EDGE_ORDER=['FLOW','STILL','TENSION']
+
+function edgeColors(phases){
+  const counts={}; let assigned=0
+  EDGE_ORDER.forEach(z=>{counts[z]=Math.round((phases[z]||0)*EDGES.length);assigned+=counts[z]})
+  while(assigned<EDGES.length){counts.FLOW++;assigned++}
+  while(assigned>EDGES.length){if(counts.TENSION>0)counts.TENSION--;else if(counts.STILL>0)counts.STILL--;else counts.FLOW--;assigned--}
+  const arr=[]
+  EDGE_ORDER.forEach(z=>{for(let k=0;k<counts[z];k++)arr.push(COLORS[z])})
+  return arr
+}
+
+function drawPyramid(cx,cy,scale,angle,phases,active,isGrand){
+  const raw=[[0,-1,0],[-1,1,-1],[1,1,-1],[1,1,1],[-1,1,1]]
+  const rv=raw.map(v=>rotY(v,angle))
+  const pv=rv.map(v=>proj(v,4.5,cx,cy,scale))
+  const ec=edgeColors(phases)
+  const pulse=active?(0.7+0.3*Math.sin(Date.now()*0.004+angle)):0.45
+  const lw=isGrand?3.5*dpr:2*dpr
+
+  // face fill (shading) — each triangular face gets a phase-weighted fill
+  const facePhase=(i)=>EDGE_ORDER[Math.floor(i/(EDGES.length/3))]||'FLOW'
+  const faces=[[pv[0],pv[1],pv[2]],[pv[0],pv[2],pv[3]],[pv[0],pv[3],pv[4]],[pv[0],pv[4],pv[1]]]
+  const faceZones=['FLOW','STILL','TENSION','FLOW']
+  faces.forEach((f,i)=>{
+    const ph=phases[faceZones[i]]||0
+    ctx.beginPath();ctx.moveTo(f[0][0],f[0][1]);f.forEach(p=>ctx.lineTo(p[0],p[1]));ctx.closePath()
+    ctx.fillStyle=h2r(COLORS[faceZones[i]],isGrand?ph*0.18:ph*0.09);ctx.fill()
+  })
+
+  // wireframe edges colored by composite
+  ctx.lineWidth=lw;ctx.lineCap='round'
+  EDGES.forEach(([a,b],i)=>{
+    ctx.strokeStyle=h2r(ec[i]||'#00ff88',pulse*(isGrand?1.0:0.85))
+    ctx.beginPath();ctx.moveTo(pv[a][0],pv[a][1]);ctx.lineTo(pv[b][0],pv[b][1]);ctx.stroke()
+  })
+
+  // grand pulse ring
+  if(isGrand&&active){
+    ctx.strokeStyle=h2r('#00ff88',0.1+0.08*Math.sin(Date.now()*0.002))
+    ctx.lineWidth=1*dpr;ctx.beginPath();ctx.arc(cx,cy,scale*1.6,0,Math.PI*2);ctx.stroke()
+  }
+}
+
+// ── layout: grand in center, live pyramids in a ring around it ────────────────
+const TARGET=new Map()
+function reposition(){
+  const arr=[...pys.values()]; const n=arr.length
+  const cx=innerWidth/2*dpr, cy=innerHeight/2*dpr
+  const maxR=Math.min(innerWidth,innerHeight)*0.32*dpr
+  arr.forEach((p,i)=>{
+    const angle=i/n*Math.PI*2-Math.PI/2
+    const r=Math.max(maxR*0.55,Math.min(maxR,120*dpr+n*8*dpr))
+    TARGET.set(p.id,{x:cx+r*Math.cos(angle),y:cy+r*Math.sin(angle),scale:Math.min(innerWidth,innerHeight)*0.09*dpr})
+  })
+}
+reposition()
+
+function updateGrandStat(){
+  if(!grand.sessions) return
+  const n=grand.sessions, fp=Math.round(grand.phaseTotal.FLOW/n*100)
+  document.getElementById('gstat').textContent=`${n} session${n>1?'s':''} · ${fp}% collective flow`
+}
+
+// ── grand pyramid derived from accumulated data ───────────────────────────────
+function grandPhases(){
+  if(!grand.sessions) return {STILL:0,FLOW:1,TENSION:0}
+  const n=grand.sessions
+  return{STILL:grand.phaseTotal.STILL/n,FLOW:grand.phaseTotal.FLOW/n,TENSION:grand.phaseTotal.TENSION/n}
+}
+let grandAngle=0
+
+// ── render loop ──────────────────────────────────────────────────────────────
+function render(){
+  requestAnimationFrame(render)
+  ctx.clearRect(0,0,cv.width,cv.height)
+  const now=Date.now()
+  // prune
+  for(const[id,p] of pys){ if(!p.active&&now-p.seen>PRUNE_MS){pys.delete(id);reposition()} }
+  const arr=[...pys.values()]
+  const cx=innerWidth/2*dpr, cy=innerHeight/2*dpr
+
+  // grand pyramid — always at center, size depends on session count
+  grandAngle+=0.0012
+  const gScale=Math.min(innerWidth,innerHeight)*(0.14+Math.min(grand.sessions,30)*0.004)*dpr
+  const gPhases=grandPhases()
+  const gActive=arr.some(p=>p.active)
+  drawPyramid(cx,cy,gScale,grandAngle,gPhases,gActive,true)
+  // grand label
+  if(grand.sessions>0){
+    ctx.fillStyle='rgba(255,255,255,0.15)';ctx.font=`${8*dpr}px 'SF Mono',monospace`
+    ctx.textAlign='center';ctx.fillText('COLLECTIVE',cx,cy+gScale*1.85)
+  }
+
+  // live session pyramids in orbit
+  arr.forEach((p,i)=>{
+    const t=TARGET.get(p.id)||{x:cx,y:cy,scale:60*dpr}
+    p.x=p.x??t.x; p.y=p.y??t.y; p.scale=p.scale??t.scale
+    p.x+=(t.x-p.x)*0.07; p.y+=(t.y-p.y)*0.07; p.scale+=(t.scale-p.scale)*0.07
+    p.angle+=(p.active?0.005:0.002)
+    if(p.phases) drawPyramid(p.x,p.y,p.scale,p.angle,p.phases,p.active,false)
+    // label: active dot
+    if(p.active){
+      ctx.fillStyle=h2r(COLORS[p.zone]||'#00ff88',0.7+0.3*Math.sin(now*0.005))
+      ctx.beginPath();ctx.arc(p.x,p.y+p.scale*1.6,3*dpr,0,Math.PI*2);ctx.fill()
+    }
+  })
+
+  // update UI
+  const activeN=arr.filter(p=>p.active).length
+  document.getElementById('count').textContent=arr.length===0
+    ?'waiting for the first mover…'
+    :`${arr.length} pyramid${arr.length>1?'s':''} · ${activeN} moving now`
+  updateGrandStat()
+}
+render()
+</script>
+</body>
+</html>
