@@ -273,7 +273,7 @@ io.of(/.*/).on('connection', socket => {
 
 server.listen(PORT, () => {
   console.log(`
-  ⦿-⦿  seks online
+  ⦿-⦿  seks online  [v3 · soma-auth]
   ────────────────────────────────
   game        → http://localhost:${PORT}/game
   collective  → http://localhost:${PORT}/collective
