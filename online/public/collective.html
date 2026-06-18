@@ -8,9 +8,8 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   html,body{height:100%;background:#000;color:#fff;font-family:'SF Mono',ui-monospace,monospace;overflow:hidden;}
   #cv{position:fixed;inset:0;width:100%;height:100%;}
-  #header{position:fixed;top:0;left:0;right:0;text-align:center;z-index:10;padding:20px;pointer-events:none;}
-  #header .t{font-size:12px;letter-spacing:0.4em;color:#666;}
-  #header .s{font-size:10px;letter-spacing:0.28em;color:#333;margin-top:6px;}
+  #eventsel{position:fixed;top:16px;left:20px;z-index:10;background:#000;color:#333;border:1px solid #1a1a1a;font-family:'SF Mono',ui-monospace,monospace;font-size:9px;letter-spacing:0.22em;padding:5px 8px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;}
+  #eventsel:hover{color:#555;border-color:#333;}
   #footer{position:fixed;bottom:0;left:0;right:0;z-index:10;padding:16px 24px;display:flex;justify-content:space-between;pointer-events:none;}
   #count{font-size:10px;letter-spacing:0.22em;color:#444;}
   #gstat{font-size:10px;letter-spacing:0.14em;color:#555;text-align:right;}
@@ -21,10 +20,9 @@
 </head>
 <body>
 <canvas id="cv"></canvas>
-<div id="header">
-  <div class="t">THE COLLECTIVE</div>
-  <div class="s">⦿-⦿ · seks · every pyramid is a body in flow</div>
-</div>
+<select id="eventsel">
+  <option value="default">⦿-⦿  the game</option>
+</select>
 <div id="legend">
   <div class="lg"><span class="ld" style="background:#ffcc00"></span>still</div>
   <div class="lg"><span class="ld" style="background:#00ff88"></span>flow</div>
