@@ -178,16 +178,21 @@ wss.on('connection', ws => {
     let d; try { d = JSON.parse(raw.toString()) } catch { return }
     if (!d) return
 
-    // SomaSync biometric stream — has alpha/rmssd fields, no type
-    if (d.type == null && (d.alpha != null || d.rmssd != null)) {
-      const alpha = d.alpha ?? d.data?.alpha ?? null
-      const hr    = d.heartRate ?? d.hr ?? d.data?.heartRate ?? null
-      const rmssd = d.rmssd ?? d.data?.rmssd ?? null
-      const sdnn  = d.sdnn ?? d.data?.sdnn ?? null
-      const state = d.state ?? d.data?.state ?? null
-      console.log(`♡ soma · alpha=${alpha?.toFixed(2)} hr=${hr} rmssd=${rmssd?.toFixed(1)} state=${state}`)
-      broadcast(JSON.stringify({ type: 'soma', alpha, hr, rmssd, sdnn, state }), ws)
-      return
+    // SomaSync biometric stream — detected by known HRV fields or no type
+    const isHRV = d.type == null || typeof d.type === 'number'
+    if (isHRV && Object.keys(d).length > 0) {
+      // log raw payload so we can confirm field names
+      console.log('[soma raw]', JSON.stringify(d).slice(0, 400))
+      const alpha = d.alpha ?? d.hrv_alpha ?? d.dfa ?? d.data?.alpha ?? null
+      const hr    = d.heartRate ?? d.hr ?? d.heart_rate ?? d.bpm ?? d.data?.heartRate ?? null
+      const rmssd = d.rmssd ?? d.RMSSD ?? d.data?.rmssd ?? null
+      const sdnn  = d.sdnn ?? d.SDNN ?? d.data?.sdnn ?? null
+      const state = d.state ?? d.zone ?? d.data?.state ?? null
+      if (alpha != null || hr != null || rmssd != null) {
+        console.log(`♡ soma · alpha=${alpha?.toFixed?.(2)} hr=${hr} rmssd=${rmssd?.toFixed?.(1)} state=${state}`)
+        broadcast(JSON.stringify({ type: 'soma', alpha, hr, rmssd, sdnn, state }), ws)
+        return
+      }
     }
 
     if (!d.type) return
