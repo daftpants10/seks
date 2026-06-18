@@ -166,6 +166,23 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify(ev))
   }
 
+  // SomaSync namespace auth + CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200, { 'Access-Control-Allow-Origin':'*', 'Access-Control-Allow-Methods':'GET,POST,OPTIONS', 'Access-Control-Allow-Headers':'Content-Type,Authorization' })
+    return res.end()
+  }
+  if (urlPath.startsWith('/api/ns/') && req.method === 'POST' && urlPath.endsWith('/auth')) {
+    const ns = urlPath.split('/')[3] || 'unknown'
+    console.log(`[soma auth] ns=${ns}`)
+    res.writeHead(200, { 'Content-Type':'application/json', 'Access-Control-Allow-Origin':'*' })
+    return res.end(JSON.stringify({ success: true, namespace: ns, token: ns }))
+  }
+  if (urlPath.startsWith('/api/')) {
+    console.log(`[soma api] ${req.method} ${urlPath}`)
+    res.writeHead(200, { 'Content-Type':'application/json', 'Access-Control-Allow-Origin':'*' })
+    return res.end(JSON.stringify({ success: true }))
+  }
+
   if (urlPath === '/robots.txt') { res.writeHead(200); return res.end('User-agent: *\nDisallow:') }
   res.writeHead(404); res.end('not found')
 })
