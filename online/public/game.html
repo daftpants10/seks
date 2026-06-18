@@ -85,7 +85,7 @@
   <div class="re">tap to play again</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script>
 // ══════════════════════════════════════════════
 // Zones (movement-based)
@@ -244,36 +244,49 @@ function sendPyramid(isComplete){
 navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280}},audio:false})
   .then(s=>document.getElementById('cam').srcObject=s).catch(()=>{})
 
-const PLINKS=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]]
-const KJOINTS=[11,12,13,14,15,16,23,24]
-let mpPose=null
-function loadPose(){
-  mpPose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`})
-  mpPose.setOptions({modelComplexity:1,smoothLandmarks:true,enableSegmentation:false,minDetectionConfidence:0.5,minTrackingConfidence:0.5})
-  mpPose.onResults(onPose)
+// hand skeleton connections (MediaPipe Hands 21-landmark model)
+const HLINKS=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]]
+const HTIPS=[0,4,8,12,16,20]  // wrist + all 5 fingertips
+const EMA_SCALE=0.010, VAR_SCALE=0.005  // tuned for fingertip-scale motion
+
+let mpHands=null
+function loadHands(){
+  mpHands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`})
+  mpHands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.7,minTrackingConfidence:0.7})
+  mpHands.onResults(onHands)
   sched()
 }
 function sched(){
   const v=document.getElementById('cam')
-  if(v.readyState>=2) mpPose.send({image:v}).then(()=>setTimeout(sched,50))
+  if(v.readyState>=2) mpHands.send({image:v}).then(()=>setTimeout(sched,50))
   else setTimeout(sched,100)
 }
-function onPose(r){
+function onHands(r){
   const cv=document.getElementById('pcv'),ctx=cv.getContext('2d'),w=cv.width,h=cv.height
   ctx.clearRect(0,0,w,h)
-  if(!r.poseLandmarks){prevLM=null;return}
-  const lm=r.poseLandmarks
-  if(prevLM){
-    let m=0,c=0
-    KJOINTS.forEach(i=>{const a=lm[i],b=prevLM[i];if(a&&b&&a.visibility>0.4){m+=Math.hypot(a.x-b.x,a.y-b.y);c++}})
-    if(c){const inst=m/c;motEMA=motEMA*0.85+inst*0.15;motVarEMA=motVarEMA*0.9+Math.abs(inst-motEMA)*0.1;pushVel(inst)}
+  const hands=r.multiHandLandmarks
+  if(!hands||!hands.length){prevLM=null;return}
+  // flatten tracked tips across all detected hands
+  const pts=[]
+  hands.forEach(lm=>HTIPS.forEach(i=>pts.push(lm[i])))
+  if(prevLM&&prevLM.length===pts.length){
+    let m=0
+    pts.forEach((p,i)=>m+=Math.hypot(p.x-prevLM[i].x,p.y-prevLM[i].y))
+    const inst=m/pts.length
+    motEMA=motEMA*0.85+inst*0.15
+    motVarEMA=motVarEMA*0.9+Math.abs(inst-motEMA)*0.1
+    pushVel(inst)
   }
-  prevLM=lm.map(p=>({x:p.x,y:p.y,visibility:p.visibility}))
+  prevLM=pts.map(p=>({x:p.x,y:p.y}))
+  // draw hand skeleton
   const col=curZone.color,dpr=window.devicePixelRatio||1
-  ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=col;ctx.lineWidth=1.5*dpr;ctx.globalAlpha=0.28;ctx.setLineDash([3*dpr,6*dpr])
-  PLINKS.forEach(([a,b])=>{const pa=lm[a],pb=lm[b];if(!pa||!pb||pa.visibility<0.4||pb.visibility<0.4)return;ctx.beginPath();ctx.moveTo(pa.x*w,pa.y*h);ctx.lineTo(pb.x*w,pb.y*h);ctx.stroke()})
-  ctx.setLineDash([]);ctx.fillStyle=col;ctx.globalAlpha=0.4
-  KJOINTS.forEach(i=>{const p=lm[i];if(!p||p.visibility<0.4)return;ctx.beginPath();ctx.arc(p.x*w,p.y*h,2.5*dpr,0,Math.PI*2);ctx.fill()})
+  ctx.lineCap='round';ctx.lineJoin='round'
+  hands.forEach(lm=>{
+    ctx.strokeStyle=col;ctx.lineWidth=1.5*dpr;ctx.globalAlpha=0.30;ctx.setLineDash([3*dpr,5*dpr])
+    HLINKS.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(lm[a].x*w,lm[a].y*h);ctx.lineTo(lm[b].x*w,lm[b].y*h);ctx.stroke()})
+    ctx.setLineDash([]);ctx.fillStyle=col;ctx.globalAlpha=0.55
+    HTIPS.forEach(i=>{ctx.beginPath();ctx.arc(lm[i].x*w,lm[i].y*h,3.5*dpr,0,Math.PI*2);ctx.fill()})
+  })
   ctx.globalAlpha=1
 }
 function resizePCV(){const cv=document.getElementById('pcv');const d=window.devicePixelRatio||1;cv.width=innerWidth*d;cv.height=innerHeight*d}
@@ -283,7 +296,7 @@ resizePCV();addEventListener('resize',resizePCV)
 // Movement → flow signal
 // ══════════════════════════════════════════════
 function sigHouse(){
-  const lv=Math.min(motEMA/0.018,1.6), er=Math.min(motVarEMA/0.009,1.0)
+  const lv=Math.min(motEMA/EMA_SCALE,1.6), er=Math.min(motVarEMA/VAR_SCALE,1.0)
   let a=lv<0.25?0.40+lv*0.6:0.52+Math.min(lv,1.0)*0.75
   a+=er*0.52
   return Math.max(0,Math.min(1.9,a))
@@ -328,7 +341,7 @@ function begin(){
   sessionStart=performance.now();lastTick=sessionStart
   moveSignal=0.8;motEMA=0;motVarEMA=0;prevLM=null
   velHead=0;velCount=0;lastDFA=0;movAlpha=1.0
-  if(!mpPose) loadPose()
+  if(!mpHands) loadHands()
   document.getElementById('start').style.display='none'
   document.getElementById('done').style.display='none'
   document.getElementById('hud').style.display='flex'
