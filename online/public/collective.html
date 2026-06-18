@@ -43,12 +43,13 @@ resize();addEventListener('resize',()=>{resize();reposition()})
 // ── shared pyramids (permanent gallery) ─────────────────────────────────────
 let grand={sessions:0, phaseTotal:{STILL:0,FLOW:0,TENSION:0}}
 const pys=new Map()  // id -> render state — never deleted
+let selEvent='all'
 
 function ingestShared(d){
   if(pys.has(d.id)) return  // already have it
   const p={id:d.id, angle:Math.random()*Math.PI*2, x:null, y:null, scale:null,
     phases:d.phases||{STILL:0,FLOW:1,TENSION:0}, total:d.total||0,
-    shareSize:d.shareSize??1, active:false}
+    shareSize:d.shareSize??1, eventId:d.eventId||'default', active:false}
   pys.set(d.id, p)
 }
 
@@ -72,6 +73,18 @@ function connect(){
   ws.onerror=()=>{}
 }
 connect()
+
+async function loadEvents(){
+  try{
+    const r=await fetch('/events'); if(!r.ok)return
+    const evs=await r.json()
+    const sel=document.getElementById('eventsel')
+    sel.innerHTML='<option value="all">⦿-⦿  all sessions</option>'
+    evs.forEach(ev=>{const o=document.createElement('option');o.value=ev.id;o.textContent=ev.label;sel.appendChild(o)})
+    sel.onchange=()=>{selEvent=sel.value;reposition()}
+  }catch{}
+}
+loadEvents()
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function h2r(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
@@ -128,7 +141,7 @@ function drawPyramid(cx,cy,scale,angle,phases,active,isGrand){
 const TARGET=new Map()
 const SHARE_SCALE=[0.5,1.0,1.5]
 function reposition(){
-  const arr=[...pys.values()]; const n=arr.length
+  const arr=[...pys.values()].filter(p=>selEvent==='all'||p.eventId===selEvent); const n=arr.length
   const cx=innerWidth/2*dpr, cy=innerHeight/2*dpr
   const baseR=Math.min(innerWidth,innerHeight)*0.30*dpr
   const r=Math.max(baseR*0.5, Math.min(baseR, 80*dpr+n*12*dpr))
@@ -159,7 +172,6 @@ let grandAngle=0
 function render(){
   requestAnimationFrame(render)
   ctx.clearRect(0,0,cv.width,cv.height)
-  const arr=[...pys.values()]
   const cx=innerWidth/2*dpr, cy=innerHeight/2*dpr
 
   // grand pyramid — center, grows with shared count
@@ -167,7 +179,8 @@ function render(){
   const gScale=Math.min(innerWidth,innerHeight)*(0.12+Math.min(grand.sessions,40)*0.003)*dpr
   drawPyramid(cx,cy,gScale,grandAngle,grandPhases(),false,true)
 
-  // shared pyramids — permanent, slow rotation
+  // shared pyramids — filtered by selected event, permanent, slow rotation
+  const arr=[...pys.values()].filter(p=>selEvent==='all'||p.eventId===selEvent)
   arr.forEach(p=>{
     const t=TARGET.get(p.id)||{x:cx,y:cy,scale:50*dpr}
     p.x=p.x??t.x; p.y=p.y??t.y; p.scale=p.scale??t.scale

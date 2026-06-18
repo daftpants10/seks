@@ -9,12 +9,12 @@ const PUBLIC = path.join(__dirname, 'public')
 const TRACKS = path.join(PUBLIC, 'tracks')
 const DATA   = path.join(__dirname, 'data')
 const SHARED_PATH = path.join(DATA, 'shared.json')
+const EVENTS_PATH = path.join(DATA, 'events.json')
 const AUDIO_EXTS = ['.mp3', '.m4a', '.wav', '.ogg', '.flac']
 const MIME = { '.mp3':'audio/mpeg', '.m4a':'audio/mp4', '.wav':'audio/wav', '.ogg':'audio/ogg', '.flac':'audio/flac' }
+const ADMIN_PASS = process.env.ADMIN_PASS || 'seks'
 
 // ── persistent shared pyramids ───────────────────────────────────────────────
-// Only added when a user explicitly taps SEND on the done screen.
-// Never deleted.
 let shared = []
 const grandPyramid = { sessions: 0, phaseTotal: { STILL: 0, FLOW: 0, TENSION: 0 } }
 
@@ -34,11 +34,41 @@ function saveShared() {
 loadShared()
 console.log(`loaded ${shared.length} shared pyramids`)
 
+// ── events ───────────────────────────────────────────────────────────────────
+let events = []
+function loadEvents() {
+  try {
+    events = JSON.parse(fs.readFileSync(EVENTS_PATH, 'utf8'))
+    if (!events.length) throw new Error('empty')
+  } catch {
+    events = [{ id: 'default', label: 'the game', createdAt: Date.now(), active: true }]
+    saveEvents()
+  }
+}
+function saveEvents() {
+  try {
+    fs.mkdirSync(DATA, { recursive: true })
+    fs.writeFileSync(EVENTS_PATH, JSON.stringify(events))
+  } catch {}
+}
+loadEvents()
+console.log(`loaded ${events.length} events`)
+
+function readBody(req) {
+  return new Promise(resolve => {
+    const chunks = []
+    req.on('data', c => chunks.push(c))
+    req.on('end', () => {
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString())) } catch { resolve(null) }
+    })
+  })
+}
+
 // ── HTTP server ──────────────────────────────────────────────────────────────
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const urlPath = req.url.split('?')[0]
 
-  const routes = { '/':'index.html', '/game':'game.html', '/collective':'collective.html' }
+  const routes = { '/':'index.html', '/game':'game.html', '/collective':'collective.html', '/admin':'admin.html' }
   const file = routes[urlPath]
   if (file) {
     try {
@@ -86,6 +116,52 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({ shared, grand: grandPyramid }))
   }
 
+  // ── events API (public) ──────────────────────────────────────────────────
+  if (urlPath === '/events') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' })
+    return res.end(JSON.stringify(events.filter(e => e.active)))
+  }
+
+  // ── admin: auth ──────────────────────────────────────────────────────────
+  if (urlPath === '/admin/auth' && req.method === 'POST') {
+    const body = await readBody(req)
+    const ok = !!(body && body.password === ADMIN_PASS)
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ ok }))
+  }
+
+  // ── admin: list all events ───────────────────────────────────────────────
+  if (urlPath === '/admin/events' && req.method === 'GET') {
+    if (req.headers['x-admin-pass'] !== ADMIN_PASS) { res.writeHead(401); return res.end('unauthorized') }
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify(events))
+  }
+
+  // ── admin: create event ──────────────────────────────────────────────────
+  if (urlPath === '/admin/event' && req.method === 'POST') {
+    if (req.headers['x-admin-pass'] !== ADMIN_PASS) { res.writeHead(401); return res.end('unauthorized') }
+    const body = await readBody(req)
+    if (!body || !body.label) { res.writeHead(400); return res.end('missing label') }
+    const ev = { id: 'evt_' + Date.now().toString(36), label: body.label.slice(0, 60), createdAt: Date.now(), active: true }
+    events.push(ev)
+    saveEvents()
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify(ev))
+  }
+
+  // ── admin: toggle event active ───────────────────────────────────────────
+  if (urlPath === '/admin/event' && req.method === 'PATCH') {
+    if (req.headers['x-admin-pass'] !== ADMIN_PASS) { res.writeHead(401); return res.end('unauthorized') }
+    const body = await readBody(req)
+    if (!body || !body.id) { res.writeHead(400); return res.end('missing id') }
+    const ev = events.find(e => e.id === body.id)
+    if (!ev) { res.writeHead(404); return res.end('not found') }
+    ev.active = !!body.active
+    saveEvents()
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify(ev))
+  }
+
   if (urlPath === '/robots.txt') { res.writeHead(200); return res.end('User-agent: *\nDisallow:') }
   res.writeHead(404); res.end('not found')
 })
@@ -96,31 +172,26 @@ const clients = new Set()
 
 wss.on('connection', ws => {
   clients.add(ws)
-  // send full shared gallery to new viewer
   ws.send(JSON.stringify({ type: 'snapshot', shared, grand: grandPyramid }))
 
   ws.on('message', raw => {
     let d; try { d = JSON.parse(raw.toString()) } catch { return }
     if (!d || !d.type) return
 
-    // live pyramid update — only relayed back to the sender's own game tab for feedback
-    // collective does NOT listen to this type
     if (d.type === 'pyramid' && d.id) {
-      // echo back to sender only (for their own game state)
       return
     }
 
-    // explicit share: user tapped SEND on done screen
     if (d.type === 'share' && d.id && d.phases) {
       const entry = {
         id: d.id,
         phases: d.phases,
         total: d.total || 0,
         shareSize: d.shareSize ?? 1,
+        eventId: d.eventId || 'default',
         sharedAt: Date.now()
       }
       shared.push(entry)
-      // accumulate into grand pyramid
       grandPyramid.sessions++
       const t = (d.phases.STILL||0) + (d.phases.FLOW||0) + (d.phases.TENSION||0) || 1
       grandPyramid.phaseTotal.STILL   += (d.phases.STILL   || 0) / t
@@ -146,8 +217,9 @@ server.listen(PORT, () => {
   ────────────────────────────────
   game        → http://localhost:${PORT}/game
   collective  → http://localhost:${PORT}/collective
+  admin       → http://localhost:${PORT}/admin
   state API   → http://localhost:${PORT}/state
   ────────────────────────────────
-  PORT ${PORT}
+  PORT ${PORT}  ·  ADMIN_PASS=${ADMIN_PASS==='seks'?'(default)':'(set)'}
 `)
 })

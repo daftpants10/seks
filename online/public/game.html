@@ -72,6 +72,9 @@
   <div style="margin-top:28px;width:100%;max-width:500px;">
     <div class="gl">CHOOSE A TRACK</div>
     <div id="grid"></div>
+    <select id="evsel" style="margin-top:16px;background:#000;color:#555;border:1px solid #1a1a1a;font-family:'SF Mono',ui-monospace,monospace;font-size:9px;letter-spacing:0.22em;padding:7px 10px;width:100%;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;">
+      <option value="default">⦿-⦿  the game</option>
+    </select>
   </div>
 </div>
 
@@ -161,6 +164,7 @@ TRACKS.forEach((t,i)=>{
 // ══════════════════════════════════════════════
 // State
 // ══════════════════════════════════════════════
+let selectedEvent='default'
 let active=false, sessionId=null
 let phaseTime={STILL:0,FLOW:0,TENSION:0}
 let sessionStart=0, lastTick=0
@@ -246,10 +250,25 @@ function animHold(){
   document.getElementById('sbprog').style.width=(p*100)+'%'
   progRAF=requestAnimationFrame(animHold)
 }
-const sbtn=()=>document.getElementById('sendbtn')
+function sendShare(){
+  const total=phaseTime.STILL+phaseTime.FLOW+phaseTime.TENSION||1
+  const msg={type:'share',id:sessionId,shareSize,eventId:selectedEvent,
+    phases:{STILL:phaseTime.STILL/total,FLOW:phaseTime.FLOW/total,TENSION:phaseTime.TENSION/total},
+    total:Math.round(total)}
+  try{if(wsOk)ws.send(JSON.stringify(msg))}catch{}
+  document.getElementById('sbtext').textContent='sent ✓'
+  setTimeout(()=>{location.href='/collective'},900)
+}
+function cancelHold(){
+  clearTimeout(holdTID);cancelAnimationFrame(progRAF)
+  document.getElementById('sbprog').style.width='0%'
+  document.getElementById('sendbtn').classList.remove('holding')
+  holdStart=0
+}
 function initSendBtn(){
-  const el=sbtn()
+  const el=document.getElementById('sendbtn')
   el.addEventListener('pointerdown',e=>{
+    if(!onDoneScreen)return
     e.stopPropagation()
     holdStart=performance.now()
     el.classList.add('holding')
@@ -257,31 +276,15 @@ function initSendBtn(){
     animHold()
   })
   el.addEventListener('pointerup',e=>{
+    if(!holdStart)return
     e.stopPropagation()
-    clearTimeout(holdTID);cancelAnimationFrame(progRAF)
-    document.getElementById('sbprog').style.width='0%'
-    el.classList.remove('holding')
     const held=performance.now()-holdStart
-    holdStart=0
-    if(held>50&&held<3000){
-      // send pyramid to collective then open it
-      const total=phaseTime.STILL+phaseTime.FLOW+phaseTime.TENSION||1
-      const msg={type:'share',id:sessionId,shareSize,
-        phases:{STILL:phaseTime.STILL/total,FLOW:phaseTime.FLOW/total,TENSION:phaseTime.TENSION/total},
-        total:Math.round(total)}
-      try{if(wsOk)ws.send(JSON.stringify(msg))}catch{}
-      window.open('/collective','_blank')
-    }
+    cancelHold()
+    if(held>50&&held<2900)sendShare()
   })
-  el.addEventListener('pointerleave',e=>{
-    if(holdStart>0){
-      clearTimeout(holdTID);cancelAnimationFrame(progRAF)
-      document.getElementById('sbprog').style.width='0%'
-      el.classList.remove('holding')
-      holdStart=0
-    }
-  })
+  el.addEventListener('pointercancel',()=>{if(holdStart)cancelHold()})
 }
+initSendBtn()
 
 // ══════════════════════════════════════════════
 // WebSocket
@@ -296,6 +299,18 @@ function connectWS(){
   }catch{}
 }
 connectWS()
+async function loadEvents(){
+  try{
+    const r=await fetch('/events'); if(!r.ok)return
+    const evs=await r.json()
+    const sel=document.getElementById('evsel')
+    sel.innerHTML=''
+    evs.forEach(ev=>{const o=document.createElement('option');o.value=ev.id;o.textContent=ev.label;sel.appendChild(o)})
+    sel.onchange=()=>{selectedEvent=sel.value}
+    if(evs.length)selectedEvent=evs[0].id
+  }catch{}
+}
+loadEvents()
 let lastSend=0
 function sendPyramid(isComplete){
   if(!wsOk||!sessionId) return
@@ -441,8 +456,8 @@ function showDone(){
   onDoneScreen=true
   pyScaleMul=SHARE_SCALE[shareSize]
   updateSzDisplay()
+  document.getElementById('sbtext').textContent='hold · size    tap · send'
   document.getElementById('done').style.display='flex'
-  initSendBtn()
 }
 document.getElementById('done').addEventListener('click',e=>{
   if(e.target.closest('#sendbtn'))return

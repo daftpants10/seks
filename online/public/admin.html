@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>admin · seks</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#000;color:#fff;font-family:'SF Mono',ui-monospace,monospace;padding:36px 28px;min-height:100%}
+  h2{font-size:9px;letter-spacing:0.45em;color:#333;margin-bottom:32px}
+  .section{max-width:440px}
+  .sect-label{font-size:8px;letter-spacing:0.4em;color:#222;margin-bottom:14px}
+  .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #0e0e0e}
+  .row:first-of-type{border-top:1px solid #0e0e0e}
+  .dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+  .dot.on{background:#00ff88}
+  .dot.off{background:#1a1a1a}
+  .lbl{flex:1;font-size:11px;letter-spacing:0.12em;color:#777}
+  .dt{font-size:8px;letter-spacing:0.1em;color:#222}
+  .btn{background:none;color:#333;border:1px solid #1a1a1a;padding:5px 10px;font-family:inherit;font-size:8px;letter-spacing:0.22em;cursor:pointer;transition:color 0.15s,border-color 0.15s}
+  .btn:hover{color:#aaa;border-color:#444}
+  .btn.on{color:#00ff88;border-color:#1a3a28}
+  input{background:#000;color:#aaa;border:none;border-bottom:1px solid #1a1a1a;padding:8px 0;font-family:inherit;font-size:11px;letter-spacing:0.14em;outline:none;width:100%;margin-bottom:14px}
+  input::placeholder{color:#222}
+  input:focus{border-bottom-color:#333}
+  .add-btn{background:none;color:#333;border:1px solid #1a1a1a;padding:8px 16px;font-family:inherit;font-size:9px;letter-spacing:0.28em;cursor:pointer;width:100%}
+  .add-btn:hover{color:#aaa;border-color:#444}
+  #msg{font-size:9px;letter-spacing:0.2em;color:#555;margin-top:10px;min-height:16px}
+  #lerr{font-size:9px;letter-spacing:0.2em;color:#ff4444;margin-top:10px;min-height:16px}
+  #panel{display:none}
+  .links{margin-top:32px;display:flex;gap:20px;font-size:9px;letter-spacing:0.2em}
+  .links a{color:#333;text-decoration:none}
+  .links a:hover{color:#888}
+  .divider{border:none;border-top:1px solid #0e0e0e;margin:28px 0}
+</style>
+</head>
+<body>
+
+<h2>⦿-⦿  ADMIN</h2>
+
+<div class="section" id="login">
+  <input id="pw" type="password" placeholder="password" autocomplete="current-password" />
+  <button class="add-btn" onclick="login()">enter</button>
+  <div id="lerr"></div>
+</div>
+
+<div class="section" id="panel">
+  <div class="sect-label">EVENTS</div>
+  <div id="evlist"></div>
+
+  <hr class="divider">
+
+  <div class="sect-label">NEW EVENT</div>
+  <input id="newlbl" type="text" placeholder="event label (e.g. loob june 2026)" maxlength="60" />
+  <button class="add-btn" onclick="addEvent()">+ create</button>
+  <div id="msg"></div>
+
+  <div class="links">
+    <a href="/game">/game</a>
+    <a href="/collective">/collective</a>
+  </div>
+</div>
+
+<script>
+let pass = sessionStorage.getItem('seks_adm') || ''
+if (pass) tryLoad(pass)
+
+document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') login() })
+document.getElementById('newlbl').addEventListener('keydown', e => { if (e.key === 'Enter') addEvent() })
+
+async function login() {
+  const p = document.getElementById('pw').value.trim()
+  if (!p) return
+  const r = await fetch('/admin/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: p })
+  })
+  const d = await r.json()
+  if (d.ok) {
+    sessionStorage.setItem('seks_adm', p)
+    tryLoad(p)
+  } else {
+    document.getElementById('lerr').textContent = 'wrong password'
+  }
+}
+
+async function tryLoad(p) {
+  pass = p
+  const r = await fetch('/admin/events', { headers: { 'X-Admin-Pass': p } })
+  if (r.status === 401) { sessionStorage.removeItem('seks_adm'); return }
+  const evs = await r.json()
+  document.getElementById('login').style.display = 'none'
+  document.getElementById('panel').style.display = 'block'
+  renderEvents(evs)
+}
+
+function renderEvents(evs) {
+  const el = document.getElementById('evlist')
+  el.innerHTML = ''
+  if (!evs.length) {
+    el.innerHTML = '<div style="font-size:10px;color:#1a1a1a;padding:12px 0;letter-spacing:0.2em">no events</div>'
+    return
+  }
+  evs.forEach(ev => {
+    const row = document.createElement('div')
+    row.className = 'row'
+    const d = new Date(ev.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' })
+    row.innerHTML = `
+      <span class="dot ${ev.active ? 'on' : 'off'}"></span>
+      <span class="lbl">${ev.label}</span>
+      <span class="dt">${d}</span>
+      <button class="btn ${ev.active ? 'on' : ''}" onclick="toggle('${ev.id}', ${!ev.active})">${ev.active ? 'on' : 'off'}</button>
+    `
+    el.appendChild(row)
+  })
+}
+
+async function toggle(id, active) {
+  await fetch('/admin/event', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Pass': pass },
+    body: JSON.stringify({ id, active })
+  })
+  refresh()
+}
+
+async function addEvent() {
+  const label = document.getElementById('newlbl').value.trim()
+  if (!label) return
+  const r = await fetch('/admin/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Pass': pass },
+    body: JSON.stringify({ label })
+  })
+  if (r.ok) {
+    document.getElementById('newlbl').value = ''
+    flash('created')
+    refresh()
+  }
+}
+
+async function refresh() {
+  const r = await fetch('/admin/events', { headers: { 'X-Admin-Pass': pass } })
+  renderEvents(await r.json())
+}
+
+function flash(txt) {
+  const m = document.getElementById('msg')
+  m.textContent = txt
+  setTimeout(() => { m.textContent = '' }, 2000)
+}
+</script>
+</body>
+</html>
