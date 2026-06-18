@@ -239,7 +239,13 @@ async function pick(i){
   document.querySelectorAll('.t').forEach(t=>t.style.pointerEvents='none')
   if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();masterGain=audioCtx.createGain();masterGain.gain.value=0;masterGain.connect(audioCtx.destination)}
   if(audioCtx.state!=='running') await audioCtx.resume()
-  const buf=buildTrack(audioCtx,TRACKS[i])
+  // try a real track file first (track number = i+1); fall back to procedural
+  let buf=null
+  try{
+    const r=await fetch(`/track?n=${i+1}`)
+    if(r.ok){ const ab=await r.arrayBuffer(); buf=await audioCtx.decodeAudioData(ab) }
+  }catch{}
+  if(!buf) buf=buildTrack(audioCtx,TRACKS[i])
   if(trackSrc){try{trackSrc.stop();trackSrc.disconnect()}catch{}}
   trackSrc=audioCtx.createBufferSource();trackSrc.buffer=buf;trackSrc.loop=true;trackSrc.connect(masterGain);trackSrc.start()
   begin()

@@ -7,6 +7,9 @@ const WebSocket = require('ws')
 
 const PORT   = process.env.PORT || 3000
 const PUBLIC = path.join(__dirname, 'public')
+const TRACKS = path.join(PUBLIC, 'tracks')
+const AUDIO_EXTS = ['.mp3', '.m4a', '.wav', '.ogg', '.flac']
+const MIME = { '.mp3':'audio/mpeg', '.m4a':'audio/mp4', '.wav':'audio/wav', '.ogg':'audio/ogg', '.flac':'audio/flac' }
 
 // ── in-memory state ──────────────────────────────────────────────────────────
 const pyramids   = new Map()   // id -> latest live pyramid state
@@ -33,6 +36,41 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' })
       return res.end(html)
     } catch { res.writeHead(404); return res.end('not found') }
+  }
+
+  // serve a real audio track by number: /track?n=3  → public/tracks/seks_track_3.mp3
+  if (urlPath === '/track') {
+    const n = parseInt((req.url.split('?')[1]||'').replace(/.*n=/,''), 10)
+    if (!n) { res.writeHead(400); return res.end('missing n') }
+    let file = null
+    for (const ext of AUDIO_EXTS) {
+      const f = path.join(TRACKS, `seks_track_${n}${ext}`)
+      try { fs.accessSync(f); file = f; break } catch {}
+    }
+    if (!file) { res.writeHead(404); return res.end('track not found') }
+    const stat = fs.statSync(file)
+    const ct = MIME[path.extname(file).toLowerCase()] || 'audio/mpeg'
+    const range = req.headers.range
+    if (range) {
+      const [s, e] = range.replace(/bytes=/, '').split('-')
+      const start = parseInt(s, 10), end = e ? parseInt(e, 10) : stat.size - 1
+      res.writeHead(206, { 'Content-Range':`bytes ${start}-${end}/${stat.size}`, 'Accept-Ranges':'bytes', 'Content-Length':end-start+1, 'Content-Type':ct })
+      return fs.createReadStream(file, { start, end }).pipe(res)
+    }
+    res.writeHead(200, { 'Content-Length':stat.size, 'Content-Type':ct, 'Accept-Ranges':'bytes' })
+    return fs.createReadStream(file).pipe(res)
+  }
+
+  // list which track numbers have real audio: /tracks-available → [3,8]
+  if (urlPath === '/tracks-available') {
+    const avail = []
+    for (let n = 1; n <= 8; n++) {
+      for (const ext of AUDIO_EXTS) {
+        try { fs.accessSync(path.join(TRACKS, `seks_track_${n}${ext}`)); avail.push(n); break } catch {}
+      }
+    }
+    res.writeHead(200, { 'Content-Type':'application/json', 'Access-Control-Allow-Origin':'*' })
+    return res.end(JSON.stringify(avail))
   }
 
   // collective state (for late-join snapshot)
