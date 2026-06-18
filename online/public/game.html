@@ -17,11 +17,11 @@
   h1{font-size:clamp(40px,9vw,80px);font-weight:700;letter-spacing:-0.02em;}
   .sub{color:#555;font-size:12px;letter-spacing:0.28em;margin-top:12px;}
   .hint{color:#333;font-size:11px;letter-spacing:0.22em;margin-top:36px;}
-  #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:500px;width:100%;margin-top:8px;}
+  #grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:320px;width:100%;margin-top:8px;}
   .t{aspect-ratio:1;border:1px solid #1a1a1a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;gap:6px;}
   .t:hover,.t:active{border-color:var(--z);background:rgba(0,255,136,0.04);}
-  .tn{font-size:22px;font-weight:300;color:#777;}
-  .tl{font-size:8px;letter-spacing:0.18em;color:#444;}
+  .tn{font-size:16px;font-weight:300;color:#aaa;letter-spacing:0.12em;}
+  .tl{font-size:9px;letter-spacing:0.18em;color:#444;}
   .gl{font-size:10px;letter-spacing:0.26em;color:#555;margin-bottom:20px;}
   #hud{position:fixed;top:0;left:0;right:0;z-index:30;padding:20px 24px;display:flex;justify-content:space-between;pointer-events:none;}
   #zn{font-size:12px;letter-spacing:0.3em;color:var(--z);transition:color 1s;}
@@ -92,14 +92,8 @@ const SESSION_SECS=90
 // Each has a distinct feel / BPM / timbre
 // ══════════════════════════════════════════════
 const TRACKS=[
-  {label:'ambient', bpm:85,  desc:'slow pulse'},
-  {label:'groove',  bpm:110, desc:'4/4 house'},
-  {label:'techno',  bpm:128, desc:'minimal'},
-  {label:'tribal',  bpm:96,  desc:'drum circle'},
-  {label:'drift',   bpm:72,  desc:'slow haze'},
-  {label:'fast',    bpm:140, desc:'high energy'},
-  {label:'click',   bpm:120, desc:'metronomic'},
-  {label:'breath',  bpm:60,  desc:'breathing'},
+  {label:'ambient', n:1, bpm:85,  desc:'slow pulse'},
+  {label:'bass',    n:3, bpm:120, desc:'metronomic'},
 ]
 
 function buildTrack(ctx, cfg){
@@ -142,7 +136,7 @@ function buildTrack(ctx, cfg){
 const gEl=document.getElementById('grid')
 TRACKS.forEach((t,i)=>{
   const d=document.createElement('div'); d.className='t'
-  d.innerHTML=`<div class="tn">${i+1}</div><div class="tl">${t.label}</div>`
+  d.innerHTML=`<div class="tn">${t.label}</div><div class="tl">${t.desc}</div>`
   d.onclick=()=>pick(i)
   gEl.appendChild(d)
 })
@@ -239,10 +233,10 @@ async function pick(i){
   document.querySelectorAll('.t').forEach(t=>t.style.pointerEvents='none')
   if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();masterGain=audioCtx.createGain();masterGain.gain.value=0;masterGain.connect(audioCtx.destination)}
   if(audioCtx.state!=='running') await audioCtx.resume()
-  // try a real track file first (track number = i+1); fall back to procedural
+  // try a real track file first; fall back to procedural
   let buf=null
   try{
-    const r=await fetch(`/track?n=${i+1}`)
+    const r=await fetch(`/track?n=${TRACKS[i].n}`)
     if(r.ok){ const ab=await r.arrayBuffer(); buf=await audioCtx.decodeAudioData(ab) }
   }catch{}
   if(!buf) buf=buildTrack(audioCtx,TRACKS[i])
