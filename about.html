@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Be Hear Now</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    min-height: 100dvh;
+    padding: 64px 28px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    max-width: 390px;
+    margin: 0 auto;
+  }
+
+  .top {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+
+  .wordmark {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .hero {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .hero-line {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.8px;
+    line-height: 1.15;
+    color: #fff;
+  }
+
+  .hero-sub {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.7;
+    max-width: 300px;
+  }
+
+  /* Animated dot */
+  .dot-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.6); opacity: 0.6; }
+  }
+
+  /* Sections */
+  .sections {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid #111;
+    padding-top: 20px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #333;
+  }
+
+  .section-body {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.65;
+  }
+
+  /* Bottom */
+  .bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-top: 48px;
+  }
+
+  .team {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .team-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #333;
+  }
+
+  .team-names {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.8;
+  }
+
+  .tagline-bottom {
+    font-size: 11px;
+    color: #222;
+    letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+
+  <div class="wordmark">Be Hear Now</div>
+
+  <div class="hero">
+    <div class="hero-line">Audio, candid.<br>No editing.<br>Just now.</div>
+    <p class="hero-sub">A place to record what you're hearing. Not to perform it.</p>
+  </div>
+
+  <div class="dot-wrap">
+    <div class="dot"></div>
+  </div>
+
+  <div class="sections">
+
+    <div class="section">
+      <div class="section-label">What it is</div>
+      <div class="section-body">
+        Hold to record. Release to post. Your friends hear it in their feed, chronologically. No algorithm, no likes. Just sound and time.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Echo</div>
+      <div class="section-body">
+        Instead of a like, you echo. Hold longer to echo deeper. The ring that forms shows how much something moved you — not just that it did.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">To get in</div>
+      <div class="section-body">
+        We'll give you a clue. You go out and record it. That recording is your key.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Who it's for</div>
+      <div class="section-body">
+        Listeners. People who feel deeply about sound and have no good place to put that. Not as creators. Not as critics. Just as people who are paying attention.
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="bottom">
+  <div class="team">
+    <div class="team-label">Built by</div>
+    <div class="team-names">
+      rv<br>
+      André
+    </div>
+  </div>
+  <div class="tagline-bottom">prototype · june 2026</div>
+</div>
+
+</body>
+</html>
