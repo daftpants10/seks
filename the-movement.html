@@ -7,18 +7,37 @@
   <meta name="description" content="⦿-⦿ — a mouse for the human bio-computer. A movement tool designed to move your mind." />
   <meta name="theme-color" content="#ffffff" />
   <style>
+    @font-face{
+      font-family:'Glacial Indifference';
+      src:url('assets/fonts/GlacialIndifference-Regular.woff2') format('woff2');
+      font-weight:400; font-style:normal; font-display:swap;
+    }
+    @font-face{
+      font-family:'Glacial Indifference';
+      src:url('assets/fonts/GlacialIndifference-Bold.woff2') format('woff2');
+      font-weight:700; font-style:normal; font-display:swap;
+    }
+    @font-face{
+      font-family:'Modulus Pro';
+      src:url('assets/fonts/ModulusPro-Bold.woff2') format('woff2');
+      font-weight:400; font-style:normal; font-display:swap;
+    }
     :root{
       --bg:#ffffff;
       --ink:#3a3a40;
       --muted:#8e8e96;
       --line:#ececec;
       --colw:540px;
+      --font-display:'Glacial Indifference', ui-sans-serif, system-ui, -apple-system, Helvetica, Arial, sans-serif;
+      --font-body:'Modulus Pro', ui-sans-serif, system-ui, -apple-system, Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     }
     *{box-sizing:border-box}
     body{
       margin:0; background:var(--bg); color:var(--ink);
-      font:16px/1.7 ui-sans-serif, system-ui, -apple-system, Inter, Segoe UI, Roboto, Helvetica, Arial;
+      font:16px/1.7 var(--font-body);
       -webkit-font-smoothing:antialiased;
+      font-variant-ligatures:none;
+      font-feature-settings:"liga" 0,"dlig" 0,"clig" 0;
     }
     .shell{max-width:var(--colw); margin:0 auto; padding:20px 20px 64px;}
 
@@ -78,15 +97,16 @@
   <div class="tabs">
     <div class="tabs-inner">
       <div class="tab"><a href="index.html">seks</a></div>
-      <div class="tab">EDS</div>
+      <div class="tab"><a href="EDS.html">EDS</a></div>
       <div class="tab">toys</div>
+      <div class="tab"><a href="join.html">join</a></div>
     </div>
   </div>
 
   <main class="shell">
     <!-- identity -->
     <div class="row left reveal">
-      <h1 style="margin:0; font-size:22px; font-weight:700">⦿-⦿</h1>
+      <h1 style="margin:0; font-size:22px; font-weight:700; font-family:var(--font-display)">⦿-⦿</h1>
       <p class="muted"> a movement tool designed to move your mind.</p>
     </div>
 
@@ -110,9 +130,10 @@
       <p>play with us</p>
       <div class="stick step3"><div class="dot"></div><div class="bar"></div><div class="dot"></div></div>
 
-      <!-- Run + Read side by side -->
+      <!-- Get the stick + Run + Read -->
       <div class="connect" style="margin-top:22px">
-        <div class="connect-grid">
+        <div class="connect-grid" style="grid-template-columns:repeat(3,1fr)">
+          <a href="join.html">get the stick</a>
           <a href="https://forms.gle/rhYSKbXUK9U7vudr6" target="_blank" rel="noopener">run</a>
           <a href="cheatcodes.html" target="_blank" rel="noopener">read</a>
         </div>
