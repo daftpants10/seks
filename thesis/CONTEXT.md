@@ -23,6 +23,22 @@ This file holds everything needed to pick the thesis up again in a new session. 
 - Earlier target: 40 pages at 1.5 spacing. Superseded by "like Carla's". To switch, use `\onehalfspacing` in main.tex.
 - Web copy style for seks.design pages: lowercase, Space Mono, warm off-white, accent #e8501f, terse, no em dashes or double dashes.
 
+## facts from the Timo email thread (read 2026-10-15)
+
+- Timo left FU on 1 Apr 2026. He is now a full professor at Medical School Berlin (MSB). He wrote (30 Mar 2026): "I would assume that Felix will be your supervisor then and we should also regularly meet all three of us together." So the reviewer roles on the form (Felix first? Timo second?) need confirming.
+- Timo said Campus Management now has all the required courses approved, so arvy can sign up for the MSc thesis.
+- MSc thesis working time: 6 months from registration (Timo, Sep 2025). That fits the 14-week plan easily.
+- Ethics:
+  - Timo (Feb 2026): allow 4-6 weeks between submission and the start of data acquisition. He attached two example applications (Revision-Amendment-Schmidt.pdf, 02-...). They're confidential, not for sharing. The Word template link was missing from his email.
+  - FU EWI-PSY ethics committee: apply at least 10 weeks before the study starts, by email to ethikkommission@ewi-psy.fu-berlin.de. Only department members can submit, so for a thesis the supervisor submits. Everything goes in one PDF: the form plus participant information and consent forms. Form I: https://www.ewi-psy.fu-berlin.de/verwaltung-service/gremien/kommissionen/ethik-kommission/ETHIKANTRAG_Formular-I.docx (this was blocked from the cloud session).
+  - Timo's alternative (27 Feb 2026): the data are collected outside FU by arvy's company (seks.design). The company owns the data and is responsible for storage and data protection; arvy is allowed to analyse them for the thesis. Needs Felix's OK.
+- Design history in the thread:
+  - Nov–Dec 2025: an acute study, 2x2 (still vs spin × metronome vs silence); Timo suggested "2x2 -> 2x3".
+  - Jan 2026 research workshop: Felix said "be pragmatic" and suggested a longitudinal 30-day study.
+  - Mar 2026: a 5-week crossover with Apple Watch tiers.
+  - Oct 2026 (now): back to an acute design with the Polar H10 (this thesis).
+- Timo's notes from 23 Jan 2026: include personality (Big 5), handedness, age/sex, subjective relaxation, acute vs chronic.
+
 ## registration and timeline (2026-10-15)
 
 - Form: "Application for admission to the master's thesis" (MCNB, FU). Fields: name, student ID, cohort, personal non-FU email, phone, postal address, working title (not binding), student signature with location and date. Primary reviewer (signature = consent to supervise) and second reviewer: name, title, affiliation, signature, date.
