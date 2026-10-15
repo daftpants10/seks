@@ -23,6 +23,12 @@ This file holds everything needed to pick the thesis up again in a new session. 
 - Earlier target: 40 pages at 1.5 spacing. Superseded by "like Carla's". To switch, use `\onehalfspacing` in main.tex.
 - Web copy style for seks.design pages: lowercase, Space Mono, warm off-white, accent #e8501f, terse, no em dashes or double dashes.
 
+## framing added 2026-10-15
+
+- Isolation sticks: created 20+ years ago by Alexandre "Pich" (Le Cirque Graphique, France), influenced by Michael Moschen (rhythm and motion). Source still needed.
+- Flow arts + seks.design context (experience design, somatic journaling, "somatic interfacing", embodied model of consciousness): brief paragraph in the intro.
+- Steven Lehar (Gestalt Bubble model, BBS 2003; The World in Your Head 2003): one paragraph in the discussion section "Towards a Somatic Interface", paired with interoceptive inference (Seth 2013) and Craig 2002. Background reading from arvy: QRI's Lehar lineage post and smoothbrains.net "An introduction to Steven Lehar" series. These blogs aren't cited in the thesis; cite the peer-reviewed Lehar article instead.
+
 ## study history
 
 1. **Exposé (March 2025).** "Learning to Couple": a 30-day longitudinal crossover design.
