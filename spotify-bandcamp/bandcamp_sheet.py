@@ -137,7 +137,20 @@ def parse_video_title(title, channel):
     return artist, clean
 
 
+def expand_youtube_args(args):
+    """Accept playlist links directly, or text/CSV files containing them."""
+    urls = []
+    for a in args:
+        if os.path.isfile(os.path.expanduser(a)):
+            text = Path(os.path.expanduser(a)).read_text(encoding="utf-8-sig")
+            urls += re.findall(r"https?://[^\s,\"']*(?:youtube\.com|youtu\.be)[^\s,\"']*", text)
+        else:
+            urls.append(a)
+    return list(dict.fromkeys(urls))
+
+
 def youtube_playlists(urls):
+    urls = expand_youtube_args(urls)
     if not urls:
         return {}
     try:
@@ -297,7 +310,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("playlists", nargs="*", help="playlist names (API mode; default: all you own)")
     ap.add_argument("--csv", nargs="+", metavar="FILE", help="Exportify CSV files instead of the Spotify API")
-    ap.add_argument("--youtube", nargs="+", metavar="URL", help="public/unlisted YouTube playlist links (no login)")
+    ap.add_argument("--youtube", nargs="+", metavar="URL_OR_FILE", help="public/unlisted YouTube playlist links, or a text/CSV file of links (no login)")
     ap.add_argument("--list", action="store_true", help="list playlists you own and exit (API mode)")
     ap.add_argument("--out", default="bandcamp-playlists.xlsx", help="output file (default: %(default)s)")
     args = ap.parse_args()
