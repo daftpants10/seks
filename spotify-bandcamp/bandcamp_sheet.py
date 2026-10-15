@@ -5,11 +5,13 @@ One tab per playlist with Artist, Track, Year and a Bandcamp link when the
 track is found there. The result is an .xlsx file: upload it to Google Drive
 and open it with Google Sheets, and the tabs carry over.
 
-Input is either Exportify CSV exports (https://exportify.app, no setup) or
-your Spotify account through the API (needs a Spotify developer app).
+Input is Exportify CSV exports (https://exportify.app), public or unlisted
+YouTube playlist links (no login), or your Spotify account through the API
+(needs a Spotify developer app).
 
 Usage:
     python bandcamp_sheet.py --csv exports/*.csv     # Exportify files
+    python bandcamp_sheet.py --youtube "https://www.youtube.com/playlist?list=..."
     python bandcamp_sheet.py --list                  # your own playlists (API)
     python bandcamp_sheet.py                         # all playlists you own (API)
     python bandcamp_sheet.py "Road Trip" "Chill"     # selected playlists (API)
@@ -115,6 +117,46 @@ def csv_playlists(paths):
                         "year": pick(row, "release date", "album release date", "year")[:4],
                     })
         out[Path(path).stem.replace("_", " ")] = tracks
+    return out
+
+
+# --- YouTube input (public / unlisted playlists, no login) --------------------
+
+YT_JUNK = re.compile(
+    r"\s*[\(\[][^\)\]]*\b(official|video|audio|lyrics?|visuali[sz]er|hd|hq|4k|mv|m/v|clip)\b[^\)\]]*[\)\]]"
+    r"|\s*\|.*$", re.I)
+
+
+def parse_video_title(title, channel):
+    """Split 'Artist - Track (Official Video)' into (artist, track)."""
+    clean = YT_JUNK.sub("", title).strip()
+    parts = re.split(r"\s+[-–—]\s+", clean, maxsplit=1)
+    if len(parts) == 2 and all(parts):
+        return parts[0].strip(), parts[1].strip(' "\'')
+    artist = re.sub(r"\s*-\s*Topic$|VEVO$|\s*Official$", "", channel or "", flags=re.I).strip()
+    return artist, clean
+
+
+def youtube_playlists(urls):
+    try:
+        import yt_dlp
+    except ImportError:
+        sys.exit("YouTube playlists need yt-dlp: pip install yt-dlp")
+    out = {}
+    opts = {"extract_flat": "in_playlist", "quiet": True, "skip_download": True}
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        for url in urls:
+            print(f"Reading {url}…")
+            info = ydl.extract_info(url, download=False)
+            tracks = []
+            for e in info.get("entries") or []:
+                title = (e or {}).get("title") or ""
+                if not title or title in ("[Deleted video]", "[Private video]"):
+                    continue
+                channel = e.get("channel") or e.get("uploader") or ""
+                artist, track = parse_video_title(title, channel)
+                tracks.append({"artist": artist, "title": track, "year": ""})
+            out[info.get("title") or "YouTube playlist"] = tracks
     return out
 
 
@@ -253,11 +295,15 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("playlists", nargs="*", help="playlist names (API mode; default: all you own)")
     ap.add_argument("--csv", nargs="+", metavar="FILE", help="Exportify CSV files instead of the Spotify API")
+    ap.add_argument("--youtube", nargs="+", metavar="URL", help="public/unlisted YouTube playlist links (no login)")
     ap.add_argument("--list", action="store_true", help="list playlists you own and exit (API mode)")
     ap.add_argument("--out", default="bandcamp-playlists.xlsx", help="output file (default: %(default)s)")
     args = ap.parse_args()
 
-    playlists = csv_playlists(args.csv) if args.csv else api_playlists(args)
+    if args.csv or args.youtube:
+        playlists = {**csv_playlists(args.csv or []), **youtube_playlists(args.youtube or [])}
+    else:
+        playlists = api_playlists(args)
     unique = {(t["artist"], t["title"]): t for tracks in playlists.values() for t in tracks}
     print(f"{sum(map(len, playlists.values()))} tracks in {len(playlists)} playlists, "
           f"{len(unique)} unique — searching Bandcamp…")

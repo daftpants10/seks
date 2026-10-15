@@ -34,6 +34,21 @@ Results are cached, so re-running is fast and only searches new tracks.
 Upload `bandcamp-playlists.xlsx` to Google Drive, then **Open with → Google Sheets**.
 The tabs, links and colours carry over. To get a native Google Sheet, use **File → Save as Google Sheets**.
 
+## YouTube playlists (no login)
+
+The playlist must be **public or unlisted**. On YouTube, open the playlist, click **⋯ → Share → Copy link**,
+and pass one or more links:
+
+```sh
+pip install openpyxl yt-dlp
+python bandcamp_sheet.py --youtube "https://www.youtube.com/playlist?list=PL..." "https://music.youtube.com/playlist?list=..."
+```
+
+This reads only the video titles; nothing is downloaded. Artist and track come from titles like
+`Artist - Track (Official Video)`, or from the channel name for YouTube Music "Artist - Topic" uploads.
+YouTube doesn't provide a release year, so the Year column is blank for these playlists.
+You can mix `--youtube` and `--csv` in the same run.
+
 ## Alternative: Spotify API instead of Exportify
 
 This reads only playlists you own. It needs a Spotify developer app (<https://developer.spotify.com/dashboard>)
