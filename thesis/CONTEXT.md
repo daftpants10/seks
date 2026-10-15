@@ -39,6 +39,12 @@ This file holds everything needed to pick the thesis up again in a new session. 
   - Oct 2026 (now): back to an acute design with the Polar H10 (this thesis).
 - Timo's notes from 23 Jan 2026: include personality (Big 5), handedness, age/sex, subjective relaxation, acute vs chronic.
 
+## ethics draft (2026-10-15)
+
+- `ethics/` holds the FU Form I filled in English (Ethikantrag_Kumar_draft.docx), the participant info and consent form (Teilnehmendeninfo_Einwilligung_draft.docx), and both merged as one PDF.
+- Still to fill in: postal address, the first supervisor (placeholder: Felix Blankenburg, to confirm), signatures. Assumes no compensation and data on a password-protected device.
+- Arvy had one call with Felix (~Aug 2026) and no follow-up meetings yet.
+
 ## registration and timeline (2026-10-15)
 
 - Form: "Application for admission to the master's thesis" (MCNB, FU). Fields: name, student ID, cohort, personal non-FU email, phone, postal address, working title (not binding), student signature with location and date. Primary reviewer (signature = consent to supervise) and second reviewer: name, title, affiliation, signature, date.
