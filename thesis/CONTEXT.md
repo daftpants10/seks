@@ -2,6 +2,27 @@
 
 This file holds everything needed to pick the thesis up again in a new session. Read it first, then `main.tex`. Last updated 2026-10-15.
 
+## writing style guide (from Enkmann 2023, FU SCAN MSc, highly regarded; Felix was 2nd supervisor)
+
+Apply these together with the "no not-x-but-y" rule.
+
+- **Sentences.** Long and complete, about 30 words on average. Definitions are embedded mid-sentence. Avoid choppy short declaratives.
+- **Colons.** Avoid the "claim: reveal" colon. Use connectives instead: "as", "because", "which", "so that", "For example,", or a full stop. Keep colons for real lists only.
+- **Connectives.** Use "However," "Furthermore," "Specifically," "For example," "Taken together," "In summary," and "While X, Y". Contrast comes from evidence ("However, several studies have shown ..."), never from rhetorical negation.
+- **Argument structure.** Enumerate reasons and aims inline as (1), (2), (3), or as "First, ... Second, ...". End each background subsection with a synthesis sentence ("Taken together, ...") that bridges to the next or to the gap.
+- **Hedging.** Calibrated: "suggest", "indicate", "may", "seems reasonable", "first evidence", "at least in part". Results use "As predicted", "in line with", "no evidence for".
+- **Voice.** First person singular for hypotheses and the author's choices ("I hypothesised", "I expected", "I chose"). Passive and past tense for procedures. "The current/present study" as the subject elsewhere.
+- **Explaining methods.** Give one worked, concrete example per complex method ("Consider a participant resting at about 70 bpm ...").
+- **Rhetorical questions.** Sparing, as subsection openers ("What does a given value of alpha1 mean physiologically?"). Results subsections are titled as hypothesis questions ("Hypothesis 1: Does ...?").
+- **Discussion structure.**
+  - Restate the aims (1)(2)(3).
+  - For each hypothesis: what was predicted, the finding with its number, the comparison with the literature (a comparison table is fine), the interpretation, then the caveat ("Formally speaking, these results only show an association ...").
+  - Limitations: each one is stated, explained, set against counter-evidence or a robustness re-analysis, and the section closes with a judgement ("do not question the results at the qualitative level").
+  - Then an Implications section.
+- **Citations.** Dense: several per claim, plus "also see X for an overview" pointers. Only cite sources that are actually verified.
+- **Front matter.** Add an "Acknowledgements and Author's Contributions" section: supervisors, ethics approval number, who did what, software and versions, code availability.
+- **Methods.** Concrete numbers everywhere: device model, sampling, counts, durations, compensation.
+
 ## people and programme
 
 - Author: Aravind Kumar (arvy). MSc Cognitive Neuroscience (MCNB), Freie Universität Berlin.
