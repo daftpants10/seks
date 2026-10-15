@@ -2,26 +2,28 @@
 
 This file holds everything needed to pick the thesis up again in a new session. Read it first, then `main.tex`. Last updated 2026-10-15.
 
-## writing style guide (from Enkmann 2023, FU SCAN MSc, highly regarded; Felix was 2nd supervisor)
+## writing style guide (arvy's rules, refined 2026-10-15 after the Enkmann comparison)
 
-Apply these together with the "no not-x-but-y" rule.
+Rules from arvy:
 
-- **Sentences.** Long and complete, about 30 words on average. Definitions are embedded mid-sentence. Avoid choppy short declaratives.
-- **Colons.** Avoid the "claim: reveal" colon. Use connectives instead: "as", "because", "which", "so that", "For example,", or a full stop. Keep colons for real lists only.
-- **Connectives.** Use "However," "Furthermore," "Specifically," "For example," "Taken together," "In summary," and "While X, Y". Contrast comes from evidence ("However, several studies have shown ..."), never from rhetorical negation.
-- **Argument structure.** Enumerate reasons and aims inline as (1), (2), (3), or as "First, ... Second, ...". End each background subsection with a synthesis sentence ("Taken together, ...") that bridges to the next or to the gap.
-- **Hedging.** Calibrated: "suggest", "indicate", "may", "seems reasonable", "first evidence", "at least in part". Results use "As predicted", "in line with", "no evidence for".
-- **Voice.** First person singular for hypotheses and the author's choices ("I hypothesised", "I expected", "I chose"). Passive and past tense for procedures. "The current/present study" as the subject elsewhere.
-- **Explaining methods.** Give one worked, concrete example per complex method ("Consider a participant resting at about 70 bpm ...").
-- **Rhetorical questions.** Sparing, as subsection openers ("What does a given value of alpha1 mean physiologically?"). Results subsections are titled as hypothesis questions ("Hypothesis 1: Does ...?").
-- **Discussion structure.**
-  - Restate the aims (1)(2)(3).
-  - For each hypothesis: what was predicted, the finding with its number, the comparison with the literature (a comparison table is fine), the interpretation, then the caveat ("Formally speaking, these results only show an association ...").
-  - Limitations: each one is stated, explained, set against counter-evidence or a robustness re-analysis, and the section closes with a judgement ("do not question the results at the qualitative level").
-  - Then an Implications section.
-- **Citations.** Dense: several per claim, plus "also see X for an overview" pointers. Only cite sources that are actually verified.
-- **Front matter.** Add an "Acknowledgements and Author's Contributions" section: supervisors, ethics approval number, who did what, software and versions, code availability.
-- **Methods.** Concrete numbers everywhere: device model, sampling, counts, durations, compensation.
+- **Short sentences.** Shorter is better. Split anything over about 30 words. One idea per sentence.
+- **Colons, not dashes.** Colons are fine, and always better than dashes. Never use em dashes or double dashes.
+- **No not-x-but-y.** No "not x but y" and no relatives of it ("rather than", "not merely", "x, not y", "as opposed to").
+- **Linking words.** Use them in moderation ("However", "Furthermore", "For example", "Specifically"), mainly when they explain why.
+- **Numbered lists in the text.** Number aims, reasons and lists inline: (1), (2), (3). Arvy likes this a lot.
+- **Section summaries.** End every background section with a "Taken together, ..." summary. Arvy likes this a lot because it sounds human.
+- **First person.** Use it throughout: "I recorded", "I computed", "I hypothesised", "I expect".
+- **Hedging.** Moderate: "suggest", "indicate", "may".
+- **Examples.** Explain each method or idea with a plain, concrete example. Ask arvy for examples from practice when a point needs one: what an isolation feels like, a somatic journaling entry, and so on.
+- **Citations.** 1 to 3 per claim is enough, verified sources only.
+- **Structure.**
+  - Results subsections are titled as hypothesis questions.
+  - The discussion restates the aims as (1)(2)(3). For each hypothesis it gives the prediction, the finding with its number, the comparison with the literature, the interpretation and the caveat.
+  - Limitations each end with a verdict, followed by an Implications section.
+  - An Acknowledgements and Author's Contributions page sits after the abstract.
+- **Methods.** Concrete numbers: device, counts, durations.
+
+Reference thesis: Enkmann 2023, FU SCAN MSc (Felix was the second supervisor). Its sentences average 31 words, which is longer than arvy wants, so take its structure and leave its sentence length.
 
 ## people and programme
 
