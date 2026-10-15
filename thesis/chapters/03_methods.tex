@@ -4,11 +4,13 @@
 \subsection{Participants}
 \label{sec:participants}
 
-Data were collected in two phases. In the first phase (October 2026), five participants completed the full protocol; these recordings also served to check data quality and to fix the remaining protocol parameters. In the second phase (November and December 2026), about ten further participants were recruited with the aim of covering a range of expertise with the two movements, from stick-naive adults to practitioners with regular practice \confirm{final N and recruitment channels}. The target sample was therefore $N \approx 15$.
+Data were collected in two phases. In the first phase (October 2026), five participants completed the full protocol; these recordings also served to check data quality and to fix the remaining protocol parameters. In the second phase (November and December 2026), about ten further participants were recruited. The sample consists mainly of experienced practitioners who can sustain both movements for two minutes, together with a small number of novices for comparison \confirm{final N per group and recruitment channels}. The target sample was therefore $N \approx 15$, of whom about three to five are novices.
 
-Inclusion criteria were age between 18 and 45 years, no known cardiovascular, respiratory or neurological condition, and the ability to perform both movements with each hand for two minutes. Stick-naive participants received a short standardised instruction and practice period before recording (Section~\ref{sec:paradigm}). Exclusion criteria were arrhythmia, an implanted cardiac device, pregnancy, and medication known to affect heart rate or HRV, such as beta-blockers. Participants were asked to avoid caffeine for two hours and strenuous exercise for 24 hours before the session, and to avoid a heavy meal in the preceding two hours \citep{laborde2017}. Compliance with these requests, hours of sleep the previous night and handedness were recorded on arrival.
+Inclusion criteria were age between 18 and 45 years, no known cardiovascular, respiratory or neurological condition, and the ability to perform both movements with each hand for two minutes. Stick-naive participants received a short standardised instruction and practice period before recording (Section~\ref{sec:paradigm}). Exclusion criteria were arrhythmia, an implanted cardiac device, pregnancy, and medication known to affect heart rate or HRV, such as beta-blockers. Participants were asked to avoid caffeine for two hours and strenuous exercise for 24 hours before the session, and to avoid a heavy meal in the preceding two hours \citep{laborde2017}. Compliance with these requests and other known influences on HRV were recorded in a pre-session questionnaire (Section~\ref{sec:questionnaires}).
 
-Expertise was assessed with a short questionnaire covering years of practice with the stick or comparable flow tools (staff, poi, juggling, contact props), typical practice hours per week, and a self-rating of proficiency for each movement on a scale from 1 to 10 \confirm{expertise items and grouping rule}. Participants were assigned to a novice or an experienced group by a rule fixed before recruitment of the second phase, and the continuous measures were retained for a secondary analysis (Section~\ref{sec:stats}).
+Expertise was assessed in the same questionnaire: years of practice with the stick and with other flow-arts props, typical practice hours per week, a self-rating of proficiency for each movement on a scale from 1 to 10, and whether the participant can sustain each movement for two minutes without dropping the stick. Participants who reported regular practice and could sustain both movements formed the experienced group; all others formed the novice group \confirm{grouping rule}. Because novices are few, expertise is analysed primarily as a continuous score derived from these items, and the contrast between groups is reported descriptively (Section~\ref{sec:stats}).
+
+Recruiting mainly experienced practitioners follows from the research question. The primary comparison is within each participant, between a movement and that participant's own baseline, so expertise does not bias it. Experienced practitioners can sustain the movements for the full two minutes with few drops, which yields continuous movement bouts and cleaner recordings, and their data describe the effect of the movement as it is actually practised. Novices add a contrast: the same movement performed in an early, effortful stage of learning. The cost of this choice is generalisability, discussed in Section~\ref{sec:limitations}.
 
 All participants gave written informed consent. \todo{ethics: name the approving committee or state that the study falls under the unit's existing approval; add reference number}
 
@@ -24,9 +26,29 @@ Two families of movement were recorded. In an \emph{isolation}, one point of the
 \subsection{Experimental Paradigm}
 \label{sec:paradigm}
 
-The study used a within-participant design with one factor, \emph{condition}, at three levels (seated rest, isolation, spin), crossed with the between-participant factor \emph{expertise} (novice, experienced). Hand (left, right) was recorded within each movement condition and treated as a secondary factor. Seated rest without the stick served as the control condition; each participant was their own control.
+The study used a within-participant design with one factor, \emph{condition}, at three levels (baseline, isolation, spin), and expertise as a between-participant variable, measured as a continuous score and summarised as novice or experienced. Hand (left, right) was recorded within each movement condition and treated as a secondary factor.
 
-Each session followed the sequence in Table~\ref{tab:session}. After consent, questionnaires and fitting of the chest strap, participants sat quietly for a pre-task rest period. The four movement trials (isolation left, isolation right, spin left, spin right) followed in an order counterbalanced across participants \confirm{counterbalancing scheme: Latin square vs randomised}. Each movement trial was followed by seated recovery, so that every trial started from a comparable resting state. A post-task rest period closed the session.
+Both movements are performed standing. The control condition was therefore a standing baseline: participants stood still, holding the stick at rest in the hand, for the same duration as a movement trial. This baseline matches posture and grip, so the comparison between baseline and movement isolates the movement itself. A seated baseline would confound movement with posture, since moving from sitting to standing on its own lowers vagally mediated HRV \citep{laborde2017}. Each participant was their own control. Table~\ref{tab:conditions} summarises the role of each condition.
+
+\begin{table}[ht]
+\centering
+\caption{Conditions and their role in the design.}
+\label{tab:conditions}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.2cm} X >{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{2.6cm}}
+\toprule
+Condition & What the participant does & Role & Compared with \\
+\midrule
+Pre-task baseline & stands still holding the stick, 2~min & control & each movement trial \\
+Isolation, left and right & isolations with one hand, 2~min each & test & baseline; spins \\
+Spin, left and right & spins with one hand, 2~min each & test & baseline; isolations \\
+Recovery & stands still after each trial & washout, not analysed & \\
+Post-task baseline & as the pre-task baseline & carry-over check & pre-task baseline \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Each session followed the sequence in Table~\ref{tab:session}. After consent, questionnaires and fitting of the chest strap, participants stood still holding the stick for the pre-task baseline. The four movement trials (isolation left, isolation right, spin left, spin right) followed in an order counterbalanced across participants \confirm{counterbalancing scheme: Latin square vs randomised}. Each movement trial was followed by a recovery period of standing still, so that every trial started from a comparable state \confirm{standing vs seated recovery}. A post-task baseline, identical to the first, closed the session.
 
 \begin{table}[ht]
 \centering
@@ -37,12 +59,12 @@ Each session followed the sequence in Table~\ref{tab:session}. After consent, qu
 \toprule
 Step & Duration & Content \\
 \midrule
-1 & 10 min & Consent, questionnaires (demographics, handedness, expertise, caffeine, sleep), strap fitting, signal check \\
+1 & 10 min & Consent, pre-session questionnaire (about 2 min), strap fitting, signal check \\
 2 & 5 min & Familiarisation: practice of both movements with each hand (novices); warm-up (experienced) \\
-3 & [2--5 min] & Pre-task rest, seated, eyes open, no stick \\
+3 & 2 min & Pre-task baseline: standing still, holding the stick, eyes open \\
 4 & 4 $\times$ 2 min & Movement trials (isolation and spin, each hand), counterbalanced order \\
-  & [2 min] each & Seated recovery after each movement trial \\
-5 & [2--5 min] & Post-task rest, seated \\
+  & [2 min] each & Recovery, standing still, after each movement trial \\
+5 & 2 min & Post-task baseline, as in step 3 \\
 6 & 5 min & Post-session ratings and debrief \\
 \midrule
  & $\approx$ 45 min & Total \\
@@ -52,7 +74,7 @@ Step & Duration & Content \\
 
 The trial duration of two minutes was chosen as a compromise between two constraints. \al{} is conventionally estimated from a two-minute window (Section~\ref{sec:bg-dfa}), so shorter trials would not yield a stable estimate. Longer trials, in turn, exceed the duration for which isolations in particular can be sustained without fatigue of the forearm and repeated drops, which would turn the trial into a series of restarts. \confirm{2 min vs 3 min: if trials are extended to 3 min, \al{} is taken from the final 2 min so that the onset transient is excluded}
 
-Rest periods were recorded with the same capture system and the same durations as the analysis windows, so that rest and movement estimates were based on comparable amounts of data. The pre-task rest is the baseline for H1; the post-task rest serves the carry-over analysis.
+Baselines were recorded with the same capture system and the same duration as the movement trials, so that baseline and movement estimates were based on comparable amounts of data. The pre-task baseline is the reference for H1; the post-task baseline serves the carry-over analysis.
 
 \subsection{Technical Setup}
 \label{sec:setup}
@@ -80,4 +102,24 @@ In addition to the raw RR intervals, SomaSync reports its own running estimates 
 \subsection{Questionnaires}
 \label{sec:questionnaires}
 
-Before the session, participants completed questions on demographics, handedness, expertise (Section~\ref{sec:participants}), caffeine intake, sleep and recent exercise. After each movement trial, participants rated perceived difficulty and perceived exertion \confirm{scales: e.g. Borg CR10 for exertion}, and after the session they completed a short flow questionnaire for each movement \confirm{instrument, e.g. Flow Short Scale}. These ratings are used descriptively and in exploratory analyses only.
+Before the session, participants completed a short questionnaire that takes about two minutes (Appendix~\ref{sec:app-questionnaire}). Table~\ref{tab:questionnaire} lists its blocks and how each enters the analysis.
+
+\begin{table}[ht]
+\centering
+\caption{Pre-session questionnaire and its use in the analysis.}
+\label{tab:questionnaire}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.6cm} X >{\raggedright\arraybackslash}p{4.4cm}}
+\toprule
+Block & Items & Use \\
+\midrule
+Demographics & age, sex, height, weight & description of the sample; age as a covariate, since complexity declines with age \citep{goldberger2002} \\
+Fitness & hours of physical exercise per week & interpretation of the heart-rate response (H2) \\
+State on the day & caffeine in the last 2~h, alcohol in the last 24~h, strenuous exercise in the last 24~h, hours of sleep, smoking, medication & exclusion and sensitivity analyses for H1--H3 \citep{laborde2017} \\
+Handedness & dominant hand & coding of dominant and non-dominant hand (exploratory) \\
+Expertise & years with the stick, years with other props, hours per week, self-rated proficiency per movement, can sustain each movement for 2~min & expertise score and grouping (H3) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+After each movement trial, participants rated perceived difficulty and perceived exertion \confirm{scales: e.g. Borg CR10 for exertion}, and after the session they completed a short flow questionnaire for each movement \confirm{instrument, e.g. Flow Short Scale}. These ratings are used descriptively and in exploratory analyses only.

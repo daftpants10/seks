@@ -23,6 +23,13 @@ This file holds everything needed to pick the thesis up again in a new session. 
 - Earlier target: 40 pages at 1.5 spacing. Superseded by "like Carla's". To switch, use `\onehalfspacing` in main.tex.
 - Web copy style for seks.design pages: lowercase, Space Mono, warm off-white, accent #e8501f, terse, no em dashes or double dashes.
 
+## design decisions 2026-10-15 (from arvy)
+
+- Moves are done standing. Control = standing baseline: stand still holding the stick, 2 min, pre and post. Seated baseline would confound posture. The first-phase recordings may have used a seated baseline; flagged in 4.4.
+- Sample: mostly experienced practitioners, a few novices (~3-5 of ~15). Expertise is analysed as a continuous score; the novice vs experienced contrast is descriptive.
+- Pre-session questionnaire (~2 min): demographics, health/today, experience. Items are in the appendix; methods table 'questionnaire' maps them to hypotheses.
+- Plain hypotheses: H1 the stick changes alpha1 vs standing baseline; H2 the change exceeds what the heart-rate rise explains (isolations the likeliest); H3 the shift depends on expertise.
+
 ## framing added 2026-10-15
 
 - Isolation sticks: created 20+ years ago by Alexandre "Pich" (Le Cirque Graphique, France), influenced by Michael Moschen (rhythm and motion). Source still needed.
