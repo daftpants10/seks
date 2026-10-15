@@ -14,6 +14,7 @@ This file holds everything needed to pick the thesis up again in a new session. 
 ## preferences (how arvy wants things)
 
 - Emails: all lowercase, simple, short. Don't mention SomaSync to Timo. The AI pattern summaries in the dashboard are "something i put in for fun".
+- Writing rule (thesis and everything else): no "not x but y" constructions or their relatives ("rather than", "not merely", "more than x: it is y", "neither x nor y" as a flourish, "x, not y", "as opposed to"). State the claim directly. Plain factual negatives ("did not differ", "was not recorded") are fine.
 - Hypotheses: state directions, not "improvement". Healthy young adults rest near alpha1 ≈ 1.0, so "improves" is meaningless.
 - LRC (locomotor–respiratory coupling) is background context and one candidate mechanism. It is not a required framing.
 - Thesis format: LaTeX, matching Carla Vollmoeller's TU Berlin MSc thesis in length and feel.
