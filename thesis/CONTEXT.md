@@ -2,6 +2,22 @@
 
 This file holds everything needed to pick the thesis up again in a new session. Read it first, then `main.tex`. Last updated 2026-10-15.
 
+## next steps queue (as of 2026-10-15)
+
+1. **Waiting:** Timo's reply to the email of 15 Oct. It asks (a) whether Felix is now first supervisor and Timo second, from MSB, and (b) whether to use the FU ethics route or the company route (seks.design). Attached: the registration form and the draft ethics application.
+2. **When Timo replies:** arvy tells Claude what he said. Then:
+   - update the supervisors on the title page, the contributions page and the registration form;
+   - finish the ethics route (submit the FU application via the supervisor, or set up company-route consent);
+   - register the thesis.
+3. **Then: participant invite.** A short message to friends plus a small PDF invite. It covers:
+   - what the study is about: flow states, the stick, heart rate variability;
+   - how long it takes: about 40 minutes, one session;
+   - what they get: they support valuable research on flow and HRV;
+   - how to sign up.
+
+   Style: lowercase message, simple, seks.design look for the PDF. Only send after the ethics route is settled. Target: 15 new participants (plus the 5 pilots).
+4. **After that:** data collection, analysis, results, discussion. Full draft by 31 Dec 2026, submission around 21 Jan 2027.
+
 ## writing style guide (arvy's rules, refined 2026-10-15 after the Enkmann comparison)
 
 Rules from arvy:
