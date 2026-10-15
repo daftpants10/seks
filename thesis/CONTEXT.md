@@ -7,7 +7,7 @@ This file holds everything needed to pick the thesis up again in a new session. 
 - Author: Aravind Kumar (arvy). MSc Cognitive Neuroscience (MCNB), Freie Universität Berlin.
 - First supervisor: Dr. Timo Torsten Schmidt, Neurocomputation and Neuroimaging Unit (Habelschwerdter Allee 45, JK 25/222d).
 - Second supervisor: Prof. Felix Blankenburg, same unit (JK 25/214). His signature is needed on the registration form.
-- Thesis + oral exam = 30 CP (2023 study regulations). Binding rules: §9 of the German SPO. Page limit not found online; ask macnb@fu-berlin.de or Timo.
+- Thesis + oral exam = 30 CP (2023 study regulations). Binding rules: §9 of the German SPO. Page limit not found online; ask the exam office (macnb@ewi-psy.fu-berlin.de) or Timo.
 - Data collection affiliation: seks.design.
 - Timo has offered help with pre-registration. Still to ask him for: the thesis template, the registration process, and the page limit.
 
@@ -22,6 +22,13 @@ This file holds everything needed to pick the thesis up again in a new session. 
   - Her structure: Eigenständigkeitserklärung → title page → abstract + keywords → contents → 1 Introduction and Experimental Objective → 2 Background (ending in Hypotheses) → 3 Methods → 4 Offline Data Analysis → 5 Results → 6 Discussion (incl. Limitations) → 7 Conclusion → References → 8 Appendix (Abbreviations, Supplementary Tables).
 - Earlier target: 40 pages at 1.5 spacing. Superseded by "like Carla's". To switch, use `\onehalfspacing` in main.tex.
 - Web copy style for seks.design pages: lowercase, Space Mono, warm off-white, accent #e8501f, terse, no em dashes or double dashes.
+
+## registration and timeline (2026-10-15)
+
+- Form: "Application for admission to the master's thesis" (MCNB, FU). Fields: name, student ID, cohort, personal non-FU email, phone, postal address, working title (not binding), student signature with location and date. Primary reviewer (signature = consent to supervise) and second reviewer: name, title, affiliation, signature, date.
+- Attachment: proof of 60 ECTS. This is the Campus Management summary report with grades, signed by the student. Send the form and the attachment as one PDF to macnb@ewi-psy.fu-berlin.de.
+- Felix hasn't been contacted yet (as of 2026-10-15). Plan: email Timo first, then Felix.
+- Target: submit Thu 21 Jan 2027 (14 weeks), full draft by 31 Dec 2026. The official writing period after registration is still unknown; ask Timo or the exam office. Register on (submission date minus writing period) or later, ideally by ~30 Oct.
 
 ## design decisions 2026-10-15 (from arvy)
 
