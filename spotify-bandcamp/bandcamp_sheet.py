@@ -162,7 +162,11 @@ def youtube_playlists(urls):
     with yt_dlp.YoutubeDL(opts) as ydl:
         for url in urls:
             print(f"Reading {url}…")
-            info = ydl.extract_info(url, download=False)
+            try:
+                info = ydl.extract_info(url, download=False)
+            except Exception as e:
+                print(f"  skipped (private, deleted or invalid link): {e}")
+                continue
             tracks = []
             for e in info.get("entries") or []:
                 title = (e or {}).get("title") or ""
