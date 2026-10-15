@@ -1,0 +1,4 @@
+.spotify-cache
+.bandcamp-cache.json
+*.xlsx
+exports/
