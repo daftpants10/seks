@@ -138,6 +138,8 @@ def parse_video_title(title, channel):
 
 
 def youtube_playlists(urls):
+    if not urls:
+        return {}
     try:
         import yt_dlp
     except ImportError:
