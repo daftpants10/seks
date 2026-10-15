@@ -1,0 +1,65 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\todo{opening paragraph after results: restate the question, the main finding and its direction in three to four sentences}
+
+The discussion is organised around three questions: in which direction \al{} moves when a person manipulates the stick, whether that movement is specific to skilled manipulation or explained by physical load, and what the answer implies for the stick as a tool for studying skilled engagement. The interpretation depends on the outcome, and Table~\ref{tab:outcomes} sets out in advance how each pattern would be read.
+
+\begin{table}[ht]
+\centering
+\caption{Pre-specified interpretation of possible outcomes.}
+\label{tab:outcomes}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.6cm} X X}
+\toprule
+Outcome & Reading & Next step it motivates \\
+\midrule
+\al{} falls towards 0.75--0.5, explained by HR & Ordinary intensity effect; the stick behaves like light exercise & Match conditions on HR before testing skill effects \\
+\al{} falls beyond what HR predicts & Task-specific change in autonomic organisation, consistent with engaged regulation or co-activation \citep{peifer2014} & Relate to flow ratings; compare isolations and spins at matched HR \\
+\al{} stays near 1.0 & Fractal organisation preserved under a demanding motor task & Compare with a non-skilled movement control \\
+\al{} rises towards 1.5 & Shift towards regularity, e.g.\ breathing locked to the movement rhythm & Record breathing; test respiratory entrainment directly \\
+Expertise or hand differences & Skill demand modulates autonomic organisation & Longitudinal practice; movement quantification \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Direction of the Shift}
+\label{sec:disc-direction}
+
+\todo{interpret the H1 result against the landmarks of Table~\ref{tab:alpha-landmarks}}
+
+If \al{} falls during manipulation, the most economical reading is the one established in exercise research: as physical demand rises, the many regulatory influences on the heart are progressively dominated by a single drive, and short-term correlations weaken \citep{gronwald2020review,gronwald2020biomarker}. A fall towards 0.75 would place stick manipulation in the range of light to moderate exercise, which would be informative in itself, because the movement looks physically undemanding. A fall towards 0.5 at only modestly raised heart rate would be harder to explain by load and would point to a change in the organisation of regulation.
+
+If \al{} rises, the complexity framework offers a different reading. A shift towards 1.5 indicates that a slow, regular component has come to dominate the series \citep{goldberger2002}. In the present task the most likely source of such a component is breathing. If breathing locks to the rhythm of the movement, as locomotor--respiratory coupling would predict \citep{hoffmann2012,bardy2015}, respiratory sinus arrhythmia imposes a regular oscillation on the heartbeat at the movement frequency or one of its subharmonics. A rise in \al{} would then be a cardiac trace of coupling between movement and breathing, which the present design cannot confirm without a respiratory signal but which can be tested directly in future work.
+
+If \al{} stays near its resting value, the result is not null in a trivial sense. It would show that fractal organisation is preserved during a task that demands continuous visuomotor control, in contrast to endurance exercise of comparable heart rate, and would argue against the view that any engagement of the motor system reduces correlation structure.
+
+\subsection{Skill or Load?}
+\label{sec:disc-specificity}
+
+\todo{interpret H2: does the isolation--spin difference survive the HR adjustment}
+
+The heart-rate adjustment is the crux of the design. Two minutes of stick manipulation raise heart rate, and \al{} is known to fall with heart rate, so a raw difference between rest and movement is expected on physiological grounds alone. The question is whether isolations and spins, which differ in their demands on control and rhythm, differ in \al{} at matched heart rate. Isolations, which load visual prediction and fine control, are the more likely candidate for an effect beyond load; spins, which load rhythm and timing, are the more likely candidate for respiratory entrainment. \todo{relate the observed pattern to this contrast}
+
+Two caveats apply. Heart rate is an imperfect proxy for physical load in upper-limb tasks, because small muscle groups raise heart rate less per unit of effort than whole-body exercise, and isometric holding in isolations may raise blood pressure more than heart rate. And the covariate adjustment assumes that the relation between heart rate and \al{} is the same in both movements, which can be checked but not guaranteed in a small sample.
+
+\subsection{Expertise}
+\label{sec:disc-expertise}
+
+\todo{interpret H3}
+
+The expertise hypothesis follows from the stages of skill learning \citep{fitts1967}: if novices perform the movements under explicit control and experts largely automatically, the regulatory demand of the same movement differs between them. A smaller departure from resting \al{} in experts at matched heart rate would be consistent with this account and with the transient hypofrontality view of skilled performance \citep{dietrich2004}. The literature on rhythmic coupling adds a second possibility: if experts have learned to coordinate breathing with the movement, their \al{} could shift more, not less, towards regularity, as stable coupling imposes a regular respiratory rhythm. These two accounts predict different directions, and the observed pattern discriminates between them \todo{which one}. A cross-sectional comparison cannot show that practice causes the difference; it can show whether a difference exists that a longitudinal study should follow.
+
+\subsection{The Stick as a Research Tool}
+\label{sec:disc-tool}
+
+\todo{interpret the Bland--Altman result and data quality}
+
+A secondary aim was to establish whether a low-cost chain of consumer hardware and open software can measure \al{} during object manipulation. Data quality during movement, the agreement between real-time and offline estimates, and the practicality of two-minute trials all bear on this. If agreement is poor, as the pilot recordings suggested it might be, future studies need to compute \al{} offline from raw RR intervals with documented settings, as recommended for exercise research \citep{hoos2025}, rather than rely on application outputs.
+
+\subsection{Limitations and Future Research}
+\label{sec:limitations}
+
+Several limitations follow from the design. Trials lasted two minutes, which yields one estimate of \al{} per trial and no information about how \al{} develops within a movement bout; longer bouts are not feasible for isolations without repeated breaks. Upper-body movement introduces artifacts, and the chest strap's error for \al{} grows during activity and in the uncorrelated range \citep{schaffarczyk2022,cassirame2025}. Breathing was not recorded, so respiratory changes during movement, a plausible driver of any shift, cannot be separated from other mechanisms. The analysis relies on a monofractal short-term index; multifractal and long-range structure were not assessed \citep{goldberger2002}. The sample is small and the expertise groups smaller still, so the between-group comparison has limited power and should be read as an estimate. Finally, the study contains no non-skilled movement control matched for effort, so the contrast between skill and load rests on the statistical adjustment for heart rate rather than on design.
+
+Each limitation points to a next step. A respiratory belt or the H10's accelerometer-derived breathing signal would allow coupling between movement, breathing and heart rate to be quantified directly, using the frequency-locking and phase-coupling measures of the coupling literature \citep{hoffmann2015}. A metronome condition would test whether external rhythm stabilises the coordination, as it does in cycling \citep{hoffmann2012}. A non-skilled rhythmic arm movement matched for heart rate would provide the control that the present design approximates statistically. And a longitudinal study, as originally proposed for this thesis, would test whether daily practice changes resting \al{} and the response to the movements, which is the question that the health relevance of fractal dynamics ultimately depends on \citep{goldberger2002,lipsitz1992}. \todo{expand to the length of the other discussion subsections once results are in}

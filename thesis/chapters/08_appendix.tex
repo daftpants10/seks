@@ -1,0 +1,44 @@
+\section{Appendix}
+\label{sec:appendix}
+
+\subsection{Abbreviations}
+
+\begin{tabular}{@{}ll@{}}
+BLE & Bluetooth Low Energy \\
+bpm & beats per minute \\
+DFA & detrended fluctuation analysis \\
+\al & short-term scaling exponent of DFA (box sizes 4--16 beats) \\
+$\alpha_2$ & long-term scaling exponent of DFA (box sizes 16--64 beats) \\
+ECG & electrocardiography \\
+fBM & fractional Brownian motion \\
+fGN & fractional Gaussian noise \\
+HR & heart rate \\
+HRV & heart rate variability \\
+ICC & intraclass correlation coefficient \\
+LoA & limits of agreement \\
+LRC & locomotor--respiratory coupling \\
+pNN50 & percentage of successive RR differences larger than 50~ms \\
+RMSSD & root mean square of successive differences \\
+RR & interval between successive R waves (beat-to-beat interval) \\
+SDNN & standard deviation of normal-to-normal intervals \\
+VT1 & first ventilatory threshold \\
+\end{tabular}
+
+\subsection{Trial File Format}
+
+Each trial was saved as a JSON file with the fields listed below, alongside a line-delimited log of every raw message received from the streaming application.
+
+\begin{tabular}{@{}ll@{}}
+\texttt{session\_id} & condition, participant and start time \\
+\texttt{condition} & condition label, e.g.\ \texttt{baseline}, \texttt{isol\_l}, \texttt{spin\_r} \\
+\texttt{participant\_id} & pseudonymous participant code \\
+\texttt{recorded\_at} & ISO timestamp of trial start \\
+\texttt{target\_duration\_s} & set trial duration in seconds \\
+\texttt{sample\_count} & number of RR intervals received \\
+\texttt{samples} & list of RR intervals with arrival timestamps \\
+\texttt{computed\_stream} & real-time metrics reported by the streaming application \\
+\end{tabular}
+
+\subsection{Supplementary Tables}
+
+\todo{per-participant artifact rates; per-participant \al{} per condition; full model outputs}
